@@ -63,7 +63,13 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col justify-between relative">
+
+    <!-- 👑 全服歐皇廣播橫幅 (維持 5 秒) -->
+    <div id="broadcastBanner" class="hidden fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-3 text-sm md:text-base animate-bounce transition-all">
+        <i class="fa-solid fa-crown text-xl text-red-600 animate-pulse"></i>
+        <span id="broadcastText"></span>
+    </div>
 
     <!-- 頂部導覽與帳號狀態欄 -->
     <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 shadow-lg">
@@ -123,7 +129,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-        <!-- 📊 全服營運與玩家收益看板 (已隱藏全服玩家總數) -->
+        <!-- 📊 全服營運與玩家收益看板 -->
         <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
                 <div>
@@ -555,7 +561,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const MAX_DEBT_LIMIT = -10000;
@@ -580,6 +586,32 @@
         let currentPulledCards = [];
         let pendingPackConfig = null;
         let allUsersCache = [];
+        let broadcastTimer = null;
+
+        // 👑 即時監聽全服歐皇廣播頻道
+        onSnapshot(doc(db, "system", "broadcast"), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                // 僅展示 10 秒內發生的即時廣播，避免載入過期紀錄
+                if (data.timestamp && (Date.now() - data.timestamp < 10000)) {
+                    showBroadcastBanner(data.playerName, data.cardName, data.rarity);
+                }
+            }
+        });
+
+        function showBroadcastBanner(playerName, cardName, rarity) {
+            const banner = document.getElementById('broadcastBanner');
+            const textEl = document.getElementById('broadcastText');
+            if (!banner || !textEl) return;
+
+            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1 text-base md:text-lg">${playerName}</span> 幸運抽到最稀有卡牌 <span class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-md border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
+            banner.classList.remove('hidden');
+
+            if (broadcastTimer) clearTimeout(broadcastTimer);
+            broadcastTimer = setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 5000); // 5 秒後自動隱藏
+        }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -625,7 +657,7 @@
             isRegisterMode = !isRegisterMode;
             document.getElementById('authTitle').innerText = isRegisterMode ? "註冊新訓練家帳號" : "雲端訓練家登入";
             document.getElementById('authPrimaryBtn').innerText = isRegisterMode ? "註冊並登入" : "登入帳號";
-            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「註冊帳號」" : "還沒有帳號？點此切換至「註冊帳號」";
+            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此登入" : "還沒有帳號？點此切換至「註冊帳號」";
         };
 
         window.handleAuthSubmit = async () => {
@@ -736,7 +768,8 @@
             if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入正確的目標分數！");
 
             try {
-                await setDoc(doc(doc, "users", targetUid), { points: newPoints }, { merge: true });
+                // 🛠️ 修正 Bug：改回正確的 doc(db, "users", targetUid)
+                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
                 alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
@@ -1019,6 +1052,21 @@
             currentUserDoc.totalPulledValue = (currentUserDoc.totalPulledValue || 0) + batchPulledValue;
 
             await syncToCloud();
+
+            // 🌟 檢查是否抽出最稀有卡牌（SAR、UR），若抽中則推播雲端歐皇廣播
+            const topCards = currentPulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
+            for (let rareCard of topCards) {
+                try {
+                    await setDoc(doc(db, "system", "broadcast"), {
+                        playerName: currentUserDoc.name || "訓練家",
+                        cardName: rareCard.name,
+                        rarity: rareCard.rarity,
+                        timestamp: Date.now()
+                    });
+                } catch (e) {
+                    console.error("發送歐皇廣播失敗:", e);
+                }
+            }
 
             // 5. 觸發撕卡包動態畫面
             document.getElementById('animStepChoice').classList.add('hidden');
