@@ -199,13 +199,12 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (使用專屬金鑰: pokemon-342c8) -->
+    <!-- Firebase SDK (已嵌入專屬金鑰 pokemon-342c8) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 已填入你的專屬 Firebase 金鑰
         const firebaseConfig = {
             apiKey: "AIzaSyALGt-dWSJLf4Qa03AWoFo22u87LMFErIE",
             authDomain: "pokemon-342c8.firebaseapp.com",
@@ -270,9 +269,10 @@
             try {
                 if (isRegisterMode) {
                     const res = await createUserWithEmailAndPassword(auth, email, password);
+                    // 初始積分改為 1000 分
                     await setDoc(doc(db, "users", res.user.uid), {
                         name: username,
-                        points: 500,
+                        points: 1000,
                         lastDailyDate: new Date().toISOString().split('T')[0],
                         cards: {}
                     });
