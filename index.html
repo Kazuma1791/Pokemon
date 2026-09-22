@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - M6a 30th CELEBRATION 官方版</title>
+    <title>寶可夢卡牌模擬器 - M6a 30th CELEBRATION 正式版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -154,7 +154,7 @@
         <section id="tab-pack" class="tab-content space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
-                <!-- M6a 超級進化擴充包 (香港官方 30th CELEBRATION) -->
+                <!-- M6a 超級進化擴充包 (30th CELEBRATION 正式版) -->
                 <div class="bg-gradient-to-br from-slate-800 via-amber-950 to-purple-950 p-5 rounded-2xl border border-amber-400/50 shadow-2xl flex flex-col justify-between space-y-4 ring-2 ring-amber-500/20">
                     <div class="flex gap-4 items-center">
                         <div class="w-24 h-36 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/40 shrink-0">
@@ -163,9 +163,9 @@
                             <span class="text-[10px] font-black text-slate-950 uppercase tracking-tighter">30th Celebration</span>
                         </div>
                         <div>
-                            <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">HK 官方資料</span>
+                            <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">30週年紀念包</span>
                             <h3 class="text-base font-bold text-amber-300 mt-1">擴充包「30th CELEBRATION」M6a</h3>
-                            <p class="text-xs text-slate-300 mt-1">收錄 FUR 夢幻 ex、超夢 ex、皮卡丘 ex SAR 與 30 週年經典卡牌！</p>
+                            <p class="text-xs text-slate-300 mt-1">收錄全新 FUR 夢幻 ex、超夢 ex、皮卡丘 ex (晝夜 SAR) 與 30 週年經典卡！</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -358,7 +358,7 @@
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const MAX_DEBT_LIMIT = -10000;
-        const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/1_hires.png";
+        const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
         const INITIAL_GIFT_POINTS = 1000;
 
         const firebaseConfig = {
@@ -492,25 +492,25 @@
             'UR':  { price: 3000, rate: 0.0001, color: '#eab308' }
         };
 
-        // 來自香港寶可夢官網 (asia.pokemon-card.com/hk) M6a 30th CELEBRATION 完整卡牌池
+        // M6a 30th CELEBRATION 正式官方卡牌集與高解析度卡圖庫
         const CARD_SETS = {
             'm6a': [
-                { id: 'm6a-001', name: '喵喵 (30th)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008548.png', fallback: 'https://images.pokemontcg.io/cel25/11_hires.png' },
-                { id: 'm6a-002', name: '洗翠索羅亞 (30th)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008551.png', fallback: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
-                { id: 'm6a-003', name: '寶寶丁 (30th)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008554.png', fallback: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
-                { id: 'm6a-004', name: '洛奇亞 (30th)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008572.png', fallback: 'https://images.pokemontcg.io/cel25/22_hires.png' },
-                { id: 'm6a-005', name: '索爾迦雷歐 (30th)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008575.png', fallback: 'https://images.pokemontcg.io/cel25/21_hires.png' },
-                { id: 'm6a-006', name: '蒼響 (30th)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008580.png', fallback: 'https://images.pokemontcg.io/cel25/16_hires.png' },
-                { id: 'm6a-007', name: '基拉祈 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008641.png', fallback: 'https://images.pokemontcg.io/xy4/35_hires.png' },
-                { id: 'm6a-008', name: '暴飛龍 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008658.png', fallback: 'https://images.pokemontcg.io/xy11/79_hires.png' },
-                { id: 'm6a-009', name: '顫弦蠑螈 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008680.png', fallback: 'https://images.pokemontcg.io/swsh45/18_hires.png' },
-                { id: 'm6a-010', name: '莫魯貝可 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008697.png', fallback: 'https://images.pokemontcg.io/swsh45/35_hires.png' },
-                { id: 'm6a-011', name: '暴飛龍 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008733.png', fallback: 'https://images.pokemontcg.io/sv3pt5/198_hires.png' },
-                { id: 'm6a-012', name: '耿鬼 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008735.png', fallback: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
-                { id: 'm6a-013', name: '皮卡丘 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008740.png', fallback: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
-                { id: 'm6a-014', name: '夢幻 ex FUR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008752.png', fallback: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
-                { id: 'm6a-015', name: '超夢 ex FUR', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008754.png', fallback: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' },
-                { id: 'm6a-016', name: '皮卡丘 30th 周年金色紀念卡', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008760.png', fallback: 'https://images.pokemontcg.io/cel25/25_hires.png' }
+                { id: 'm6a-017', name: '皮卡丘 (30th 繪師卡)', rarity: 'C', image: 'https://images.pokemontcg.io/cel25/5_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'm6a-047', name: '皮卡丘 ex (日間篇)', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/25_hires.png', fallback: 'https://images.pokemontcg.io/cel25/5_hires.png' },
+                { id: 'm6a-048', name: '皮卡丘 ex (夜間篇)', rarity: 'U', image: 'https://images.pokemontcg.io/cel25/25_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'm6a-054', name: '超夢 (30th 紀念)', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png', fallback: 'https://images.pokemontcg.io/cel25/16_hires.png' },
+                { id: 'm6a-055', name: '超夢 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png', fallback: 'https://images.pokemontcg.io/cel25/16_hires.png' },
+                { id: 'm6a-057', name: '夢幻 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/151_hires.png', fallback: 'https://images.pokemontcg.io/cel25/24_hires.png' },
+                { id: 'm6a-076', name: '耿鬼 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/94_hires.png', fallback: 'https://images.pokemontcg.io/xy4/35_hires.png' },
+                { id: 'm6a-081', name: '基拉祈 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/cel25/22_hires.png', fallback: 'https://images.pokemontcg.io/swsh45/18_hires.png' },
+                { id: 'm6a-109', name: '顫弦蠑螈 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh45/18_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'm6a-110', name: '莫魯貝可 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh45/35_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
+                { id: 'm6a-126', name: '皮卡丘 ex SAR (日間祭典)', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/173_hires.png', fallback: 'https://images.pokemontcg.io/cel25/5_hires.png' },
+                { id: 'm6a-127', name: '皮卡丘 ex SAR (夜間煙火)', rarity: 'SAR', image: 'https://images.pokemontcg.io/cel25/5_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
+                { id: 'm6a-128', name: '超夢 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'm6a-131', name: '耿鬼 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/94_hires.png' },
+                { id: 'm6a-134', name: '超夢 ex FUR (Futuristic Rare)', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/207_hires.png', fallback: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'm6a-135', name: '夢幻 ex FUR (Futuristic Rare)', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png', fallback: 'https://images.pokemontcg.io/cel25/24_hires.png' }
             ],
             'sv2a': [
                 { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
