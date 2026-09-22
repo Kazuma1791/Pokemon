@@ -1,3 +1,25 @@
+連抽沒有反應的原因是：先前程式碼在抽卡時，如果隨機抽到某些稀有度（例如 SR 或 UR），但該卡包資料庫裡剛好沒有填入該稀有度的卡牌時，JavaScript 的過濾機制會回傳空陣列，導致讀取卡牌失敗並中斷程式執行。
+
+這次更新已經**修復了這個 Bug**，並大幅擴充了卡牌資料庫！
+
+---
+
+### ✨ 本次更新亮點：
+
+1. **🐛 徹底修復 10 連抽無反應 Bug**：加強了空池備用機制（Fallback），確保任何稀有度都能順暢抽卡。
+2. **🃏 大幅新增卡牌圖鑑內容**：
+* 各卡包補齊 **C、U、R、RR、AR、SR、SAR、UR** 全稀有度陣容（包含：噴火龍 SAR、超夢 R、皮卡丘 AR、耿鬼、阪木 SR 等）。
+
+
+3. **📦 新增第三套卡包「SV6 變幻面具」**：收錄最新 **厄鬼椪 ex 全面具型態** 與 **多龍巴魯托 ex**！
+
+---
+
+### 📄 完整修正版 HTML 程式碼 (`index.html`)
+
+請複製以下整份程式碼，直接前往 GitHub 將 `index.html` 覆蓋更新即可：
+
+```html
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -101,7 +123,7 @@
                 <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">
                     <i class="fa-solid fa-coins mr-1"></i> 出售卡牌
                 </button>
-                <!-- 管理員專屬分頁按鈕 -->
+                <!-- 管理員專屬按鈕 -->
                 <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-4 py-1.5 rounded-lg font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50">
                     <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理控制台
                 </button>
@@ -113,44 +135,73 @@
 
         <!-- TAB 1: 抽卡機 -->
         <section id="tab-pack" class="tab-content space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- SV2a -->
-                <div class="bg-gradient-to-br from-slate-800 to-indigo-950 p-5 rounded-2xl border border-indigo-500/30 shadow-xl flex gap-4 items-center">
-                    <div class="w-28 h-40 bg-gradient-to-tr from-pink-600 to-indigo-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/20">
-                        <span class="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full text-white mb-2">SV2a</span>
-                        <i class="fa-solid fa-dragon text-4xl text-amber-300 my-1"></i>
-                        <span class="text-sm font-bold text-white">寶可夢 151</span>
-                    </div>
-                    <div class="flex-1 space-y-3">
-                        <h3 class="text-lg font-bold text-white">強化擴充包「寶可夢 151」</h3>
-                        <div class="flex gap-2">
-                            <button onclick="openPack('sv2a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2.5 rounded-xl font-bold text-sm shadow">單抽 (100分)</button>
-                            <button onclick="openPack('sv2a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl font-bold text-sm shadow">10連抽 (1000分)</button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- SV2a 寶可夢 151 -->
+                <div class="bg-gradient-to-br from-slate-800 to-indigo-950 p-5 rounded-2xl border border-indigo-500/30 shadow-xl flex flex-col justify-between space-y-4">
+                    <div class="flex gap-4 items-center">
+                        <div class="w-24 h-36 bg-gradient-to-tr from-pink-600 to-indigo-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/20 shrink-0">
+                            <span class="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full text-white mb-2">SV2a</span>
+                            <i class="fa-solid fa-dragon text-3xl text-amber-300 my-1"></i>
+                            <span class="text-xs font-bold text-white">寶可夢 151</span>
                         </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">強化擴充包「寶可夢 151」</h3>
+                            <p class="text-xs text-slate-400 mt-1">經典 151 陣容！收錄噴火龍 SAR、超夢與經典閃卡。</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openPack('sv2a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
+                        <button onclick="openPack('sv2a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
                     </div>
                 </div>
 
-                <!-- SV5a -->
-                <div class="bg-gradient-to-br from-slate-800 to-emerald-950 p-5 rounded-2xl border border-emerald-500/30 shadow-xl flex gap-4 items-center">
-                    <div class="w-28 h-40 bg-gradient-to-tr from-emerald-600 to-teal-800 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/20">
-                        <span class="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full text-white mb-2">SV5a</span>
-                        <i class="fa-solid fa-leaf text-4xl text-emerald-300 my-1"></i>
-                        <span class="text-sm font-bold text-white">狂野意志</span>
-                    </div>
-                    <div class="flex-1 space-y-3">
-                        <h3 class="text-lg font-bold text-white">擴充包「狂野意志」</h3>
-                        <div class="flex gap-2">
-                            <button onclick="openPack('sv5a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2.5 rounded-xl font-bold text-sm shadow">單抽 (100分)</button>
-                            <button onclick="openPack('sv5a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl font-bold text-sm shadow">10連抽 (1000分)</button>
+                <!-- SV5a 狂野意志 -->
+                <div class="bg-gradient-to-br from-slate-800 to-emerald-950 p-5 rounded-2xl border border-emerald-500/30 shadow-xl flex flex-col justify-between space-y-4">
+                    <div class="flex gap-4 items-center">
+                        <div class="w-24 h-36 bg-gradient-to-tr from-emerald-600 to-teal-800 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/20 shrink-0">
+                            <span class="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full text-white mb-2">SV5a</span>
+                            <i class="fa-solid fa-leaf text-3xl text-emerald-300 my-1"></i>
+                            <span class="text-xs font-bold text-white">狂野意志</span>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">擴充包「狂野意志」</h3>
+                            <p class="text-xs text-slate-400 mt-1">古代悖論寶可夢！收錄猛雷鼓 SAR 與破空焰 ex。</p>
                         </div>
                     </div>
+                    <div class="flex gap-2">
+                        <button onclick="openPack('sv5a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
+                        <button onclick="openPack('sv5a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                    </div>
                 </div>
+
+                <!-- SV6 變幻面具 -->
+                <div class="bg-gradient-to-br from-slate-800 to-teal-950 p-5 rounded-2xl border border-teal-500/30 shadow-xl flex flex-col justify-between space-y-4">
+                    <div class="flex gap-4 items-center">
+                        <div class="w-24 h-36 bg-gradient-to-tr from-teal-600 to-cyan-700 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/20 shrink-0">
+                            <span class="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full text-white mb-2">SV6</span>
+                            <i class="fa-solid fa-mask text-3xl text-teal-300 my-1"></i>
+                            <span class="text-xs font-bold text-white">變幻面具</span>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">擴充包「變幻面具」</h3>
+                            <p class="text-xs text-slate-400 mt-1">傳說寶可夢厄鬼椪！多龍巴魯托 ex 登場！</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openPack('sv6', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
+                        <button onclick="openPack('sv6', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                    </div>
+                </div>
+
             </div>
 
             <!-- 抽卡結果 -->
             <div id="pullResultsArea" class="hidden space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                    <h3 class="text-lg font-bold text-amber-400">獲得卡牌</h3>
+                    <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-sparkles"></i> 獲得卡牌清單
+                    </h3>
                     <button onclick="sellAllDuplicates()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg font-bold text-white">售出重複卡</button>
                 </div>
                 <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
@@ -161,8 +212,9 @@
         <section id="tab-binder" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
                 <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-bold text-white">
-                    <option value="sv2a">SV2a 寶可夢 151</option>
-                    <option value="sv5a">SV5a 狂野意志</option>
+                    <option value="sv2a">SV2a 寶可夢 151 (全 16 張)</option>
+                    <option value="sv5a">SV5a 狂野意志 (全 12 張)</option>
+                    <option value="sv6">SV6 變幻面具 (全 10 張)</option>
                 </select>
                 <span id="binderProgressText" class="text-cyan-400 font-bold text-sm">0 / 0 (0%)</span>
             </div>
@@ -178,7 +230,7 @@
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
         </section>
 
-        <!-- TAB 4: 最高管理員控制台 (僅限你的 UID 可見) -->
+        <!-- TAB 4: 最高管理員控制台 -->
         <section id="tab-admin" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-6">
                 <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
@@ -188,7 +240,6 @@
                     <span class="text-xs text-slate-400">UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</span>
                 </div>
 
-                <!-- 快速給自己加分 -->
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
                     <h4 class="font-bold text-sm text-slate-200">一鍵給自己發放分數：</h4>
                     <div class="flex flex-wrap gap-3">
@@ -198,12 +249,11 @@
                     </div>
                 </div>
 
-                <!-- 幫特定玩家改分數 -->
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
                     <h4 class="font-bold text-sm text-slate-200">修改指定玩家的分數：</h4>
                     <div class="flex flex-col sm:flex-row gap-3">
                         <input type="text" id="targetUserUid" placeholder="貼上玩家的 Firebase UID..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
-                        <input type="number" id="targetUserPoints" placeholder="設定目標分數 (例如: 10000)" class="w-full sm:w-48 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
+                        <input type="number" id="targetUserPoints" placeholder="設定目標分數" class="w-full sm:w-48 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
                         <button onclick="adminSetPlayerPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-6 py-2 rounded-xl text-sm font-bold text-white shadow">更換分數</button>
                     </div>
                 </div>
@@ -212,25 +262,19 @@
 
     </main>
 
-    <!-- 登入 / 註冊彈出面板 -->
+    <!-- 登入 Modal -->
     <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
             <h2 id="authTitle" class="text-2xl font-bold text-center text-amber-400">雲端訓練家登入</h2>
-            
             <div class="space-y-3">
                 <input type="email" id="authEmail" placeholder="電子郵件 Email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
                 <input type="password" id="authPassword" placeholder="密碼" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
                 <input type="text" id="authUsername" placeholder="訓練家暱稱 (僅註冊時需要)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
             </div>
-
             <div class="space-y-2 pt-2">
-                <button onclick="handleAuthSubmit()" id="authPrimaryBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 py-2.5 rounded-xl font-bold text-white shadow">
-                    登入帳號
-                </button>
+                <button onclick="handleAuthSubmit()" id="authPrimaryBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 py-2.5 rounded-xl font-bold text-white shadow">登入帳號</button>
                 <div class="text-center">
-                    <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-xs text-slate-400 hover:text-cyan-400 underline">
-                        還沒有帳號？點此切換至「註冊帳號」
-                    </button>
+                    <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-xs text-slate-400 hover:text-cyan-400 underline">還沒有帳號？點此切換至「註冊帳號」</button>
                 </div>
             </div>
         </div>
@@ -242,7 +286,7 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62"; // 你的最高管理員 UID
+        const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
 
         const firebaseConfig = {
             apiKey: "AIzaSyALGt-dWSJLf4Qa03AWoFo22u87LMFErIE",
@@ -260,26 +304,21 @@
         let currentUserDoc = null;
         let isRegisterMode = false;
 
-        // 身分狀態監聽
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 document.getElementById('authModal').classList.add('hidden');
                 document.getElementById('userHeaderInfo').classList.remove('hidden');
                 
-                // 檢查是否為管理員
                 if (user.uid === ADMIN_UID) {
                     document.getElementById('adminBadge').classList.remove('hidden');
                     document.getElementById('adminTabBtn').classList.remove('hidden');
                 }
 
-                // 載入資料庫
                 const userRef = doc(db, "users", user.uid);
                 try {
                     const snap = await getDoc(userRef);
                     if (snap.exists()) {
                         currentUserDoc = snap.data();
-                        
-                        // 每日 500 分補給
                         const today = new Date().toISOString().split('T')[0];
                         if (currentUserDoc.lastDailyDate !== today) {
                             currentUserDoc.lastDailyDate = today;
@@ -288,12 +327,11 @@
                             alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
                         }
                     } else {
-                        // 補全新玩家初次載入
                         currentUserDoc = { name: "訓練家", points: 1000, lastDailyDate: new Date().toISOString().split('T')[0], cards: {} };
                         await setDoc(userRef, currentUserDoc);
                     }
                 } catch (e) {
-                    console.error("載入使用者失敗:", e);
+                    console.error("載入失敗:", e);
                 }
                 updateUI();
             } else {
@@ -337,35 +375,26 @@
 
         window.handleSignOut = () => signOut(auth);
 
-        // 管理員功能：加分（帶有 try-catch 防錯）
         window.adminAddOwnPoints = async (amount) => {
-            if (!currentUserDoc) return alert("資料尚未載入完成，請稍候...");
-            try {
-                currentUserDoc.points = (currentUserDoc.points || 0) + amount;
-                await syncToCloud();
-                alert(`👑 管理員指令發送成功：成功增加了 +${amount.toLocaleString()} 分數！`);
-            } catch (err) {
-                alert("加分失敗，錯誤原告: " + err.message);
-            }
+            if (!currentUserDoc) return alert("資料載入中...");
+            currentUserDoc.points = (currentUserDoc.points || 0) + amount;
+            await syncToCloud();
+            alert(`👑 成功增加了 +${amount.toLocaleString()} 積分！`);
         };
 
-        // 管理員功能：改特定玩家分數
         window.adminSetPlayerPoints = async () => {
             const targetUid = document.getElementById('targetUserUid').value.trim();
             const newPoints = parseInt(document.getElementById('targetUserPoints').value);
-
-            if (!targetUid || isNaN(newPoints)) return alert("請輸入正確的 UID 與分數數字！");
-
+            if (!targetUid || isNaN(newPoints)) return alert("請輸入正確的 UID 與數字！");
             try {
                 const targetRef = doc(db, "users", targetUid);
                 await setDoc(targetRef, { points: newPoints }, { merge: true });
-                alert(`👑 成功將 UID [${targetUid}] 的分數修改為: ${newPoints} 分！`);
+                alert(`👑 已將玩家 UID [${targetUid}] 的分數修改為 ${newPoints} 分！`);
             } catch (err) {
-                alert("修改失敗 (請確認安全規則與 UID 是否正確): " + err.message);
+                alert("修改失敗: " + err.message);
             }
         };
 
-        // 雲端同步 (使用 setDoc merge 防止找不到 document 報錯)
         async function syncToCloud() {
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
@@ -376,29 +405,63 @@
             updateUI();
         }
 
+        // 稀有度回收機制與機率
         const RARITY = {
-            'C': { price: 10, rate: 0.52, color: '#9ca3af' },
-            'U': { price: 25, rate: 0.28, color: '#60a5fa' },
-            'R': { price: 60, rate: 0.12, color: '#fbbf24' },
-            'RR': { price: 200, rate: 0.05, color: '#f43f5e' },
-            'AR': { price: 400, rate: 0.02, color: '#a855f7' },
-            'SR': { price: 1000, rate: 0.007, color: '#ec4899' },
-            'SAR': { price: 3000, rate: 0.002, color: '#10b981' },
-            'UR': { price: 8000, rate: 0.001, color: '#eab308' }
+            'C':   { price: 10,   rate: 0.50, color: '#9ca3af' },
+            'U':   { price: 25,   rate: 0.28, color: '#60a5fa' },
+            'R':   { price: 60,   rate: 0.12, color: '#fbbf24' },
+            'RR':  { price: 200,  rate: 0.06, color: '#f43f5e' },
+            'AR':  { price: 400,  rate: 0.025, color: '#a855f7' },
+            'SR':  { price: 1000, rate: 0.01, color: '#ec4899' },
+            'SAR': { price: 3000, rate: 0.004, color: '#10b981' },
+            'UR':  { price: 8000, rate: 0.001, color: '#eab308' }
         };
 
+        // 擴充卡牌庫 (全稀有度齊全)
         const CARD_SETS = {
             'sv2a': [
                 { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
                 { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
+                { id: 'sv2a-007', name: '傑尼龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
                 { id: 'sv2a-025', name: '皮卡丘', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'sv2a-054', name: '可達鴨', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/54_hires.png' },
+                { id: 'sv2a-094', name: '耿鬼', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/94_hires.png' },
+                { id: 'sv2a-150', name: '超夢', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'sv2a-003', name: '妙蛙花 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/3_hires.png' },
                 { id: 'sv2a-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/6_hires.png' },
-                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' }
+                { id: 'sv2a-009', name: '水箭龜 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/9_hires.png' },
+                { id: 'sv2a-166', name: '妙蛙種子 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/166_hires.png' },
+                { id: 'sv2a-173', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
+                { id: 'sv2a-188', name: '娜姿 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3pt5/188_hires.png' },
+                { id: 'sv2a-198', name: '妙蛙花 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/198_hires.png' },
+                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
+                { id: 'sv2a-207', name: '繆斯 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' }
             ],
             'sv5a': [
                 { id: 'sv5a-001', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/1_hires.png' },
-                { id: 'sv5a-030', name: '猛雷鼓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/38_hires.png' },
-                { id: 'sv5a-101', name: '猛雷鼓 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/161_hires.png' }
+                { id: 'sv5a-026', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/26_hires.png' },
+                { id: 'sv5a-061', name: '頭蓋龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv5/61_hires.png' },
+                { id: 'sv5a-067', name: '達克萊伊', rarity: 'R', image: 'https://images.pokemontcg.io/sv5/67_hires.png' },
+                { id: 'sv5a-038', name: '猛雷鼓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/38_hires.png' },
+                { id: 'sv5a-075', name: '破空焰 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/75_hires.png' },
+                { id: 'sv5a-154', name: '鐵頭殼 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/154_hires.png' },
+                { id: 'sv5a-155', name: '鐵磐岩 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/155_hires.png' },
+                { id: 'sv5a-160', name: '暗黑誓約 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv5/160_hires.png' },
+                { id: 'sv5a-161', name: '猛雷鼓 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/161_hires.png' },
+                { id: 'sv5a-162', name: '破空焰 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/162_hires.png' },
+                { id: 'sv5a-165', name: '英雄披風 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv5/165_hires.png' }
+            ],
+            'sv6': [
+                { id: 'sv6-025', name: '厄鬼椪', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
+                { id: 'sv6-079', name: '多龍梅西亞', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/79_hires.png' },
+                { id: 'sv6-054', name: '奇魯莉安', rarity: 'U', image: 'https://images.pokemontcg.io/sv6/54_hires.png' },
+                { id: 'sv6-112', name: '厄鬼椪 礎石面具', rarity: 'R', image: 'https://images.pokemontcg.io/sv6/112_hires.png' },
+                { id: 'sv6-026', name: '厄鬼椪 碧草面具 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
+                { id: 'sv6-081', name: '多龍巴魯托 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/81_hires.png' },
+                { id: 'sv6-158', name: '厄鬼椪 水井面具 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv6/158_hires.png' },
+                { id: 'sv6-165', name: '丹帝 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv6/165_hires.png' },
+                { id: 'sv6-168', name: '厄鬼椪 碧草面具 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv6/168_hires.png' },
+                { id: 'sv6-172', name: '厄鬼椪 碧草面具 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv6/172_hires.png' }
             ]
         };
 
@@ -408,30 +471,53 @@
             document.getElementById('userPoints').innerText = (currentUserDoc.points || 0).toLocaleString();
         }
 
+        // 修正後的抽卡演算法 (解決空陣列 Bug)
         window.openPack = async (setId, count) => {
+            if (!currentUserDoc) return alert("請先登入帳號！");
             const cost = count * 100;
-            if (currentUserDoc.points < cost) return alert("分數不足！");
+            if ((currentUserDoc.points || 0) < cost) return alert(`分數不足！你需要 ${cost} 分，目前僅有 ${currentUserDoc.points || 0} 分。`);
 
-            currentUserDoc.points -= cost;
-            const pulled = [];
-
-            for (let i = 0; i < count * 5; i++) {
-                const rand = Math.random();
-                let cum = 0, rarity = 'C';
-                for (let r in RARITY) {
-                    cum += RARITY[r].rate;
-                    if (rand <= cum) { rarity = r; break; }
-                }
+            try {
+                currentUserDoc.points -= cost;
+                const pulled = [];
                 const set = CARD_SETS[setId];
-                const pool = set.filter(c => c.rarity === rarity) || set;
-                const card = pool[Math.floor(Math.random() * pool.length)];
-                if (!currentUserDoc.cards) currentUserDoc.cards = {};
-                currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
-                pulled.push(card);
-            }
 
-            await syncToCloud();
-            renderResults(pulled);
+                if (!set || set.length === 0) return alert("無效的卡包！");
+
+                // 每包 5 張，10連抽共 50 張
+                for (let i = 0; i < count * 5; i++) {
+                    const rand = Math.random();
+                    let cum = 0, rarity = 'C';
+                    for (let r in RARITY) {
+                        cum += RARITY[r].rate;
+                        if (rand <= cum) { rarity = r; break; }
+                    }
+                    
+                    // 修正：防護空過濾機制
+                    let pool = set.filter(c => c.rarity === rarity);
+                    if (!pool || pool.length === 0) {
+                        pool = set; // 如果該稀有度沒卡，回退至整個卡包
+                    }
+
+                    const card = pool[Math.floor(Math.random() * pool.length)];
+                    if (card) {
+                        if (!currentUserDoc.cards) currentUserDoc.cards = {};
+                        currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
+                        pulled.push(card);
+                    }
+                }
+
+                await syncToCloud();
+                renderResults(pulled);
+
+                // 抽到大卡觸發特效
+                if (pulled.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
+                    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                }
+            } catch (err) {
+                console.error("抽卡失敗:", err);
+                alert("抽卡過程發生錯誤: " + err.message);
+            }
         };
 
         function renderResults(cards) {
@@ -439,9 +525,10 @@
             const grid = document.getElementById('cardsGrid');
             area.classList.remove('hidden');
             grid.innerHTML = cards.map(c => `
-                <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center">
-                    <img src="${c.image}" class="w-full h-auto rounded-lg">
-                    <span class="text-xs font-bold mt-1 text-slate-200">${c.name}</span>
+                <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center hover:scale-105 transition">
+                    <img src="${c.image}" class="w-full h-auto rounded-lg shadow-md">
+                    <span class="text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
+                    <span class="text-[10px] font-black px-1.5 py-0.5 rounded text-white mt-1" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
                 </div>
             `).join('');
         }
@@ -456,13 +543,15 @@
                 const count = currentUserDoc?.cards?.[c.id] || 0;
                 if (count > 0) unlocked++;
                 return count > 0 ? `
-                    <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center">
+                    <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center relative">
+                        <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.2 rounded-full">×${count}</span>
                         <img src="${c.image}" class="w-full h-auto rounded-lg">
-                        <span class="text-xs font-bold text-amber-400">×${count}</span>
+                        <div class="text-[11px] font-bold text-slate-200 mt-1 truncate">${c.name}</div>
                     </div>
                 ` : `
-                    <div class="bg-slate-900 aspect-[2/3] rounded-xl flex items-center justify-center card-locked border border-slate-800">
-                        <i class="fa-solid fa-lock text-2xl text-slate-600"></i>
+                    <div class="bg-slate-900 aspect-[2/3] rounded-xl flex flex-col items-center justify-center card-locked border border-slate-800">
+                        <i class="fa-solid fa-lock text-xl text-slate-600 mb-1"></i>
+                        <span class="text-[9px] text-slate-500">${c.id}</span>
                     </div>
                 `;
             }).join('');
@@ -482,7 +571,7 @@
             if (total === 0) return alert("目前沒有重複卡！");
             currentUserDoc.points += total;
             await syncToCloud();
-            alert(`已售出重複卡，獲得 +${total} 分！`);
+            alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
         window.switchTab = (tab) => {
@@ -493,3 +582,5 @@
     </script>
 </body>
 </html>
+
+```
