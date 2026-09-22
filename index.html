@@ -33,6 +33,18 @@
             filter: grayscale(100%) brightness(0.3);
         }
 
+        /* 👑 VIP 專屬流光霓虹特效邊框 */
+        @keyframes vipBorderGlow {
+            0% { border-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5), inset 0 0 5px rgba(245, 158, 11, 0.3); }
+            50% { border-color: #ec4899; box-shadow: 0 0 20px rgba(236, 72, 153, 0.8), inset 0 0 10px rgba(236, 72, 153, 0.5); }
+            100% { border-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5), inset 0 0 5px rgba(245, 158, 11, 0.3); }
+        }
+        .vip-nameplate {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            border: 2px solid #f59e0b;
+            animation: vipBorderGlow 3s infinite ease-in-out;
+        }
+
         /* 3D 翻牌動畫與 GPU 硬體加速 */
         .perspective-1000 {
             perspective: 1000px;
@@ -94,7 +106,7 @@
                 </h1>
             </div>
 
-            <!-- 玩家雲端資訊 (含 1000 分改名按鈕) -->
+            <!-- 玩家雲端資訊 (含改名與 VIP 升級按鈕) -->
             <div id="userHeaderInfo" class="hidden flex items-center gap-3 sm:gap-4 bg-slate-900 px-3 sm:px-4 py-2 rounded-xl border border-slate-700">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-user text-cyan-400"></i>
@@ -104,6 +116,11 @@
                     <button onclick="promptChangeUsername()" title="改名字 (花費 1,000 分)" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 transition flex items-center gap-1 shadow">
                         <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                         <span class="hidden sm:inline">改名</span>
+                    </button>
+
+                    <!-- 💎 VIP 升級按鈕 -->
+                    <button onclick="openVipModal()" class="text-[11px] bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-950 font-black px-2.5 py-0.5 rounded shadow flex items-center gap-1">
+                        <i class="fa-solid fa-crown text-[10px]"></i> <span>VIP 專區</span>
                     </button>
 
                     <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded">👑 管理員</span>
@@ -308,9 +325,10 @@
                     <span class="text-xs text-slate-400">UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</span>
                 </div>
 
+                <!-- 玩家分數與 VIP 管理 -->
                 <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-4">
                     <h4 class="font-bold text-base text-amber-300 flex items-center gap-2">
-                        <i class="fa-solid fa-users-gear"></i> 全服訓練家分數管理
+                        <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與分數管理
                     </h4>
                     
                     <div class="flex flex-col sm:flex-row gap-3">
@@ -334,6 +352,17 @@
                             </div>
                         </div>
 
+                        <!-- 💎 管理員快速切換 VIP 狀態 -->
+                        <div class="border-t border-slate-700 pt-3 flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-amber-300 block">VIP 會員狀態：</span>
+                                <span id="selectedUserVipStatusText" class="text-xs text-slate-400">檢查中...</span>
+                            </div>
+                            <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-xl text-xs font-bold text-slate-950 shadow">
+                                切換 VIP 狀態
+                            </button>
+                        </div>
+
                         <div class="border-t border-slate-700 pt-3">
                             <span class="text-xs font-bold text-slate-300 block mb-2">快速增減分數：</span>
                             <div class="flex flex-wrap gap-2">
@@ -354,6 +383,48 @@
         </section>
 
     </main>
+
+    <!-- 💎 VIP 會員介紹與購買 Modal -->
+    <div id="vipModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 p-6 sm:p-8 rounded-2xl border-2 border-amber-400 max-w-lg w-full space-y-6 shadow-2xl relative">
+            <button onclick="closeVipModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 bg-amber-500/20 border-2 border-amber-400 rounded-full flex items-center justify-center mx-auto text-amber-400 text-2xl shadow-lg">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <h2 class="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+                    永久 VIP 尊榮會員系統
+                </h2>
+                <p class="text-xs text-slate-300">只需一杯咖啡錢 <b class="text-amber-400">$25 港幣</b>，即可永久解鎖全服尊榮特權！</p>
+            </div>
+
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <h4 class="font-bold text-sm text-amber-300 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> VIP 專屬特權福利：</h4>
+                <ul class="text-xs text-slate-300 space-y-2">
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 名字享有專屬的<b>流光霓虹特效邊框</b>。</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 排行榜與介面常駐 <b>👑 VIP 皇冠標籤</b>。</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 永久身分認定，支持本模擬器持續營運！</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <div class="text-xs font-bold text-slate-300">步驟一：點擊下方 PayMe 連結付款 $25 港幣</div>
+                <a href="https://payme.hsbc/0661b177b2f04214972535987915b5d6" target="_blank" class="block w-full text-center bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black py-3 rounded-xl shadow-lg transition text-sm">
+                    <i class="fa-solid fa-wallet mr-2"></i> 一鍵按此 PayMe 付款 ($25)
+                </a>
+            </div>
+
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-center space-y-1">
+                <span class="text-[11px] text-slate-400 block">付款完成後，請將您的 **登入信箱 (Email)** 或 **PayMe 截圖/單號** 告知管理員。</span>
+                <span class="text-[11px] font-bold text-amber-300 block">管理員確認後將為您一鍵開通永久 VIP！</span>
+            </div>
+
+            <button onclick="closeVipModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs">
+                關閉視窗
+            </button>
+        </div>
+    </div>
 
     <!-- 🎴 3D 拆卡包動畫 Modal -->
     <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-4">
@@ -463,14 +534,14 @@
         let currentLbSubTab = 'lucky';
 
         const RARITY = {
-            'C':   { price: 4,    rate: 0.5000, color: '#9ca3af' }, // 50.0%
-            'U':   { price: 8,    rate: 0.2500, color: '#60a5fa' }, // 25.0%
-            'R':   { price: 20,   rate: 0.1200, color: '#fbbf24' }, // 12.0%
-            'RR':  { price: 70,   rate: 0.0700, color: '#f43f5e' }, // 7.0%
-            'AR':  { price: 180,  rate: 0.0350, color: '#a855f7' }, // 3.5%
-            'SR':  { price: 400,  rate: 0.0150, color: '#ec4899' }, // 1.5%
-            'SAR': { price: 1500, rate: 0.0080, color: '#10b981' }, // 0.8%
-            'UR':  { price: 4100, rate: 0.0020, color: '#eab308' }  // 0.2%
+            'C':   { price: 4,    rate: 0.5000, color: '#9ca3af' },
+            'U':   { price: 8,    rate: 0.2500, color: '#60a5fa' },
+            'R':   { price: 20,   rate: 0.1200, color: '#fbbf24' },
+            'RR':  { price: 70,   rate: 0.0700, color: '#f43f5e' },
+            'AR':  { price: 180,  rate: 0.0350, color: '#a855f7' },
+            'SR':  { price: 400,  rate: 0.0150, color: '#ec4899' },
+            'SAR': { price: 1500, rate: 0.0080, color: '#10b981' },
+            'UR':  { price: 4100, rate: 0.0020, color: '#eab308' }
         };
 
         const PACK_DEFINITIONS = [
@@ -592,41 +663,33 @@
                 { id: 'sv8-008', name: '太晶皮卡丘 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv8/135_hires.png' }
             ],
             's12a': [
-                // 普通卡 (C)
                 { id: 's12a-001', name: '帕拉斯', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/1_hires.png' },
                 { id: 's12a-002', name: '洗翠霹靂電球', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/3_hires.png' },
                 { id: 's12a-003', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/6_hires.png' },
                 { id: 's12a-004', name: '小火焰猴', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/16_hires.png' },
                 { id: 's12a-005', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/31_hires.png' },
-                // 少見卡 (U)
                 { id: 's12a-020', name: '大牙狸', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/120_hires.png' },
                 { id: 's12a-021', name: '卡比獸', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/121_hires.png' },
-                // 罕見卡 (R)
                 { id: 's12a-040', name: '洗翠索羅亞', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/104_hires.png' },
                 { id: 's12a-041', name: '奇魯莉安', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/69_hires.png' },
-                // 雙星卡 (RR)
                 { id: 's12a-011', name: '葉伊布 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/11_hires.png' },
                 { id: 's12a-013', name: '噴火龍 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/13_hires.png' },
                 { id: 's12a-038', name: '雷公 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/38_hires.png' },
                 { id: 's12a-110', name: '騎拉帝納 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/110_hires.png' },
                 { id: 's12a-126', name: '阿爾宙斯 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/126_hires.png' },
-                // 藝術稀有 (AR)
                 { id: 's12a-201', name: '利歐路 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG01_hires.png' },
                 { id: 's12a-205', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG30_hires.png' },
                 { id: 's12a-206', name: '草苗龜 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG31_hires.png' },
                 { id: 's12a-207', name: '帕拉斯 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG32_hires.png' },
                 { id: 's12a-209', name: '電綿羊 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG34_hires.png' },
-                // 超級稀有 (SR)
                 { id: 's12a-246', name: '瑟蕾娜 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/150_hires.png' },
                 { id: 's12a-247', name: '神奧的夥伴 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/GG72_hires.png' },
                 { id: 's12a-248', name: '奇樹 (支援者) SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/155_hires.png' },
-                // 特選藝術 (SAR)
                 { id: 's12a-211', name: '噴火龍 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG05_hires.png' },
                 { id: 's12a-215', name: '水君 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG38_hires.png' },
                 { id: 's12a-221', name: '超夢 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG44_hires.png' },
                 { id: 's12a-226', name: '路卡利歐 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG10_hires.png' },
                 { id: 's12a-236', name: '珠貝 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG56_hires.png' },
-                // 極限稀有 (UR)
                 { id: 's12a-259', name: '帕路奇亞 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG67_hires.png' },
                 { id: 's12a-260', name: '帝牙盧卡 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG68_hires.png' },
                 { id: 's12a-261', name: '騎拉帝納 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG69_hires.png' },
@@ -667,18 +730,19 @@
 
                 if (isMostRecent && data.timestamp > lastBroadcastTimestamp) {
                     lastBroadcastTimestamp = data.timestamp;
-                    showBroadcastBanner(data.playerName, data.cardName, data.rarity);
+                    showBroadcastBanner(data.playerName, data.cardName, data.rarity, data.isVip);
                 }
                 isMostRecent = false;
 
                 const rarityColor = data.rarity === 'UR' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-emerald-600 text-white font-black';
+                const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
 
                 html += `
                     <div class="flex flex-wrap items-center justify-between bg-slate-900/80 p-2 rounded-lg border border-slate-700/60 gap-2">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="text-slate-500 text-[11px] font-mono">[${dateStr}]</span>
                             <span class="font-bold text-slate-200">恭喜</span>
-                            <span class="font-black text-amber-300 px-1 bg-amber-500/10 rounded">${data.playerName}</span>
+                            <span class="font-black text-amber-300 px-1 bg-amber-500/10 rounded flex items-center">${data.playerName}${vipTag}</span>
                             <span class="text-slate-300">抽到</span>
                             <span class="${rarityColor} text-[10px] px-1.5 py-0.2 rounded border border-white/20">${data.rarity}</span>
                             <span class="font-bold text-amber-200">${data.cardName}</span>
@@ -690,12 +754,13 @@
             listEl.innerHTML = html;
         });
 
-        function showBroadcastBanner(playerName, cardName, rarity) {
+        function showBroadcastBanner(playerName, cardName, rarity, isVip) {
             const banner = document.getElementById('broadcastBanner');
             const textEl = document.getElementById('broadcastText');
             if (!banner || !textEl) return;
 
-            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1 text-base md:text-lg">${playerName}</span> 抽到 <span class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-md border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
+            const vipTag = isVip ? ' <span class="bg-slate-950 text-amber-400 text-xs px-1.5 py-0.5 rounded font-black">👑 VIP尊榮</span>' : '';
+            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1 text-base md:text-lg">${playerName}</span>${vipTag} 抽到 <span class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-md border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
             banner.classList.remove('hidden');
 
             if (broadcastTimer) clearTimeout(broadcastTimer);
@@ -729,7 +794,7 @@
                             alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
                         }
                     } else {
-                        currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, lastDailyDate: new Date().toISOString().split('T')[0], cards: {}, totalSpent: 0, totalPulledValue: 0 };
+                        currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, isVip: false, lastDailyDate: new Date().toISOString().split('T')[0], cards: {}, totalSpent: 0, totalPulledValue: 0 };
                         await setDoc(userRef, currentUserDoc);
                     }
                 } catch (e) {
@@ -766,6 +831,7 @@
                     await setDoc(doc(db, "users", res.user.uid), {
                         name: username,
                         points: INITIAL_GIFT_POINTS,
+                        isVip: false,
                         lastDailyDate: new Date().toISOString().split('T')[0],
                         cards: {},
                         totalSpent: 0,
@@ -781,6 +847,14 @@
 
         function handleSignOut() {
             signOut(auth);
+        }
+
+        function openVipModal() {
+            document.getElementById('vipModal').classList.remove('hidden');
+        }
+
+        function closeVipModal() {
+            document.getElementById('vipModal').classList.add('hidden');
         }
 
         async function promptChangeUsername() {
@@ -830,8 +904,8 @@
                     allUsersCache.push({ uid: d.id, ...d.data() });
                 });
 
-                selectEl.innerHTML = `<option value="">-- 請選擇要調整分數的訓練家 --</option>` +
-                    allUsersCache.map(u => `<option value="${u.uid}">${u.name || '訓練家'} (UID: ${u.uid.substring(0,6)}...) - [${(u.points||0).toLocaleString()} 分]</option>`).join('');
+                selectEl.innerHTML = `<option value="">-- 請選擇要管理的訓練家 --</option>` +
+                    allUsersCache.map(u => `<option value="${u.uid}">${u.isVip ? '👑 [VIP] ' : ''}${u.name || '訓練家'} (UID: ${u.uid.substring(0,6)}...) - [${(u.points||0).toLocaleString()} 分]</option>`).join('');
 
                 selectEl.onchange = (e) => {
                     const uid = e.target.value;
@@ -842,12 +916,37 @@
                         document.getElementById('selectedUserName').innerText = u.name || '訓練家';
                         document.getElementById('selectedUserUidText').innerText = `UID: ${u.uid}`;
                         document.getElementById('selectedUserCurrentPoints').innerText = `${(u.points || 0).toLocaleString()} 分`;
+                        document.getElementById('selectedUserVipStatusText').innerText = u.isVip ? '已開通永久 VIP 👑' : '普通會員';
+                        document.getElementById('adminToggleVipBtn').innerText = u.isVip ? '取消 VIP 資格' : '一鍵升級 VIP 👑';
                     } else if (card) {
                         card.classList.add('hidden');
                     }
                 };
             } catch (err) {
                 selectEl.innerHTML = `<option value="">載入失敗: ${err.message}</option>`;
+            }
+        }
+
+        async function adminToggleVipForSelectedUser() {
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+
+            const newVipStatus = !u.isVip;
+            try {
+                await setDoc(doc(db, "users", targetUid), { isVip: newVipStatus }, { merge: true });
+                alert(`👑 已成功將玩家 ${u.name} 的 VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
+                fetchAdminUserList();
+                fetchGlobalStatsAndLeaderboard();
+                if (auth.currentUser && auth.currentUser.uid === targetUid) {
+                    currentUserDoc.isVip = newVipStatus;
+                    updateUI();
+                }
+            } catch (e) {
+                alert("修改 VIP 失敗: " + e.message);
             }
         }
 
@@ -901,6 +1000,7 @@
             await setDoc(userRef, {
                 name: currentUserDoc.name,
                 points: currentUserDoc.points,
+                isVip: currentUserDoc.isVip || false,
                 cards: currentUserDoc.cards || {},
                 totalSpent: currentUserDoc.totalSpent || 0,
                 totalPulledValue: currentUserDoc.totalPulledValue || 0
@@ -938,7 +1038,18 @@
         function updateUI() {
             if (!currentUserDoc) return;
             const points = currentUserDoc.points || 0;
-            document.getElementById('displayUsername').innerText = currentUserDoc.name || '訓練家';
+            const isVip = currentUserDoc.isVip || false;
+
+            const headerInfoBox = document.getElementById('userHeaderInfo');
+            const nameEl = document.getElementById('displayUsername');
+
+            nameEl.innerText = currentUserDoc.name || '訓練家';
+
+            if (isVip) {
+                headerInfoBox.className = "hidden sm:flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2 rounded-xl vip-nameplate shadow-lg";
+            } else {
+                headerInfoBox.className = "hidden sm:flex items-center gap-3 sm:gap-4 bg-slate-900 px-3 sm:px-4 py-2 rounded-xl border border-slate-700";
+            }
             
             const pointsEl = document.getElementById('userPoints');
             const iconEl = document.getElementById('pointIcon');
@@ -1019,6 +1130,7 @@
                         playerName: currentUserDoc.name || "訓練家",
                         cardName: rareCard.name,
                         rarity: rareCard.rarity,
+                        isVip: currentUserDoc.isVip || false,
                         timestamp: Date.now()
                     });
                 }
@@ -1267,6 +1379,7 @@
                         uid: docSnap.id,
                         name: data.name || "訓練家",
                         points: pts,
+                        isVip: data.isVip || false,
                         unlockedCount: unlockedCount,
                         progressPct: Math.round((unlockedCount / totalCardsInGame) * 100)
                     });
@@ -1311,27 +1424,25 @@
                         let rankBadge = `<span class="w-8 text-center text-sm font-bold text-slate-400">#${idx + 1}</span>`;
                         let bgStyle = "bg-slate-900 border-slate-700";
 
+                        if (u.isVip) {
+                            bgStyle = "vip-nameplate shadow-lg";
+                        }
+
                         if (currentLbSubTab === 'lucky') {
                             if (idx === 0) {
                                 rankBadge = `<span class="w-8 text-center text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
-                                bgStyle = "bg-gradient-to-r from-amber-950/60 to-slate-900 border-amber-500/50 ring-1 ring-amber-500/30";
                             } else if (idx === 1) {
                                 rankBadge = `<span class="w-8 text-center text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
-                                bgStyle = "bg-gradient-to-r from-slate-800 to-slate-900 border-slate-500/50";
                             } else if (idx === 2) {
                                 rankBadge = `<span class="w-8 text-center text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
-                                bgStyle = "bg-gradient-to-r from-amber-900/30 to-slate-900 border-amber-700/50";
                             }
                         } else {
                             if (idx === 0) {
                                 rankBadge = `<span class="w-8 text-center text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
-                                bgStyle = "bg-gradient-to-r from-red-950/80 via-slate-900 to-slate-900 border-red-600/60 ring-1 ring-red-500/40";
                             } else if (idx === 1) {
                                 rankBadge = `<span class="w-8 text-center text-lg text-red-400"><i class="fa-solid fa-poop"></i></span>`;
-                                bgStyle = "bg-gradient-to-r from-red-950/40 to-slate-900 border-red-800/50";
                             } else if (idx === 2) {
                                 rankBadge = `<span class="w-8 text-center text-lg text-red-300"><i class="fa-solid fa-heart-crack"></i></span>`;
-                                bgStyle = "bg-gradient-to-r from-red-900/20 to-slate-900 border-slate-700";
                             }
                         }
 
@@ -1339,11 +1450,11 @@
                         const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
 
                         let statusBadgeHtml = '';
-                        if (currentLbSubTab === 'unlucky') {
-                            if (idx === 0) statusBadgeHtml = '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1.5 py-0.5 rounded border border-red-500 ml-1">🏿 首席黑手酋長</span>';
-                            else if (isDebt) statusBadgeHtml = '<span class="text-[9px] bg-red-950 text-red-300 font-bold px-1.5 py-0.5 rounded border border-red-800/60 ml-1">💸 散財大負翁</span>';
-                        } else {
-                            if (idx === 0) statusBadgeHtml = '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded ml-1">👑 幸運歐皇帝尊</span>';
+                        if (u.isVip) {
+                            statusBadgeHtml = '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded ml-1">👑 永久 VIP</span>';
+                        }
+                        if (currentLbSubTab === 'unlucky' && idx === 0) {
+                            statusBadgeHtml += '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1.5 py-0.5 rounded border border-red-500 ml-1">🏿 首席黑手酋長</span>';
                         }
 
                         return `
@@ -1412,8 +1523,11 @@
         window.toggleAuthMode = toggleAuthMode;
         window.handleAuthSubmit = handleAuthSubmit;
         window.handleSignOut = handleSignOut;
+        window.openVipModal = openVipModal;
+        window.closeVipModal = closeVipModal;
         window.promptChangeUsername = promptChangeUsername;
         window.fetchAdminUserList = fetchAdminUserList;
+        window.adminToggleVipForSelectedUser = adminToggleVipForSelectedUser;
         window.adminAdjustSelectedUser = adminAdjustSelectedUser;
         window.adminSetCustomPoints = adminSetCustomPoints;
         window.startPackChoice = startPackChoice;
