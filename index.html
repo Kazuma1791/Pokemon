@@ -101,7 +101,6 @@
                 <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">
                     <i class="fa-solid fa-coins mr-1"></i> 出售卡牌
                 </button>
-                <!-- 管理員專屬按鈕 -->
                 <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-4 py-1.5 rounded-lg font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50">
                     <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理控制台
                 </button>
@@ -174,6 +173,15 @@
 
             </div>
 
+            <!-- 機率說明告示牌 -->
+            <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                <div>
+                    <span class="font-bold text-amber-400">⚖️ 機率平衡提示：</span>
+                    C:68% | U:22% | R:7% | RR:2.3% | AR:0.5% | SR:0.15% | SAR:0.04% | UR:0.01%
+                </div>
+                <div class="text-slate-500 hidden sm:block">每日登入自動發放 +500 分</div>
+            </div>
+
             <!-- 抽卡結果 -->
             <div id="pullResultsArea" class="hidden space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-2">
@@ -226,7 +234,7 @@
                     <div class="flex flex-wrap gap-3">
                         <button onclick="adminAddOwnPoints(1000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+1,000 分</button>
                         <button onclick="adminAddOwnPoints(5000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+5,000 分</button>
-                        <button onclick="adminAddOwnPoints(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+50,000 分 (無限抽卡)</button>
+                        <button onclick="adminAddOwnPoints(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+50,000 分 (測試用)</button>
                     </div>
                 </div>
 
@@ -386,16 +394,16 @@
             updateUI();
         }
 
-        // 稀有度與回收價格
+        // 重寫平衡後的機率與回收價格模型 (期望值約為一包 52 分)
         const RARITY = {
-            'C':   { price: 10,   rate: 0.50, color: '#9ca3af' },
-            'U':   { price: 25,   rate: 0.28, color: '#60a5fa' },
-            'R':   { price: 60,   rate: 0.12, color: '#fbbf24' },
-            'RR':  { price: 200,  rate: 0.06, color: '#f43f5e' },
-            'AR':  { price: 400,  rate: 0.025, color: '#a855f7' },
-            'SR':  { price: 1000, rate: 0.01, color: '#ec4899' },
-            'SAR': { price: 3000, rate: 0.004, color: '#10b981' },
-            'UR':  { price: 8000, rate: 0.001, color: '#eab308' }
+            'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' },
+            'U':   { price: 10,   rate: 0.2200, color: '#60a5fa' },
+            'R':   { price: 25,   rate: 0.0700, color: '#fbbf24' },
+            'RR':  { price: 80,   rate: 0.0230, color: '#f43f5e' },
+            'AR':  { price: 200,  rate: 0.0050, color: '#a855f7' },
+            'SR':  { price: 500,  rate: 0.0015, color: '#ec4899' },
+            'SAR': { price: 1500, rate: 0.0004, color: '#10b981' },
+            'UR':  { price: 3000, rate: 0.0001, color: '#eab308' }
         };
 
         const CARD_SETS = {
@@ -451,7 +459,6 @@
             document.getElementById('userPoints').innerText = (currentUserDoc.points || 0).toLocaleString();
         }
 
-        // 抽卡核心邏輯
         window.openPack = async (setId, count) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             const cost = count * 100;
@@ -487,7 +494,7 @@
                 renderResults(pulled);
 
                 if (pulled.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
-                    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
                 }
             } catch (err) {
                 console.error("抽卡失敗:", err);
@@ -495,7 +502,6 @@
             }
         };
 
-        // 渲染抽卡結果 (卡牌下方顯示對應回收分數)
         function renderResults(cards) {
             const area = document.getElementById('pullResultsArea');
             const grid = document.getElementById('cardsGrid');
@@ -514,7 +520,6 @@
             `).join('');
         }
 
-        // 渲染集卡冊圖鑑 (顯示解鎖數量與卡牌回收分數)
         window.renderBinder = () => {
             const setId = document.getElementById('binderSetFilter').value;
             const grid = document.getElementById('binderGrid');
@@ -546,7 +551,6 @@
             document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${Math.round(unlocked/cards.length*100)}%)`;
         };
 
-        // 渲染出售卡牌庫
         window.renderSellInventory = () => {
             const grid = document.getElementById('sellInventoryGrid');
             if (!grid || !currentUserDoc) return;
@@ -584,7 +588,6 @@
             }
         };
 
-        // 單張出售邏輯
         window.sellSingleCard = async (cardId) => {
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
@@ -599,7 +602,6 @@
             renderSellInventory();
         };
 
-        // 一鍵賣出重複卡
         window.sellAllDuplicates = async () => {
             let total = 0;
             Object.values(CARD_SETS).flat().forEach(c => {
