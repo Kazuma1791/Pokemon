@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - M6a 30週年紀念版</title>
+    <title>寶可夢卡牌模擬器 - 營運看板版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -112,24 +112,60 @@
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+        <!-- 📊 全服營運與玩家收益看板 -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
+                <div>
+                    <span class="text-xs text-slate-400 font-bold block">👥 全服玩家總數</span>
+                    <span id="statTotalUsers" class="text-2xl font-black text-white">--</span>
+                    <span class="text-xs text-slate-500 ml-1">位訓練家</span>
+                </div>
+                <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20 text-blue-400 text-xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
+                <div>
+                    <span class="text-xs text-slate-400 font-bold block">🎉 全服玩家總淨收益</span>
+                    <span id="statPlayerProfit" class="text-2xl font-black text-emerald-400">--</span>
+                    <span class="text-xs text-slate-500 ml-1">分</span>
+                </div>
+                <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-xl">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
+                <div>
+                    <span class="text-xs text-slate-400 font-bold block">🏪 卡店累積營運損益</span>
+                    <span id="statShopLoss" class="text-2xl font-black text-red-400">--</span>
+                    <span class="text-xs text-slate-500 ml-1">分</span>
+                </div>
+                <div id="statShopLossIcon" class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-xl">
+                    <i class="fa-solid fa-store-slash"></i>
+                </div>
+            </div>
+        </section>
 
         <!-- TAB 1: 抽卡機 -->
         <section id="tab-pack" class="tab-content space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
-                <!-- M6a 30th CELEBRATION (最新登場) -->
+                <!-- M6a 超級進化擴充包 -->
                 <div class="bg-gradient-to-br from-slate-800 via-amber-950 to-purple-950 p-5 rounded-2xl border border-amber-400/50 shadow-2xl flex flex-col justify-between space-y-4 ring-2 ring-amber-500/20">
                     <div class="flex gap-4 items-center">
                         <div class="w-24 h-36 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/40 shrink-0">
                             <span class="text-xs font-black bg-slate-950/80 px-2 py-0.5 rounded-full text-amber-300 mb-1 border border-amber-400">M6a</span>
                             <i class="fa-solid fa-crown text-3xl text-slate-900 my-1 animate-bounce"></i>
-                            <span class="text-[10px] font-black text-slate-950 uppercase tracking-tighter">30th Celebration</span>
+                            <span class="text-[10px] font-black text-slate-950 uppercase tracking-tighter">超級進化</span>
                         </div>
                         <div>
-                            <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">限定卡包</span>
-                            <h3 class="text-base font-bold text-amber-300 mt-1">超級進化 M6a「30th CELEBRATION」</h3>
-                            <p class="text-xs text-slate-300 mt-1">全新 FUR 夢幻 ex、超級噴火龍X ex 與 30 週年皮卡丘！</p>
+                            <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">HK 官方最新</span>
+                            <h3 class="text-base font-bold text-amber-300 mt-1">超級進化擴充包 M6a</h3>
+                            <p class="text-xs text-slate-300 mt-1">收錄超級噴火龍X ex、夢幻 ex、超級耿鬼 ex 與多款 SAR 密卡！</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -222,7 +258,7 @@
         <section id="tab-binder" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
                 <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-bold text-white">
-                    <option value="m6a">M6a 30th CELEBRATION (全 10 張限定包)</option>
+                    <option value="m6a">超級進化 M6a (全 10 張)</option>
                     <option value="sv2a">SV2a 寶可夢 151 (全 16 張)</option>
                     <option value="sv5a">SV5a 狂野意志 (全 12 張)</option>
                     <option value="sv6">SV6 變幻面具 (全 10 張)</option>
@@ -254,8 +290,8 @@
                         </h3>
                         <p class="text-xs text-slate-400 mt-1">即時比較全伺服器訓練家的財富分數與集卡成就！</p>
                     </div>
-                    <button onclick="renderLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold text-slate-200">
-                        <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
+                    <button onclick="fetchGlobalStatsAndLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold text-slate-200">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理數據
                     </button>
                 </div>
                 <div id="leaderboardList" class="space-y-3">
@@ -322,6 +358,8 @@
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const MAX_DEBT_LIMIT = -10000;
+        const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/1_hires.png";
+        const INITIAL_GIFT_POINTS = 1000; // 每位創號玩家初始資金
 
         const firebaseConfig = {
             apiKey: "AIzaSyALGt-dWSJLf4Qa03AWoFo22u87LMFErIE",
@@ -362,13 +400,14 @@
                             alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
                         }
                     } else {
-                        currentUserDoc = { name: "訓練家", points: 1000, lastDailyDate: new Date().toISOString().split('T')[0], cards: {} };
+                        currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, lastDailyDate: new Date().toISOString().split('T')[0], cards: {} };
                         await setDoc(userRef, currentUserDoc);
                     }
                 } catch (e) {
                     console.error("載入失敗:", e);
                 }
                 updateUI();
+                fetchGlobalStatsAndLeaderboard();
             } else {
                 document.getElementById('authModal').classList.remove('hidden');
                 document.getElementById('userHeaderInfo').classList.add('hidden');
@@ -396,7 +435,7 @@
                     const res = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", res.user.uid), {
                         name: username,
-                        points: 1000,
+                        points: INITIAL_GIFT_POINTS,
                         lastDailyDate: new Date().toISOString().split('T')[0],
                         cards: {}
                     });
@@ -425,6 +464,7 @@
                 const targetRef = doc(db, "users", targetUid);
                 await setDoc(targetRef, { points: newPoints }, { merge: true });
                 alert(`👑 已將玩家 UID [${targetUid}] 的分數修改為 ${newPoints} 分！`);
+                fetchGlobalStatsAndLeaderboard();
             } catch (err) {
                 alert("修改失敗: " + err.message);
             }
@@ -438,6 +478,7 @@
                 cards: currentUserDoc.cards || {}
             }, { merge: true });
             updateUI();
+            fetchGlobalStatsAndLeaderboard();
         }
 
         const RARITY = {
@@ -451,19 +492,18 @@
             'UR':  { price: 3000, rate: 0.0001, color: '#eab308' }
         };
 
-        // 包含新增的 M6a 30th CELEBRATION 專屬卡庫
         const CARD_SETS = {
             'm6a': [
-                { id: 'm6a-001', name: '皮卡丘 30th 周年紀念', rarity: 'C', image: 'https://images.pokemontcg.io/cel25/5_hires.png' },
-                { id: 'm6a-002', name: '妙蛙種子 30th', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
-                { id: 'm6a-003', name: '小火龍 30th', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
-                { id: 'm6a-004', name: '傑尼龜 30th', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
-                { id: 'm6a-010', name: '超夢 ex', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
-                { id: 'm6a-015', name: '超級噴火龍X ex', rarity: 'RR', image: 'https://images.pokemontcg.io/xy1/12_hires.png' },
-                { id: 'm6a-020', name: '超級耿鬼 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/xy4/35_hires.png' },
-                { id: 'm6a-025', name: '超級沙奈朵 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/xy11/79_hires.png' },
-                { id: 'm6a-030', name: '夢幻 ex FUR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
-                { id: 'm6a-031', name: '超夢 ex FUR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' }
+                { id: 'm6a-001', name: '妙蛙種子', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008548.png', fallback: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
+                { id: 'm6a-002', name: '小火龍', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008551.png', fallback: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
+                { id: 'm6a-003', name: '傑尼龜', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008554.png', fallback: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
+                { id: 'm6a-004', name: '皮卡丘', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008572.png', fallback: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'm6a-005', name: '超夢', rarity: 'R', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008697.png', fallback: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'm6a-006', name: '超級噴火龍X ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008553.png', fallback: 'https://images.pokemontcg.io/xy1/12_hires.png' },
+                { id: 'm6a-007', name: '超級耿鬼 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008641.png', fallback: 'https://images.pokemontcg.io/xy4/35_hires.png' },
+                { id: 'm6a-008', name: '超級沙奈朵 ex', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008658.png', fallback: 'https://images.pokemontcg.io/xy11/79_hires.png' },
+                { id: 'm6a-009', name: '夢幻 ex', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008752.png', fallback: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
+                { id: 'm6a-010', name: '超夢 ex', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008754.png', fallback: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' }
             ],
             'sv2a': [
                 { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
@@ -580,13 +620,18 @@
             }
         };
 
+        function getImgSrcWithFallback(card) {
+            const fallback = card.fallback || DEFAULT_FALLBACK_IMG;
+            return `src="${card.image}" onerror="this.onerror=null;this.src='${fallback}';"`;
+        }
+
         function renderResults(cards) {
             const area = document.getElementById('pullResultsArea');
             const grid = document.getElementById('cardsGrid');
             area.classList.remove('hidden');
             grid.innerHTML = cards.map(c => `
                 <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center hover:scale-105 transition shadow-lg">
-                    <img src="${c.image}" class="w-full h-auto rounded-lg shadow-md">
+                    <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg shadow-md">
                     <span class="text-xs font-bold mt-1.5 text-slate-200 text-center truncate w-full">${c.name}</span>
                     <div class="flex items-center gap-1 mt-1">
                         <span class="text-[10px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
@@ -610,7 +655,7 @@
                 return count > 0 ? `
                     <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center relative flex flex-col items-center justify-between">
                         <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.2 rounded-full shadow">×${count}</span>
-                        <img src="${c.image}" class="w-full h-auto rounded-lg">
+                        <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg">
                         <div class="w-full mt-1">
                             <div class="text-[11px] font-bold text-slate-200 truncate">${c.name}</div>
                             <div class="text-[10px] font-black text-cyan-300 bg-slate-900/80 px-1 py-0.5 rounded border border-slate-700 mt-0.5 inline-block">
@@ -645,7 +690,7 @@
                         <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
                             <div class="relative w-full">
                                 <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.5 rounded-full shadow">擁有 ${count} 張</span>
-                                <img src="${c.image}" class="w-full h-auto rounded-lg">
+                                <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg">
                             </div>
                             <div class="text-center w-full">
                                 <div class="text-xs font-bold text-white truncate">${c.name}</div>
@@ -698,81 +743,120 @@
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
-        window.renderLeaderboard = async () => {
+        // 📊 即時計算全服營運數據與排行榜
+        window.fetchGlobalStatsAndLeaderboard = async () => {
             const listEl = document.getElementById('leaderboardList');
-            listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服數據中...</div>`;
+            if (listEl) {
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服營運數據中...</div>`;
+            }
 
             try {
                 const snap = await getDocs(collection(db, "users"));
                 let usersList = [];
+                let totalCurrentPoints = 0;
+
                 const totalCardsInGame = Object.values(CARD_SETS).flat().length;
 
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
+                    const pts = data.points || 0;
+                    totalCurrentPoints += pts;
+
                     const cardsObj = data.cards || {};
                     const unlockedCount = Object.keys(cardsObj).filter(id => cardsObj[id] > 0).length;
 
                     usersList.push({
                         uid: docSnap.id,
                         name: data.name || "訓練家",
-                        points: data.points || 0,
+                        points: pts,
                         unlockedCount: unlockedCount,
                         progressPct: Math.round((unlockedCount / totalCardsInGame) * 100)
                     });
                 });
 
-                usersList.sort((a, b) => b.points - a.points);
+                const userCount = usersList.length;
+                const totalInitialCapital = userCount * INITIAL_GIFT_POINTS;
+                const netPlayerProfit = totalCurrentPoints - totalInitialCapital;
+                const shopNetLoss = netPlayerProfit; // 玩家淨收益即為卡店淨虧損
 
-                if (usersList.length === 0) {
-                    listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
-                    return;
+                // 更新頂部營運看板數據
+                document.getElementById('statTotalUsers').innerText = userCount.toLocaleString();
+                
+                const profitEl = document.getElementById('statPlayerProfit');
+                profitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
+                profitEl.className = netPlayerProfit >= 0 ? "text-2xl font-black text-emerald-400" : "text-2xl font-black text-red-400";
+
+                const lossEl = document.getElementById('statShopLoss');
+                const lossIconEl = document.getElementById('statShopLossIcon');
+                if (shopNetLoss >= 0) {
+                    lossEl.innerText = "虧損 " + shopNetLoss.toLocaleString();
+                    lossEl.className = "text-2xl font-black text-red-400";
+                    lossIconEl.className = "w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-xl";
+                    lossIconEl.innerHTML = `<i class="fa-solid fa-store-slash"></i>`;
+                } else {
+                    lossEl.innerText = "盈餘 " + Math.abs(shopNetLoss).toLocaleString();
+                    lossEl.className = "text-2xl font-black text-emerald-400";
+                    lossIconEl.className = "w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-xl";
+                    lossIconEl.innerHTML = `<i class="fa-solid fa-building-circle-check"></i>`;
                 }
 
-                listEl.innerHTML = usersList.map((u, idx) => {
-                    let rankBadge = `<span class="w-8 text-center text-sm font-bold text-slate-400">#${idx + 1}</span>`;
-                    let bgStyle = "bg-slate-900 border-slate-700";
+                // 按分數高低排序排行榜
+                usersList.sort((a, b) => b.points - a.points);
 
-                    if (idx === 0) {
-                        rankBadge = `<span class="w-8 text-center text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
-                        bgStyle = "bg-gradient-to-r from-amber-950/60 to-slate-900 border-amber-500/50 ring-1 ring-amber-500/30";
-                    } else if (idx === 1) {
-                        rankBadge = `<span class="w-8 text-center text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
-                        bgStyle = "bg-gradient-to-r from-slate-800 to-slate-900 border-slate-500/50";
-                    } else if (idx === 2) {
-                        rankBadge = `<span class="w-8 text-center text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
-                        bgStyle = "bg-gradient-to-r from-amber-900/30 to-slate-900 border-amber-700/50";
+                if (listEl) {
+                    if (usersList.length === 0) {
+                        listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
+                        return;
                     }
 
-                    const isDebt = u.points < 0;
-                    const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
+                    listEl.innerHTML = usersList.map((u, idx) => {
+                        let rankBadge = `<span class="w-8 text-center text-sm font-bold text-slate-400">#${idx + 1}</span>`;
+                        let bgStyle = "bg-slate-900 border-slate-700";
 
-                    return `
-                        <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
-                            <div class="flex items-center gap-3">
-                                ${rankBadge}
-                                <div>
-                                    <div class="font-bold text-sm text-white flex items-center gap-1.5">
-                                        ${u.name}
-                                        ${isSelf ? '<span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded">你</span>' : ''}
-                                    </div>
-                                    <div class="text-[11px] text-slate-400 mt-0.5">
-                                        圖鑑收集度: <b class="text-cyan-300">${u.unlockedCount}/${totalCardsInGame}</b> (${u.progressPct}%)
+                        if (idx === 0) {
+                            rankBadge = `<span class="w-8 text-center text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
+                            bgStyle = "bg-gradient-to-r from-amber-950/60 to-slate-900 border-amber-500/50 ring-1 ring-amber-500/30";
+                        } else if (idx === 1) {
+                            rankBadge = `<span class="w-8 text-center text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
+                            bgStyle = "bg-gradient-to-r from-slate-800 to-slate-900 border-slate-500/50";
+                        } else if (idx === 2) {
+                            rankBadge = `<span class="w-8 text-center text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
+                            bgStyle = "bg-gradient-to-r from-amber-900/30 to-slate-900 border-amber-700/50";
+                        }
+
+                        const isDebt = u.points < 0;
+                        const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
+
+                        return `
+                            <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
+                                <div class="flex items-center gap-3">
+                                    ${rankBadge}
+                                    <div>
+                                        <div class="font-bold text-sm text-white flex items-center gap-1.5">
+                                            ${u.name}
+                                            ${isSelf ? '<span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded">你</span>' : ''}
+                                        </div>
+                                        <div class="text-[11px] text-slate-400 mt-0.5">
+                                            圖鑑收集度: <b class="text-cyan-300">${u.unlockedCount}/${totalCardsInGame}</b> (${u.progressPct}%)
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-black ${isDebt ? 'text-red-400' : 'text-cyan-300'}">
-                                    <i class="${isDebt ? 'fa-solid fa-skull text-red-400 mr-1' : 'fa-solid fa-gem text-cyan-400 mr-1'}"></i>${u.points.toLocaleString()} 分
+                                <div class="text-right">
+                                    <div class="text-sm font-black ${isDebt ? 'text-red-400' : 'text-cyan-300'}">
+                                        <i class="${isDebt ? 'fa-solid fa-skull text-red-400 mr-1' : 'fa-solid fa-gem text-cyan-400 mr-1'}"></i>${u.points.toLocaleString()} 分
+                                    </div>
+                                    ${isDebt ? '<span class="text-[9px] bg-red-900/80 text-red-200 px-1 rounded">負債破產中</span>' : ''}
                                 </div>
-                                ${isDebt ? '<span class="text-[9px] bg-red-900/80 text-red-200 px-1 rounded">負債破產中</span>' : ''}
                             </div>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                }
 
             } catch (err) {
-                console.error("載入排行榜失敗:", err);
-                listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入排行榜失敗: ${err.message}</div>`;
+                console.error("計算營運數據失敗:", err);
+                if (listEl) {
+                    listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入數據失敗: ${err.message}</div>`;
+                }
             }
         };
 
@@ -781,7 +865,7 @@
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
             if (tab === 'binder') renderBinder();
             if (tab === 'sell') renderSellInventory();
-            if (tab === 'leaderboard') renderLeaderboard();
+            if (tab === 'leaderboard') fetchGlobalStatsAndLeaderboard();
         };
     </script>
 </body>
