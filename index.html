@@ -248,7 +248,7 @@
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
                     <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Firestore 雲端邏輯鎖定：</span>
-                    所有單抽 (-20分)、10連抽 (-200分) 與改名 (-1000分) 均由雲端資料庫規則進行嚴格邏輯鎖定，100% 防止 F12 改分。
+                    所有抽卡與改名操作均由雲端資料庫規則進行嚴格邏輯鎖定，100% 防止 F12 改分。
                 </div>
                 <div class="text-slate-500">透支上限：無上限（無限負債） | 每日登入 +500 分</div>
             </div>
@@ -325,7 +325,6 @@
                     <span class="text-xs text-slate-400">UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</span>
                 </div>
 
-                <!-- 玩家分數與 VIP 管理 -->
                 <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-4">
                     <h4 class="font-bold text-base text-amber-300 flex items-center gap-2">
                         <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與分數管理
@@ -352,7 +351,6 @@
                             </div>
                         </div>
 
-                        <!-- 💎 管理員快速切換 VIP 狀態 -->
                         <div class="border-t border-slate-700 pt-3 flex items-center justify-between">
                             <div>
                                 <span class="text-xs font-bold text-amber-300 block">VIP 會員狀態：</span>
@@ -402,6 +400,7 @@
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
                 <h4 class="font-bold text-sm text-amber-300 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> VIP 專屬特權福利：</h4>
                 <ul class="text-xs text-slate-300 space-y-2">
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <b>VIP 專屬 30 連抽</b>（僅需 600 分，超高性價比！）</li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 名字享有專屬的<b>流光霓虹特效邊框</b>。</li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 排行榜與介面常駐 <b>👑 VIP 皇冠標籤</b>。</li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 永久身分認定，支持本模擬器持續營運！</li>
@@ -801,6 +800,7 @@
                     console.error("載入失敗:", e);
                 }
                 updateUI();
+                renderPackList();
                 fetchGlobalStatsAndLeaderboard();
             } else {
                 document.getElementById('authModal').classList.remove('hidden');
@@ -808,6 +808,7 @@
                 document.getElementById('adminBadge').classList.add('hidden');
                 document.getElementById('adminTabBtn').classList.add('hidden');
                 document.getElementById('mobAdminTabBtn').classList.add('hidden');
+                renderPackList();
             }
         });
 
@@ -944,6 +945,7 @@
                 if (auth.currentUser && auth.currentUser.uid === targetUid) {
                     currentUserDoc.isVip = newVipStatus;
                     updateUI();
+                    renderPackList();
                 }
             } catch (e) {
                 alert("修改 VIP 失敗: " + e.message);
@@ -1013,6 +1015,8 @@
             const container = document.getElementById('packListGrid');
             if (!container) return;
 
+            const isVip = currentUserDoc && currentUserDoc.isVip;
+
             container.innerHTML = PACK_DEFINITIONS.map(pack => `
                 <div class="bg-gradient-to-br ${pack.bg} p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-4">
                     <div class="flex gap-4 items-center">
@@ -1027,9 +1031,20 @@
                             <p class="text-xs text-slate-300 mt-1">${pack.desc}</p>
                         </div>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('${pack.id}', 1)" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl text-xs shadow">單抽 (20分)</button>
-                        <button onclick="startPackChoice('${pack.id}', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs shadow">10連抽 (200分)</button>
+                    <div class="space-y-2">
+                        <div class="flex gap-2">
+                            <button onclick="startPackChoice('${pack.id}', 1)" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl text-xs shadow">單抽 (20分)</button>
+                            <button onclick="startPackChoice('${pack.id}', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs shadow">10連抽 (200分)</button>
+                        </div>
+                        ${isVip ? `
+                            <button onclick="startPackChoice('${pack.id}', 30)" class="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black py-2 rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 animate-pulse">
+                                <i class="fa-solid fa-crown"></i> 👑 VIP 專屬 30 連抽 (600分)
+                            </button>
+                        ` : `
+                            <button onclick="openVipModal()" class="w-full bg-slate-800/80 hover:bg-slate-800 text-amber-300/80 border border-amber-500/30 font-bold py-1.5 rounded-xl text-[11px] flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-lock text-[10px]"></i> 解鎖 VIP 專屬 30 連抽 (600分)
+                            </button>
+                        `}
                     </div>
                 </div>
             `).join('');
@@ -1072,6 +1087,10 @@
             if (!currentUserDoc) return alert("請先登入帳號！");
             
             const cost = cardCount * 20;
+            if (cardCount === 30 && !currentUserDoc.isVip) {
+                return alert("⚠️ 30 連抽為 VIP 專屬福利！請先解鎖 VIP 會員。");
+            }
+
             pendingPackConfig = { setId, cardCount, cost };
 
             document.querySelectorAll('.pack-choice-title').forEach(el => {
