@@ -249,7 +249,7 @@
                     <option value="sv6">SV6 變幻面具 (全 10 張)</option>
                     <option value="sv7">SV7 璀璨星空 (全 8 張)</option>
                     <option value="sv8">SV8 超電導突破 (全 8 張)</option>
-                    <option value="s12a">S12a VSTAR 宇宙 (全 10 張)</option>
+                    <option value="s12a">S12a VSTAR 宇宙 (全 30 張)</option>
                 </select>
                 <span id="binderProgressText" class="text-cyan-400 font-bold text-sm">0 / 0 (0%)</span>
             </div>
@@ -463,14 +463,14 @@
         let currentLbSubTab = 'lucky';
 
         const RARITY = {
-            'C':   { price: 4,    rate: 0.6800, color: '#9ca3af' },
-            'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' },
-            'R':   { price: 20,   rate: 0.0700, color: '#fbbf24' },
-            'RR':  { price: 70,   rate: 0.0230, color: '#f43f5e' },
-            'AR':  { price: 180,  rate: 0.0050, color: '#a855f7' },
-            'SR':  { price: 400,  rate: 0.0015, color: '#ec4899' },
-            'SAR': { price: 1500, rate: 0.0004, color: '#10b981' },
-            'UR':  { price: 4100, rate: 0.0001, color: '#eab308' }
+            'C':   { price: 4,    rate: 0.5000, color: '#9ca3af' }, // 50.0%
+            'U':   { price: 8,    rate: 0.2500, color: '#60a5fa' }, // 25.0%
+            'R':   { price: 20,   rate: 0.1200, color: '#fbbf24' }, // 12.0%
+            'RR':  { price: 70,   rate: 0.0700, color: '#f43f5e' }, // 7.0%
+            'AR':  { price: 180,  rate: 0.0350, color: '#a855f7' }, // 3.5%
+            'SR':  { price: 400,  rate: 0.0150, color: '#ec4899' }, // 1.5%
+            'SAR': { price: 1500, rate: 0.0080, color: '#10b981' }, // 0.8%
+            'UR':  { price: 4100, rate: 0.0020, color: '#eab308' }  // 0.2%
         };
 
         const PACK_DEFINITIONS = [
@@ -592,16 +592,45 @@
                 { id: 'sv8-008', name: '太晶皮卡丘 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv8/135_hires.png' }
             ],
             's12a': [
-                { id: 's12a-001', name: '飛天螳螂 AR', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/GG01_hires.png' },
-                { id: 's12a-002', name: '皮卡丘 AR', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/GG30_hires.png' },
-                { id: 's12a-003', name: '立向葵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/150_hires.png' },
-                { id: 's12a-004', name: '噴火龍 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG05_hires.png' },
-                { id: 's12a-005', name: '路卡利歐 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG10_hires.png' },
-                { id: 's12a-006', name: '超夢 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG44_hires.png' },
-                { id: 's12a-007', name: '帕路奇亞 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG67_hires.png' },
-                { id: 's12a-008', name: '帝牙盧卡 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG68_hires.png' },
-                { id: 's12a-009', name: '騎拉帝納 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG69_hires.png' },
-                { id: 's12a-010', name: '阿爾宙斯 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG70_hires.png' }
+                // 普通卡 (C)
+                { id: 's12a-001', name: '帕拉斯', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/1_hires.png' },
+                { id: 's12a-002', name: '洗翠霹靂電球', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/3_hires.png' },
+                { id: 's12a-003', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/6_hires.png' },
+                { id: 's12a-004', name: '小火焰猴', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/16_hires.png' },
+                { id: 's12a-005', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/31_hires.png' },
+                // 少見卡 (U)
+                { id: 's12a-020', name: '大牙狸', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/120_hires.png' },
+                { id: 's12a-021', name: '卡比獸', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/121_hires.png' },
+                // 罕見卡 (R)
+                { id: 's12a-040', name: '洗翠索羅亞', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/104_hires.png' },
+                { id: 's12a-041', name: '奇魯莉安', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/69_hires.png' },
+                // 雙星卡 (RR)
+                { id: 's12a-011', name: '葉伊布 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/11_hires.png' },
+                { id: 's12a-013', name: '噴火龍 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/13_hires.png' },
+                { id: 's12a-038', name: '雷公 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/38_hires.png' },
+                { id: 's12a-110', name: '騎拉帝納 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/110_hires.png' },
+                { id: 's12a-126', name: '阿爾宙斯 V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/126_hires.png' },
+                // 藝術稀有 (AR)
+                { id: 's12a-201', name: '利歐路 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG01_hires.png' },
+                { id: 's12a-205', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG30_hires.png' },
+                { id: 's12a-206', name: '草苗龜 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG31_hires.png' },
+                { id: 's12a-207', name: '帕拉斯 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG32_hires.png' },
+                { id: 's12a-209', name: '電綿羊 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/swsh12pt5/GG34_hires.png' },
+                // 超級稀有 (SR)
+                { id: 's12a-246', name: '瑟蕾娜 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/150_hires.png' },
+                { id: 's12a-247', name: '神奧的夥伴 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/GG72_hires.png' },
+                { id: 's12a-248', name: '奇樹 (支援者) SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/155_hires.png' },
+                // 特選藝術 (SAR)
+                { id: 's12a-211', name: '噴火龍 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG05_hires.png' },
+                { id: 's12a-215', name: '水君 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG38_hires.png' },
+                { id: 's12a-221', name: '超夢 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG44_hires.png' },
+                { id: 's12a-226', name: '路卡利歐 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG10_hires.png' },
+                { id: 's12a-236', name: '珠貝 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG56_hires.png' },
+                // 極限稀有 (UR)
+                { id: 's12a-259', name: '帕路奇亞 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG67_hires.png' },
+                { id: 's12a-260', name: '帝牙盧卡 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG68_hires.png' },
+                { id: 's12a-261', name: '騎拉帝納 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG69_hires.png' },
+                { id: 's12a-262', name: '阿爾宙斯 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG70_hires.png' }
             ]
         };
 
