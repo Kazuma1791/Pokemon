@@ -418,7 +418,7 @@
             <h2 id="authTitle" class="text-2xl font-bold text-center text-amber-400">雲端訓練家登入</h2>
             <div class="space-y-3">
                 <input type="email" id="authEmail" placeholder="電子郵件 Email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
-                <input type="password" id="authPassword" placeholder="密碼" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
+                <input type="password" id="authPassword" placeholder="密碼 (至少6位數)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
                 <input type="text" id="authUsername" placeholder="訓練家暱稱 (僅註冊時需要)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
             </div>
             <div class="space-y-2 pt-2">
@@ -605,7 +605,6 @@
             ]
         };
 
-        // 🎲 前端抽卡演算法 (包含動態機率控制)
         function drawCardFromSet(setCards) {
             const rand = Math.random();
             let cum = 0, rarity = 'C';
@@ -618,7 +617,6 @@
             return pool[Math.floor(Math.random() * pool.length)];
         }
 
-        // 👑 即時監聽全服歐皇戰報
         const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
         onSnapshot(broadcastQuery, (snapshot) => {
             const listEl = document.getElementById('broadcastHistoryList');
@@ -719,14 +717,14 @@
             }
         });
 
-        window.toggleAuthMode = () => {
+        function toggleAuthMode() {
             isRegisterMode = !isRegisterMode;
             document.getElementById('authTitle').innerText = isRegisterMode ? "註冊新訓練家帳號" : "雲端訓練家登入";
             document.getElementById('authPrimaryBtn').innerText = isRegisterMode ? "註冊並登入" : "登入帳號";
-            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「註冊帳號」";
-        };
+            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「登入帳號」" : "還沒有帳號？點此切換至「註冊帳號」";
+        }
 
-        window.handleAuthSubmit = async () => {
+        async function handleAuthSubmit() {
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPassword').value;
             const username = document.getElementById('authUsername').value || '訓練家';
@@ -750,12 +748,13 @@
             } catch (err) {
                 alert("驗證失敗: " + err.message);
             }
-        };
+        }
 
-        window.handleSignOut = () => signOut(auth);
+        function handleSignOut() {
+            signOut(auth);
+        }
 
-        // ✏️ 前端改名字 (精確扣除 1000 分並寫入 Firestore)
-        window.promptChangeUsername = async () => {
+        async function promptChangeUsername() {
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入帳號！");
             
             const currentName = currentUserDoc.name || '訓練家';
@@ -774,7 +773,6 @@
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 const newPoints = currentUserDoc.points - 1000;
 
-                // 雲端 Security Rules 會比對 points 是否精確 -1000
                 await updateDoc(userRef, {
                     name: trimmedName,
                     points: newPoints
@@ -789,9 +787,9 @@
             } catch (err) {
                 alert("修改暱稱失敗: " + (err.message.includes("permission-denied") ? "分數不足或不合法的寫入請求！" : err.message));
             }
-        };
+        }
 
-        window.fetchAdminUserList = async () => {
+        async function fetchAdminUserList() {
             const selectEl = document.getElementById('adminUserSelect');
             if (!selectEl) return;
             selectEl.innerHTML = `<option value="">載入全服玩家中...</option>`;
@@ -822,9 +820,9 @@
             } catch (err) {
                 selectEl.innerHTML = `<option value="">載入失敗: ${err.message}</option>`;
             }
-        };
+        }
 
-        window.adminAdjustSelectedUser = async (delta) => {
+        async function adminAdjustSelectedUser(delta) {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
@@ -845,9 +843,9 @@
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
-        };
+        }
 
-        window.adminSetCustomPoints = async () => {
+        async function adminSetCustomPoints() {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             const newPoints = parseInt(document.getElementById('adminCustomPointsInput').value);
@@ -866,7 +864,7 @@
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
-        };
+        }
 
         async function syncToCloud() {
             if (!auth.currentUser || !currentUserDoc) return;
@@ -930,7 +928,7 @@
             }
         }
 
-        window.startPackChoice = (setId, cardCount) => {
+        function startPackChoice(setId, cardCount) {
             if (!currentUserDoc) return alert("請先登入帳號！");
             
             const cost = cardCount * 20;
@@ -945,10 +943,9 @@
             document.getElementById('animStepTear').classList.add('hidden');
             document.getElementById('animStepReveal').classList.add('hidden');
             modal.classList.remove('hidden');
-        };
+        }
 
-        // 🎴 前端抽卡核心：寫入受 Security Rules 限制防護
-        window.choosePackAndTear = async (packNumber) => {
+        async function choosePackAndTear(packNumber) {
             if (!pendingPackConfig || !currentUserDoc || !auth.currentUser) return;
             const { setId, cardCount, cost } = pendingPackConfig;
 
@@ -979,7 +976,6 @@
                 const newTotalSpent = (currentUserDoc.totalSpent || 0) + cost;
                 const newTotalPulledValue = (currentUserDoc.totalPulledValue || 0) + batchPulledValue;
 
-                // 🚀 直接更新 Firestore，Security Rules 會硬性鎖定扣分金額必須恰好為 -20 或 -200
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 await updateDoc(userRef, {
                     points: newPoints,
@@ -988,7 +984,6 @@
                     totalPulledValue: newTotalPulledValue
                 });
 
-                // 自動發送 SAR / UR 全服廣播戰報
                 const topCards = pulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
                 for (let rareCard of topCards) {
                     await addDoc(collection(db, "broadcasts"), {
@@ -999,7 +994,6 @@
                     });
                 }
 
-                // 本地數據更新
                 currentUserDoc.points = newPoints;
                 currentUserDoc.cards = updatedCards;
                 currentUserDoc.totalSpent = newTotalSpent;
@@ -1008,7 +1002,6 @@
 
                 updateUI();
 
-                // 播放動畫
                 document.getElementById('animStepChoice').classList.add('hidden');
                 document.getElementById('animStepTear').classList.remove('hidden');
                 document.getElementById('packVisualTitle').innerText = `${setId.toUpperCase()} (#${packNumber})`;
@@ -1024,7 +1017,7 @@
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
             }
-        };
+        }
 
         function getImgSrcWithFallback(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
@@ -1060,19 +1053,19 @@
             }
         }
 
-        window.flipCard = (idx) => {
+        function flipCard(idx) {
             const el = document.getElementById(`cardInner-${idx}`);
             if (el) el.classList.toggle('flipped');
-        };
+        }
 
-        window.flipAllCards = () => {
+        function flipAllCards() {
             currentPulledCards.forEach((_, idx) => {
                 const el = document.getElementById(`cardInner-${idx}`);
                 if (el) el.classList.add('flipped');
             });
-        };
+        }
 
-        window.closePackModal = () => {
+        function closePackModal() {
             document.getElementById('packModal').classList.add('hidden');
             renderResults(currentPulledCards);
 
@@ -1082,7 +1075,7 @@
                     area.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, 100);
-        };
+        }
 
         function renderResults(cards) {
             const area = document.getElementById('pullResultsArea');
@@ -1103,7 +1096,7 @@
             `).join('');
         }
 
-        window.renderBinder = () => {
+        function renderBinder() {
             const setId = document.getElementById('binderSetFilter').value;
             const grid = document.getElementById('binderGrid');
             const cards = CARD_SETS[setId] || [];
@@ -1132,9 +1125,9 @@
             }).join('');
 
             document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${Math.round(unlocked/cards.length*100)}%)`;
-        };
+        }
 
-        window.renderSellInventory = () => {
+        function renderSellInventory() {
             const grid = document.getElementById('sellInventoryGrid');
             if (!grid || !currentUserDoc) return;
             
@@ -1169,9 +1162,9 @@
             if (!hasCards) {
                 grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12 font-bold"><i class="fa-solid fa-box-open text-3xl block mb-2 opacity-50"></i>背包裡沒有可出售的卡牌！</div>`;
             }
-        };
+        }
 
-        window.sellSingleCard = async (cardId) => {
+        async function sellSingleCard(cardId) {
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
             let card = Object.values(CARD_SETS).flat().find(c => c.id === cardId);
@@ -1183,9 +1176,9 @@
 
             await syncToCloud();
             renderSellInventory();
-        };
+        }
 
-        window.sellAllDuplicates = async () => {
+        async function sellAllDuplicates() {
             let total = 0;
             Object.values(CARD_SETS).flat().forEach(c => {
                 const count = currentUserDoc.cards?.[c.id] || 0;
@@ -1201,9 +1194,9 @@
                 renderSellInventory();
             }
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
-        };
+        }
 
-        window.switchLbSubTab = (subTab) => {
+        function switchLbSubTab(subTab) {
             currentLbSubTab = subTab;
             
             const luckyBtn = document.getElementById('lbBtnLucky');
@@ -1218,9 +1211,9 @@
             }
 
             fetchGlobalStatsAndLeaderboard();
-        };
+        }
 
-        window.fetchGlobalStatsAndLeaderboard = async () => {
+        async function fetchGlobalStatsAndLeaderboard() {
             const listEl = document.getElementById('leaderboardList');
             if (listEl) {
                 listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服排行榜數據中...</div>`;
@@ -1356,9 +1349,9 @@
                     listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入數據失敗: ${err.message}</div>`;
                 }
             }
-        };
+        }
 
-        window.switchTab = (tab) => {
+        function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
@@ -1384,7 +1377,28 @@
             if (tab === 'sell') renderSellInventory();
             if (tab === 'leaderboard') fetchGlobalStatsAndLeaderboard();
             if (tab === 'admin') fetchAdminUserList();
-        };
+        }
+
+        // 🌐 將所有函式安全掛載至全域 window，供 HTML onclick 呼叫
+        window.toggleAuthMode = toggleAuthMode;
+        window.handleAuthSubmit = handleAuthSubmit;
+        window.handleSignOut = handleSignOut;
+        window.promptChangeUsername = promptChangeUsername;
+        window.fetchAdminUserList = fetchAdminUserList;
+        window.adminAdjustSelectedUser = adminAdjustSelectedUser;
+        window.adminSetCustomPoints = adminSetCustomPoints;
+        window.startPackChoice = startPackChoice;
+        window.choosePackAndTear = choosePackAndTear;
+        window.flipCard = flipCard;
+        window.flipAllCards = flipAllCards;
+        window.closePackModal = closePackModal;
+        window.renderBinder = renderBinder;
+        window.renderSellInventory = renderSellInventory;
+        window.sellSingleCard = sellSingleCard;
+        window.sellAllDuplicates = sellAllDuplicates;
+        window.switchLbSubTab = switchLbSubTab;
+        window.fetchGlobalStatsAndLeaderboard = fetchGlobalStatsAndLeaderboard;
+        window.switchTab = switchTab;
 
         document.addEventListener('DOMContentLoaded', renderPackList);
     </script>
