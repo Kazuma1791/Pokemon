@@ -19,13 +19,21 @@
             background-color: #0f172a;
             color: #f8fafc;
             user-select: none;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 70px; /* 手機端預留底部導覽列空間 */
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: 0px;
+            }
         }
 
         .card-locked {
             filter: grayscale(100%) brightness(0.3);
         }
 
-        /* 3D 翻牌動畫樣式 */
+        /* 3D 翻牌動畫與 GPU 硬體加速 */
         .perspective-1000 {
             perspective: 1000px;
         }
@@ -33,8 +41,10 @@
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
+            will-change: transform;
+            transform: translateZ(0);
         }
         .card-inner.flipped {
             transform: rotateY(180deg);
@@ -106,8 +116,8 @@
                 </button>
             </div>
 
-            <!-- 分頁選單 -->
-            <nav class="flex gap-2 w-full md:w-auto justify-center flex-wrap">
+            <!-- 💻 桌面端分頁導覽選單 (md 以上顯示) -->
+            <nav class="hidden md:flex gap-2 justify-center flex-wrap">
                 <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow text-sm">
                     <i class="fa-solid fa-box-open mr-1"></i> 抽卡機
                 </button>
@@ -126,6 +136,30 @@
             </nav>
         </div>
     </header>
+
+    <!-- 📱 手機專用固定底部導覽列 (md 以下顯示) -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 flex justify-around py-2 px-1 text-center shadow-2xl">
+        <button onclick="switchTab('pack')" id="mob-nav-pack" class="mob-tab-btn flex flex-col items-center gap-1 text-red-500 font-bold text-[11px]">
+            <i class="fa-solid fa-box-open text-base"></i>
+            <span>抽卡機</span>
+        </button>
+        <button onclick="switchTab('binder')" id="mob-nav-binder" class="mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]">
+            <i class="fa-solid fa-book-bookmark text-base"></i>
+            <span>集卡冊</span>
+        </button>
+        <button onclick="switchTab('sell')" id="mob-nav-sell" class="mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]">
+            <i class="fa-solid fa-coins text-base"></i>
+            <span>出售</span>
+        </button>
+        <button onclick="switchTab('leaderboard')" id="mob-nav-leaderboard" class="mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]">
+            <i class="fa-solid fa-trophy text-base"></i>
+            <span>排行榜</span>
+        </button>
+        <button id="mobAdminTabBtn" onclick="switchTab('admin')" class="hidden mob-tab-btn flex flex-col items-center gap-1 text-amber-400 font-bold text-[11px]">
+            <i class="fa-solid fa-crown text-base"></i>
+            <span>管理</span>
+        </button>
+    </div>
 
     <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
@@ -183,181 +217,8 @@
                 <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                <!-- 1. M6a 30th CELEBRATION -->
-                <div class="bg-gradient-to-br from-slate-800 via-amber-950 to-purple-950 p-5 rounded-2xl border border-amber-400/50 shadow-2xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-amber-500 to-purple-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/40 shrink-0">
-                            <span class="text-[10px] font-black bg-slate-950 px-1.5 py-0.5 rounded text-amber-300">M6a</span>
-                            <i class="fa-solid fa-crown text-2xl text-slate-900 my-1"></i>
-                            <span class="text-[9px] font-black text-slate-950">30th</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">限定紀念包</span>
-                            <h3 class="text-base font-bold text-amber-300 mt-1">「30th CELEBRATION」M6a</h3>
-                            <p class="text-xs text-slate-300 mt-1">FUR 夢幻 ex、超夢 ex 與皮卡丘 ex 晝夜 SAR！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('m6a', 1)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-2 rounded-xl text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('m6a', 10)" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black py-2 rounded-xl text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 2. SV2a 寶可夢 151 -->
-                <div class="bg-gradient-to-br from-slate-800 to-indigo-950 p-5 rounded-2xl border border-indigo-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-pink-600 to-indigo-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">SV2a</span>
-                            <i class="fa-solid fa-dragon text-2xl text-amber-300 my-1"></i>
-                            <span class="text-[9px] font-bold text-white">151</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">強化擴充包「寶可夢 151」</h3>
-                            <p class="text-xs text-slate-400 mt-1">收錄經典 151 陣容！噴火龍 ex SAR 與超夢！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('sv2a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('sv2a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 3. SV3 黑炎支配者 -->
-                <div class="bg-gradient-to-br from-slate-800 to-red-950 p-5 rounded-2xl border border-red-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-red-600 to-amber-700 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">SV3</span>
-                            <i class="fa-solid fa-fire text-2xl text-amber-300 my-1"></i>
-                            <span class="text-[9px] font-bold text-white">黑炎</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">擴充包「黑炎支配者」</h3>
-                            <p class="text-xs text-slate-400 mt-1">惡屬性太晶噴火龍 ex SAR 霸氣登場！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('sv3', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('sv3', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 4. SV4a 閃色寶藏 ex -->
-                <div class="bg-gradient-to-br from-slate-800 to-amber-950 p-5 rounded-2xl border border-amber-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-yellow-500 to-amber-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">SV4a</span>
-                            <i class="fa-solid fa-sparkles text-2xl text-slate-900 my-1"></i>
-                            <span class="text-[9px] font-bold text-slate-900">閃色</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">高級包「閃色寶藏 ex」</h3>
-                            <p class="text-xs text-slate-400 mt-1">色違噴火龍 ex SSR 與奇樹 SAR 登場！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('sv4a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('sv4a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 5. SV5a 狂野意志 -->
-                <div class="bg-gradient-to-br from-slate-800 to-emerald-950 p-5 rounded-2xl border border-emerald-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-emerald-600 to-teal-800 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">SV5a</span>
-                            <i class="fa-solid fa-leaf text-2xl text-emerald-300 my-1"></i>
-                            <span class="text-[9px] font-bold text-white">狂野</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">擴充包「狂野意志」</h3>
-                            <p class="text-xs text-slate-400 mt-1">古代悖論寶可夢！猛雷鼓 ex SAR 登場！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('sv5a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('sv5a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 6. SV6 變幻面具 -->
-                <div class="bg-gradient-to-br from-slate-800 to-teal-950 p-5 rounded-2xl border border-teal-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-teal-600 to-cyan-700 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">SV6</span>
-                            <i class="fa-solid fa-mask text-2xl text-teal-300 my-1"></i>
-                            <span class="text-[9px] font-bold text-white">面具</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">擴充包「變幻面具」</h3>
-                            <p class="text-xs text-slate-400 mt-1">傳說寶可夢厄鬼椪與多龍巴魯托 ex！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('sv6', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('sv6', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 7. SV7 璀璨星空 -->
-                <div class="bg-gradient-to-br from-slate-800 to-cyan-950 p-5 rounded-2xl border border-cyan-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-cyan-500 to-blue-700 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">SV7</span>
-                            <i class="fa-solid fa-gem text-2xl text-cyan-200 my-1"></i>
-                            <span class="text-[9px] font-bold text-white">璀璨</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">擴充包「璀璨星空」</h3>
-                            <p class="text-xs text-slate-400 mt-1">太晶星天化！太樂巴戈斯 ex SAR！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('sv7', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('sv7', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 8. SV8 超電導突破 -->
-                <div class="bg-gradient-to-br from-slate-800 to-yellow-950 p-5 rounded-2xl border border-yellow-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-yellow-400 to-amber-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-slate-900 px-1.5 py-0.5 rounded text-yellow-300">SV8</span>
-                            <i class="fa-solid fa-bolt text-2xl text-slate-900 my-1"></i>
-                            <span class="text-[9px] font-bold text-slate-900">超電導</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">擴充包「超電導突破」</h3>
-                            <p class="text-xs text-slate-400 mt-1">太晶皮卡丘 ex SAR 閃耀登場！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('sv8', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('sv8', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-                <!-- 9. S12a VSTAR 宇宙 -->
-                <div class="bg-gradient-to-br from-slate-800 to-indigo-950 p-5 rounded-2xl border border-purple-500/30 shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-gradient-to-tr from-purple-600 to-indigo-800 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">S12a</span>
-                            <i class="fa-solid fa-galaxy text-2xl text-amber-300 my-1"></i>
-                            <span class="text-[9px] font-bold text-white">VSTAR</span>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white">高級包「VSTAR 宇宙」</h3>
-                            <p class="text-xs text-slate-400 mt-1">阿爾宙斯、騎拉帝納 UR 神級繪圖！</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startPackChoice('s12a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="startPackChoice('s12a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
-                    </div>
-                </div>
-
-            </div>
+            <!-- ⚡ 動態渲染卡包網格容器 (省去數百行重複 HTML) -->
+            <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
             <!-- 告示牌 -->
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
@@ -499,21 +360,18 @@
             </div>
 
             <div class="grid grid-cols-3 gap-4 md:gap-8 w-full py-4">
-                <!-- 卡包 1 -->
                 <div onclick="choosePackAndTear(1)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
                     <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
                     <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #1</span>
                     <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
                 </div>
 
-                <!-- 卡包 2 -->
                 <div onclick="choosePackAndTear(2)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
                     <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
                     <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #2</span>
                     <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
                 </div>
 
-                <!-- 卡包 3 -->
                 <div onclick="choosePackAndTear(3)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
                     <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
                     <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #3</span>
@@ -570,7 +428,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK 與邏輯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -602,7 +460,20 @@
         let broadcastTimer = null;
         let lastBroadcastTimestamp = Date.now();
 
-        // 👑 即時監聽全服歐皇戰報紀錄庫，更新公告欄並觸發頂部橫幅
+        // 📦 卡包定義檔 (動態渲染用)
+        const PACK_DEFINITIONS = [
+            { id: 'm6a', title: '「30th CELEBRATION」M6a', tag: '30th', desc: 'FUR 夢幻 ex、超夢 ex 與皮卡丘 ex 晝夜 SAR！', bg: 'from-slate-800 via-amber-950 to-purple-950', border: 'border-amber-400/50', icon: 'fa-crown', badge: '限定紀念包' },
+            { id: 'sv2a', title: '強化擴充包「寶可夢 151」', tag: '151', desc: '收錄經典 151 陣容！噴火龍 ex SAR 與超夢！', bg: 'from-slate-800 to-indigo-950', border: 'border-indigo-500/30', icon: 'fa-dragon', badge: '熱門擴充包' },
+            { id: 'sv3', title: '擴充包「黑炎支配者」', tag: '黑炎', desc: '惡屬性太晶噴火龍 ex SAR 霸氣登場！', bg: 'from-slate-800 to-red-950', border: 'border-red-500/30', icon: 'fa-fire', badge: '熱門擴充包' },
+            { id: 'sv4a', title: '高級包「閃色寶藏 ex」', tag: '閃色', desc: '色違噴火龍 ex SSR 與奇樹 SAR 登場！', bg: 'from-slate-800 to-amber-950', border: 'border-amber-500/30', icon: 'fa-sparkles', badge: '熱門高級包' },
+            { id: 'sv5a', title: '擴充包「狂野意志」', tag: '狂野', desc: '古代悖論寶可夢！猛雷鼓 ex SAR 登場！', bg: 'from-slate-800 to-emerald-950', border: 'border-emerald-500/30', icon: 'fa-leaf', badge: '熱門擴充包' },
+            { id: 'sv6', title: '擴充包「變幻面具」', tag: '面具', desc: '傳說寶可夢厄鬼椪與多龍巴魯托 ex！', bg: 'from-slate-800 to-teal-950', border: 'border-teal-500/30', icon: 'fa-mask', badge: '熱門擴充包' },
+            { id: 'sv7', title: '擴充包「璀璨星空」', tag: '璀璨', desc: '太晶星天化！太樂巴戈斯 ex SAR！', bg: 'from-slate-800 to-cyan-950', border: 'border-cyan-500/30', icon: 'fa-gem', badge: '熱門擴充包' },
+            { id: 'sv8', title: '擴充包「超電導突破」', tag: '超電導', desc: '太晶皮卡丘 ex SAR 閃耀登場！', bg: 'from-slate-800 to-yellow-950', border: 'border-yellow-500/30', icon: 'fa-bolt', badge: '最新擴充包' },
+            { id: 's12a', title: '高級包「VSTAR 宇宙」', tag: 'VSTAR', desc: '阿爾宙斯、騎拉帝納 UR 神級繪圖！', bg: 'from-slate-800 to-indigo-950', border: 'border-purple-500/30', icon: 'fa-shuttle-space', badge: '經典高級包' }
+        ];
+
+        // 👑 即時監聽全服歐皇戰報紀錄庫
         const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
         onSnapshot(broadcastQuery, (snapshot) => {
             const listEl = document.getElementById('broadcastHistoryList');
@@ -618,13 +489,10 @@
 
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
-                
-                // 格式化日期時間：例如 2026/09/22 17:42:05
                 const dateObj = new Date(data.timestamp || Date.now());
                 const dateStr = dateObj.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + 
                                 dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-                // 若是剛發生的最新紀錄，觸發 5 秒頂部彈出橫幅
                 if (isMostRecent && data.timestamp > lastBroadcastTimestamp) {
                     lastBroadcastTimestamp = data.timestamp;
                     showBroadcastBanner(data.playerName, data.cardName, data.rarity);
@@ -661,7 +529,7 @@
             if (broadcastTimer) clearTimeout(broadcastTimer);
             broadcastTimer = setTimeout(() => {
                 banner.classList.add('hidden');
-            }, 5000); // 維持 5 秒後自動隱藏
+            }, 5000);
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -672,6 +540,7 @@
                 if (user.uid === ADMIN_UID) {
                     document.getElementById('adminBadge').classList.remove('hidden');
                     document.getElementById('adminTabBtn').classList.remove('hidden');
+                    document.getElementById('mobAdminTabBtn').classList.remove('hidden');
                     fetchAdminUserList();
                 }
 
@@ -701,6 +570,7 @@
                 document.getElementById('userHeaderInfo').classList.add('hidden');
                 document.getElementById('adminBadge').classList.add('hidden');
                 document.getElementById('adminTabBtn').classList.add('hidden');
+                document.getElementById('mobAdminTabBtn').classList.add('hidden');
             }
         });
 
@@ -754,7 +624,6 @@
             }
         };
 
-        // 👑 管理員拉取全服玩家清單
         window.fetchAdminUserList = async () => {
             const selectEl = document.getElementById('adminUserSelect');
             if (!selectEl) return;
@@ -845,7 +714,6 @@
             fetchGlobalStatsAndLeaderboard();
         }
 
-        // 卡牌基準回收價格與圖片校對資料庫
         const RARITY = {
             'C':   { price: 4,    rate: 0.6800, color: '#9ca3af' },
             'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' },
@@ -857,7 +725,6 @@
             'UR':  { price: 4100, rate: 0.0001, color: '#eab308' }
         };
 
-        // 9 大熱門擴充包精準對應資料庫
         const CARD_SETS = {
             'm6a': [
                 { id: 'm6a-017', name: '皮卡丘 (30th 繪師卡)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019746.png' },
@@ -978,6 +845,33 @@
             ]
         };
 
+        // ⚡ 動態渲染卡包列表 (大幅優化程式碼長度)
+        function renderPackList() {
+            const container = document.getElementById('packListGrid');
+            if (!container) return;
+
+            container.innerHTML = PACK_DEFINITIONS.map(pack => `
+                <div class="bg-gradient-to-br ${pack.bg} p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-4">
+                    <div class="flex gap-4 items-center">
+                        <div class="w-20 h-28 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
+                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">${pack.id.toUpperCase()}</span>
+                            <i class="fa-solid ${pack.icon} text-2xl text-amber-300 my-1"></i>
+                            <span class="text-[9px] font-bold text-slate-300">${pack.tag}</span>
+                        </div>
+                        <div>
+                            <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">${pack.badge}</span>
+                            <h3 class="text-base font-bold text-white mt-1">${pack.title}</h3>
+                            <p class="text-xs text-slate-300 mt-1">${pack.desc}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="startPackChoice('${pack.id}', 1)" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl text-xs shadow">單抽 (20分)</button>
+                        <button onclick="startPackChoice('${pack.id}', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs shadow">10連抽 (200分)</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         function updateUI() {
             if (!currentUserDoc) return;
             const points = currentUserDoc.points || 0;
@@ -1000,7 +894,6 @@
             }
         }
 
-        // 🎴 階段 1: 開啟 3 包選擇畫面
         window.startPackChoice = (setId, cardCount) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             
@@ -1013,7 +906,6 @@
 
             pendingPackConfig = { setId, cardCount, cost };
 
-            // 更新 3 包外觀標題
             document.querySelectorAll('.pack-choice-title').forEach(el => {
                 el.innerText = `${setId.toUpperCase()} 擴充包`;
             });
@@ -1025,12 +917,10 @@
             modal.classList.remove('hidden');
         };
 
-        // 🎴 階段 2: 全服動態 50:50 零和機率算力核心
         window.choosePackAndTear = async (packNumber) => {
             if (!pendingPackConfig || !currentUserDoc) return;
             const { setId, cardCount, cost } = pendingPackConfig;
 
-            // 1. 抓取全服數據，計算當前全服返還率
             let globalSpent = 0;
             let globalPulledValue = 0;
 
@@ -1045,17 +935,12 @@
                 console.error("抓取全服狀態失敗，採用基準機率", err);
             }
 
-            // 加入本次預計投入分數
             globalSpent += cost;
 
-            // 計算當前全服 RTP（若無數據則預設 0.50）
             let currentGlobalRTP = globalSpent > 0 ? (globalPulledValue / globalSpent) : 0.50;
-            
-            // 2. 核心公式：目標 RTP 為 0.50 (50:50 平衡)
             let rtpModifier = 0.50 / Math.max(currentGlobalRTP, 0.1);
             rtpModifier = Math.max(0.15, Math.min(rtpModifier, 3.0));
 
-            // 3. 動態建構本次抽卡的機率池
             let dynamicRarity = JSON.parse(JSON.stringify(RARITY));
             let rareKeys = ['R', 'RR', 'AR', 'SR', 'SAR', 'UR'];
             let totalRareRate = 0;
@@ -1065,11 +950,9 @@
                 totalRareRate += dynamicRarity[k].rate;
             });
 
-            // U 與 C 卡動態承接剩餘機率
             dynamicRarity['U'].rate = Math.min(0.22, Math.max(0.05, 1.0 - totalRareRate - 0.1));
             dynamicRarity['C'].rate = Math.max(0.1, 1.0 - totalRareRate - dynamicRarity['U'].rate);
 
-            // 4. 開始執行抽卡邏輯
             currentUserDoc.points = (currentUserDoc.points || 0) - cost;
             currentUserDoc.totalSpent = (currentUserDoc.totalSpent || 0) + cost;
 
@@ -1103,7 +986,6 @@
 
             await syncToCloud();
 
-            // 🌟 檢查是否抽出最稀有卡牌（SAR、UR），若抽中則推播至全服廣播集合
             const topCards = currentPulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
             for (let rareCard of topCards) {
                 try {
@@ -1118,7 +1000,6 @@
                 }
             }
 
-            // 5. 觸發撕卡包動態畫面
             document.getElementById('animStepChoice').classList.add('hidden');
             document.getElementById('animStepTear').classList.remove('hidden');
             document.getElementById('packVisualTitle').innerText = `${setId.toUpperCase()} (#${packNumber})`;
@@ -1130,24 +1011,22 @@
             }, 1200);
         };
 
+        // ⚡ 圖片延遲載入與解碼優化
         function getImgSrcWithFallback(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
-            return `src="${card.image}" onerror="this.onerror=null;this.src='${fallback}';"`;
+            return `src="${card.image}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}';"`;
         }
 
-        // 渲染 Modal 內的 3D 翻牌列表
         function renderModalFlipCards(cards) {
             const grid = document.getElementById('modalCardsGrid');
             grid.innerHTML = cards.map((c, idx) => `
                 <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer" onclick="flipCard(${idx})">
                     <div id="cardInner-${idx}" class="card-inner">
-                        <!-- 卡背 (預設正面顯示) -->
                         <div class="card-front bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center p-2 shadow-2xl">
                             <i class="fa-solid fa-shield-cat text-4xl text-amber-400 mb-2 animate-bounce"></i>
                             <span class="text-xs font-black text-amber-300">POKÉMON</span>
                             <span class="text-[9px] text-slate-500 mt-1">點擊翻牌</span>
                         </div>
-                        <!-- 卡面正面 (翻轉後) -->
                         <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
                             <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg shadow-md">
                             <span class="text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
@@ -1179,7 +1058,6 @@
             });
         };
 
-        // 🌟 按下「收下卡牌並結束」：關閉彈窗 + 呈現卡牌 + 自動平滑對焦
         window.closePackModal = () => {
             document.getElementById('packModal').classList.add('hidden');
             renderResults(currentPulledCards);
@@ -1311,7 +1189,6 @@
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
-        // 📊 即時計算全服營運數據與排行榜
         window.fetchGlobalStatsAndLeaderboard = async () => {
             const listEl = document.getElementById('leaderboardList');
             if (listEl) {
@@ -1427,13 +1304,35 @@
         window.switchTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+            // 桌面端選單樣式切換
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm";
+            });
+            const activeNav = document.getElementById(`nav-${tab}`);
+            if (activeNav) {
+                activeNav.className = tab === 'admin' 
+                    ? "tab-btn px-3 py-1.5 rounded-lg font-bold bg-amber-600 text-white border border-amber-500 text-sm" 
+                    : "tab-btn px-3 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow text-sm";
+            }
+
+            // 手機端底部選單樣式切換
+            document.querySelectorAll('.mob-tab-btn').forEach(btn => {
+                btn.className = "mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]";
+            });
+            const activeMobNav = document.getElementById(`mob-nav-${tab}`);
+            if (activeMobNav) {
+                activeMobNav.className = "mob-tab-btn flex flex-col items-center gap-1 text-red-500 font-bold text-[11px]";
+            }
+
             if (tab === 'binder') renderBinder();
             if (tab === 'sell') renderSellInventory();
             if (tab === 'leaderboard') fetchGlobalStatsAndLeaderboard();
             if (tab === 'admin') fetchAdminUserList();
         };
+
+        // 頁面初次載入動態生成卡包列表
+        document.addEventListener('DOMContentLoaded', renderPackList);
     </script>
 </body>
 </html>
-
-```
