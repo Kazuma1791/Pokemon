@@ -1,3 +1,30 @@
+已為你完成「歐皇抽卡公告欄（含日期時間標記）」**與**「頂部廣播橫幅」的雙重升級！
+
+---
+
+### 🌟 新增功能亮點
+
+1. **📢 歐皇榮譽公告欄（列出完整日期與時間）**：
+* 在頁面上方新增了「📢 全服歐皇抽卡公告欄」，專門紀錄全服所有玩家抽中 **SAR / UR** 等最稀有卡牌的榮耀時刻。
+* 每筆紀錄皆會清楚列出日期與時間（如：`[2026/09/22 17:42:05]`）、玩家暱稱、卡牌稀有度標籤與卡牌名稱。
+
+
+2. **👑 頂部即時彈出廣播（維持 5 秒）**：
+* 當玩家抽到最稀有卡牌時，畫面上方會瞬間彈出耀眼的黃金橫幅：**「恭喜 (玩家名字) 抽到 (卡牌名稱)」**，維持 5 秒後自動隱藏。
+
+
+3. **雲端即時同步**：
+* 採用 Firebase Firestore 集合進行即時監聽（`onSnapshot`），全伺服器所有連線中的玩家都能同步看到最新的公告戰報！
+
+
+
+---
+
+### 📄 完整更新程式碼 (`index.html`)
+
+請複製以下整份程式碼，直接覆蓋 GitHub 儲存庫上的 `index.html` 檔案：
+
+```html
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -65,7 +92,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between relative">
 
-    <!-- 👑 全服歐皇廣播橫幅 (維持 5 秒) -->
+    <!-- 👑 頂部全服歐皇即時廣播橫幅 (維持 5 秒) -->
     <div id="broadcastBanner" class="hidden fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-3 text-sm md:text-base animate-bounce transition-all">
         <i class="fa-solid fa-crown text-xl text-red-600 animate-pulse"></i>
         <span id="broadcastText"></span>
@@ -151,6 +178,19 @@
                 <div id="statShopLossIcon" class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-xl">
                     <i class="fa-solid fa-store-slash"></i>
                 </div>
+            </div>
+        </section>
+
+        <!-- 📢 全服歐皇抽卡公告欄 (含日期時間) -->
+        <section class="bg-slate-800/90 p-4 rounded-2xl border border-amber-500/30 shadow-lg space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                <h3 class="text-sm md:text-base font-bold text-amber-300 flex items-center gap-2">
+                    <i class="fa-solid fa-bullhorn text-amber-400 animate-pulse"></i> 歐皇榮譽公告欄 (SAR / UR 稀有卡戰報)
+                </h3>
+                <span class="text-xs text-slate-400 font-mono">即時雲端更新</span>
+            </div>
+            <div id="broadcastHistoryList" class="max-h-40 overflow-y-auto space-y-2 pr-1 text-xs text-slate-300 font-mono">
+                <div class="text-center py-4 text-slate-500">載入全服歐皇戰報中...</div>
             </div>
         </section>
 
@@ -561,7 +601,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const MAX_DEBT_LIMIT = -10000;
@@ -587,16 +627,54 @@
         let pendingPackConfig = null;
         let allUsersCache = [];
         let broadcastTimer = null;
+        let lastBroadcastTimestamp = Date.now();
 
-        // 👑 即時監聽全服歐皇廣播頻道
-        onSnapshot(doc(db, "system", "broadcast"), (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.data();
-                // 僅展示 10 秒內發生的即時廣播，避免載入過期紀錄
-                if (data.timestamp && (Date.now() - data.timestamp < 10000)) {
+        // 👑 即時監聽全服歐皇戰報紀錄庫，更新公告欄並觸發頂部橫幅
+        const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
+        onSnapshot(broadcastQuery, (snapshot) => {
+            const listEl = document.getElementById('broadcastHistoryList');
+            if (!listEl) return;
+
+            if (snapshot.empty) {
+                listEl.innerHTML = `<div class="text-center py-4 text-slate-500">尚無歐皇中獎紀錄...</div>`;
+                return;
+            }
+
+            let html = '';
+            let isMostRecent = true;
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                
+                // 格式化日期時間：例如 2026/09/22 17:42:05
+                const dateObj = new Date(data.timestamp || Date.now());
+                const dateStr = dateObj.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + 
+                                dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                // 若是剛發生的最新紀錄，觸發 5 秒頂部彈出橫幅
+                if (isMostRecent && data.timestamp > lastBroadcastTimestamp) {
+                    lastBroadcastTimestamp = data.timestamp;
                     showBroadcastBanner(data.playerName, data.cardName, data.rarity);
                 }
-            }
+                isMostRecent = false;
+
+                const rarityColor = data.rarity === 'UR' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-emerald-600 text-white font-black';
+
+                html += `
+                    <div class="flex flex-wrap items-center justify-between bg-slate-900/80 p-2 rounded-lg border border-slate-700/60 gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-slate-500 text-[11px] font-mono">[${dateStr}]</span>
+                            <span class="font-bold text-slate-200">恭喜</span>
+                            <span class="font-black text-amber-300 px-1 bg-amber-500/10 rounded">${data.playerName}</span>
+                            <span class="text-slate-300">抽到</span>
+                            <span class="${rarityColor} text-[10px] px-1.5 py-0.2 rounded border border-white/20">${data.rarity}</span>
+                            <span class="font-bold text-amber-200">${data.cardName}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
         });
 
         function showBroadcastBanner(playerName, cardName, rarity) {
@@ -604,13 +682,13 @@
             const textEl = document.getElementById('broadcastText');
             if (!banner || !textEl) return;
 
-            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1 text-base md:text-lg">${playerName}</span> 幸運抽到最稀有卡牌 <span class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-md border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
+            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1 text-base md:text-lg">${playerName}</span> 抽到 <span class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-md border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
             banner.classList.remove('hidden');
 
             if (broadcastTimer) clearTimeout(broadcastTimer);
             broadcastTimer = setTimeout(() => {
                 banner.classList.add('hidden');
-            }, 5000); // 5 秒後自動隱藏
+            }, 5000); // 維持 5 秒後自動隱藏
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -768,7 +846,6 @@
             if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入正確的目標分數！");
 
             try {
-                // 🛠️ 修正 Bug：改回正確的 doc(db, "users", targetUid)
                 await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
                 alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
                 fetchAdminUserList();
@@ -1053,18 +1130,18 @@
 
             await syncToCloud();
 
-            // 🌟 檢查是否抽出最稀有卡牌（SAR、UR），若抽中則推播雲端歐皇廣播
+            // 🌟 檢查是否抽出最稀有卡牌（SAR、UR），若抽中則推播至全服廣播集合
             const topCards = currentPulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
             for (let rareCard of topCards) {
                 try {
-                    await setDoc(doc(db, "system", "broadcast"), {
+                    await addDoc(collection(db, "broadcasts"), {
                         playerName: currentUserDoc.name || "訓練家",
                         cardName: rareCard.name,
                         rarity: rareCard.rarity,
                         timestamp: Date.now()
                     });
                 } catch (e) {
-                    console.error("發送歐皇廣播失敗:", e);
+                    console.error("寫入歐皇戰報失敗:", e);
                 }
             }
 
@@ -1385,3 +1462,5 @@
     </script>
 </body>
 </html>
+
+```
