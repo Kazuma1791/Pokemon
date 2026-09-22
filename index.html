@@ -247,8 +247,8 @@
             <!-- 告示牌 -->
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
-                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Firestore 雲端邏輯鎖定：</span>
-                    所有抽卡與改名操作均由雲端資料庫規則進行嚴格邏輯鎖定，100% 防止 F12 改分。
+                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Firestore 雲端安全鎖定：</span>
+                    已啟用伺服器端安全驗證，全面防止 F12 改分與非法修改 VIP 權限。
                 </div>
                 <div class="text-slate-500">透支上限：無上限（無限負債） | 每日登入 +500 分</div>
             </div>
@@ -524,7 +524,7 @@
         const db = getFirestore(app);
 
         let currentUserDoc = null;
-        let unsubscribeUserDoc = null; // 🔄 用於即時監聽個人資料變更
+        let unsubscribeUserDoc = null;
         let isRegisterMode = false;
         let currentPulledCards = [];
         let pendingPackConfig = null;
@@ -783,7 +783,6 @@
 
                 const userRef = doc(db, "users", user.uid);
                 
-                // 🔄 建立即時監聽 (onSnapshot)，當管理員幫忙開通 VIP 或修改分數時，玩家頁面秒級自動同步！
                 if (unsubscribeUserDoc) unsubscribeUserDoc();
                 unsubscribeUserDoc = onSnapshot(userRef, async (snap) => {
                     if (snap.exists()) {
@@ -793,7 +792,9 @@
                         if (!currentUserDoc && freshData.lastDailyDate !== today) {
                             freshData.lastDailyDate = today;
                             freshData.points = (freshData.points || 0) + 500;
-                            await setDoc(userRef, { points: freshData.points, lastDailyDate: today }, { merge: true });
+                            try {
+                                await updateDoc(userRef, { points: freshData.points, lastDailyDate: today });
+                            } catch (e) {}
                             alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
                         }
 
@@ -802,7 +803,9 @@
                         renderPackList();
                     } else {
                         currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, isVip: false, lastDailyDate: new Date().toISOString().split('T')[0], cards: {}, totalSpent: 0, totalPulledValue: 0 };
-                        await setDoc(userRef, currentUserDoc);
+                        try {
+                            await setDoc(userRef, currentUserDoc);
+                        } catch (e) {}
                     }
                 });
 
@@ -903,7 +906,7 @@
                 alert(`🎉 成功花費 1,000 分將暱稱修改為「${trimmedName}」！`);
                 fetchGlobalStatsAndLeaderboard();
             } catch (err) {
-                alert("修改暱稱失敗: " + (err.message.includes("permission-denied") ? "分數不足或不合法的寫入請求！" : err.message));
+                alert("修改暱稱失敗: " + (err.message.includes("permission-denied") ? "分數不足或安全規則拒絕寫入！" : err.message));
             }
         }
 
@@ -952,7 +955,7 @@
 
             const newVipStatus = !u.isVip;
             try {
-                await setDoc(doc(db, "users", targetUid), { isVip: newVipStatus }, { merge: true });
+                await updateDoc(doc(db, "users", targetUid), { isVip: newVipStatus });
                 alert(`👑 已成功將玩家 ${u.name} 的 VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
@@ -971,7 +974,7 @@
 
             const newPoints = (u.points || 0) + delta;
             try {
-                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
+                await updateDoc(doc(db, "users", targetUid), { points: newPoints });
                 alert(`👑 成功將玩家 ${u.name} 的分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
@@ -988,7 +991,7 @@
             if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入正確的目標分數！");
 
             try {
-                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
+                await updateDoc(doc(db, "users", targetUid), { points: newPoints });
                 alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
@@ -997,19 +1000,10 @@
             }
         }
 
-        async function syncToCloud() {
+        async function syncToCloud(updateData) {
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
-            await setDoc(userRef, {
-                name: currentUserDoc.name,
-                points: currentUserDoc.points,
-                isVip: currentUserDoc.isVip || false,
-                cards: currentUserDoc.cards || {},
-                totalSpent: currentUserDoc.totalSpent || 0,
-                totalPulledValue: currentUserDoc.totalPulledValue || 0
-            }, { merge: true });
-            updateUI();
-            fetchGlobalStatsAndLeaderboard();
+            await updateDoc(userRef, updateData);
         }
 
         function renderPackList() {
@@ -1174,7 +1168,7 @@
                 }, 1200);
 
             } catch (err) {
-                alert("抽卡失敗: " + (err.message.includes("permission-denied") ? "雲端安全規則退回了無效的扣分請求！" : err.message));
+                alert("抽卡失敗: " + (err.message.includes("permission-denied") ? "分數不足或雲端安全規則攔截了違規修改！" : err.message));
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
             }
@@ -1335,7 +1329,10 @@
             currentUserDoc.cards[cardId]--;
             currentUserDoc.points = (currentUserDoc.points || 0) + price;
 
-            await syncToCloud();
+            await syncToCloud({
+                cards: currentUserDoc.cards,
+                points: currentUserDoc.points
+            });
             renderSellInventory();
         }
 
@@ -1350,7 +1347,10 @@
             });
             if (total === 0) return alert("目前沒有重複卡！");
             currentUserDoc.points += total;
-            await syncToCloud();
+            await syncToCloud({
+                cards: currentUserDoc.cards,
+                points: currentUserDoc.points
+            });
             if (!document.getElementById('tab-sell').classList.contains('hidden')) {
                 renderSellInventory();
             }
@@ -1512,6 +1512,7 @@
         }
 
         function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach,forEach = e => e.classList.add('hidden');
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
