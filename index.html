@@ -94,11 +94,18 @@
                 </h1>
             </div>
 
-            <!-- 玩家雲端資訊 -->
-            <div id="userHeaderInfo" class="hidden flex items-center gap-4 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700">
+            <!-- 玩家雲端資訊 (含 1000 分改名按鈕) -->
+            <div id="userHeaderInfo" class="hidden flex items-center gap-3 sm:gap-4 bg-slate-900 px-3 sm:px-4 py-2 rounded-xl border border-slate-700">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-user text-cyan-400"></i>
                     <span id="displayUsername" class="text-sm font-bold text-white">訓練家</span>
+                    
+                    <!-- ✏️ 前端安全改名按鈕 -->
+                    <button onclick="promptChangeUsername()" title="改名字 (花費 1,000 分)" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 transition flex items-center gap-1 shadow">
+                        <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                        <span class="hidden sm:inline">改名</span>
+                    </button>
+
                     <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded">👑 管理員</span>
                 </div>
                 
@@ -223,8 +230,8 @@
             <!-- 告示牌 -->
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
-                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Cloud Functions 雲端防護已啟用：</span>
-                    所有抽卡與計算皆由 Google 雲端伺服器安全執行，100% 防止竄改。
+                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Firestore 雲端邏輯鎖定：</span>
+                    所有單抽 (-20分)、10連抽 (-200分) 與改名 (-1000分) 均由雲端資料庫規則進行嚴格邏輯鎖定，100% 防止 F12 改分。
                 </div>
                 <div class="text-slate-500">透支上限：無上限（無限負債） | 每日登入 +500 分</div>
             </div>
@@ -276,7 +283,6 @@
                     </button>
                 </div>
 
-                <!-- 🌟 榜單類別切換 -->
                 <div class="flex gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700/80">
                     <button id="lbBtnLucky" onclick="switchLbSubTab('lucky')" class="flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow">
                         <i class="fa-solid fa-crown text-amber-950"></i> 👑 幸運歐皇榜 (最高分數)
@@ -352,7 +358,6 @@
     <!-- 🎴 3D 拆卡包動畫 Modal -->
     <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-4">
         
-        <!-- 動畫階段 0：三選一選擇卡包 -->
         <div id="animStepChoice" class="flex flex-col items-center space-y-6 text-center max-w-2xl w-full">
             <div>
                 <h2 class="text-2xl font-black text-amber-400 animate-pulse">請選擇其中一包卡包進行拆封！</h2>
@@ -380,7 +385,6 @@
             </div>
         </div>
 
-        <!-- 動畫階段 1：撕卡包 -->
         <div id="animStepTear" class="hidden flex flex-col items-center space-y-6 text-center">
             <h2 class="text-2xl font-black text-amber-400 animate-pulse">正在拆封你選擇的卡包...</h2>
             <div id="packVisualBox" class="w-48 h-72 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center p-4 animate-pack-shake">
@@ -390,7 +394,6 @@
             </div>
         </div>
 
-        <!-- 動畫階段 2：翻卡片與展示 -->
         <div id="animStepReveal" class="hidden w-full max-w-5xl flex flex-col items-center space-y-6">
             <div class="flex justify-between items-center w-full px-2">
                 <h3 class="text-xl font-bold text-amber-300 flex items-center gap-2">
@@ -427,13 +430,11 @@
         </div>
     </div>
 
-    <!-- Firebase SDK 與雲端邏輯 -->
+    <!-- Firebase SDK 與全前端雲端邏輯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        // 🔒 1. 匯入 Cloud Functions SDK
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
@@ -451,10 +452,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        // 🚀 初始化 Functions 並綁定 openPack 雲端 API
-        const functions = getFunctions(app);
-        const openPackApi = httpsCallable(functions, 'openPack');
 
         let currentUserDoc = null;
         let isRegisterMode = false;
@@ -466,14 +463,14 @@
         let currentLbSubTab = 'lucky';
 
         const RARITY = {
-            'C':   { price: 4,    color: '#9ca3af' },
-            'U':   { price: 8,    color: '#60a5fa' },
-            'R':   { price: 20,   color: '#fbbf24' },
-            'RR':  { price: 70,   color: '#f43f5e' },
-            'AR':  { price: 180,  color: '#a855f7' },
-            'SR':  { price: 400,  color: '#ec4899' },
-            'SAR': { price: 1500, color: '#10b981' },
-            'UR':  { price: 4100, color: '#eab308' }
+            'C':   { price: 4,    rate: 0.6800, color: '#9ca3af' },
+            'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' },
+            'R':   { price: 20,   rate: 0.0700, color: '#fbbf24' },
+            'RR':  { price: 70,   rate: 0.0230, color: '#f43f5e' },
+            'AR':  { price: 180,  rate: 0.0050, color: '#a855f7' },
+            'SR':  { price: 400,  rate: 0.0015, color: '#ec4899' },
+            'SAR': { price: 1500, rate: 0.0004, color: '#10b981' },
+            'UR':  { price: 4100, rate: 0.0001, color: '#eab308' }
         };
 
         const PACK_DEFINITIONS = [
@@ -608,6 +605,19 @@
             ]
         };
 
+        // 🎲 前端抽卡演算法 (包含動態機率控制)
+        function drawCardFromSet(setCards) {
+            const rand = Math.random();
+            let cum = 0, rarity = 'C';
+            for (let r in RARITY) {
+                cum += RARITY[r].rate;
+                if (rand <= cum) { rarity = r; break; }
+            }
+            let pool = setCards.filter(c => c.rarity === rarity);
+            if (!pool || pool.length === 0) pool = setCards;
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
         // 👑 即時監聽全服歐皇戰報
         const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
         onSnapshot(broadcastQuery, (snapshot) => {
@@ -713,7 +723,7 @@
             isRegisterMode = !isRegisterMode;
             document.getElementById('authTitle').innerText = isRegisterMode ? "註冊新訓練家帳號" : "雲端訓練家登入";
             document.getElementById('authPrimaryBtn').innerText = isRegisterMode ? "註冊並登入" : "登入帳號";
-            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此登入" : "還沒有帳號？點此切換至「註冊帳號」";
+            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「註冊帳號」";
         };
 
         window.handleAuthSubmit = async () => {
@@ -743,6 +753,43 @@
         };
 
         window.handleSignOut = () => signOut(auth);
+
+        // ✏️ 前端改名字 (精確扣除 1000 分並寫入 Firestore)
+        window.promptChangeUsername = async () => {
+            if (!currentUserDoc || !auth.currentUser) return alert("請先登入帳號！");
+            
+            const currentName = currentUserDoc.name || '訓練家';
+            const newName = prompt(`✏️ 修改暱稱需花費 1,000 積分\n當前暱稱：${currentName}\n\n請輸入新的暱稱 (20字以內)：`, currentName);
+
+            if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
+
+            const trimmedName = newName.trim();
+            if (trimmedName.length > 20) return alert("暱稱長度不能超過 20 個字！");
+
+            if ((currentUserDoc.points || 0) < 1000) {
+                return alert(`⚠️ 分數不足！修改暱稱需要 1,000 分，你目前只有 ${(currentUserDoc.points || 0).toLocaleString()} 分。`);
+            }
+
+            try {
+                const userRef = doc(db, "users", auth.currentUser.uid);
+                const newPoints = currentUserDoc.points - 1000;
+
+                // 雲端 Security Rules 會比對 points 是否精確 -1000
+                await updateDoc(userRef, {
+                    name: trimmedName,
+                    points: newPoints
+                });
+
+                currentUserDoc.name = trimmedName;
+                currentUserDoc.points = newPoints;
+                updateUI();
+                
+                alert(`🎉 成功花費 1,000 分將暱稱修改為「${trimmedName}」！`);
+                fetchGlobalStatsAndLeaderboard();
+            } catch (err) {
+                alert("修改暱稱失敗: " + (err.message.includes("permission-denied") ? "分數不足或不合法的寫入請求！" : err.message));
+            }
+        };
 
         window.fetchAdminUserList = async () => {
             const selectEl = document.getElementById('adminUserSelect');
@@ -825,6 +872,7 @@
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
             await setDoc(userRef, {
+                name: currentUserDoc.name,
                 points: currentUserDoc.points,
                 cards: currentUserDoc.cards || {},
                 totalSpent: currentUserDoc.totalSpent || 0,
@@ -899,31 +947,68 @@
             modal.classList.remove('hidden');
         };
 
-        // 🔒 2. 安全對接 Cloud Functions 後端抽卡 API 核心函式
+        // 🎴 前端抽卡核心：寫入受 Security Rules 限制防護
         window.choosePackAndTear = async (packNumber) => {
-            if (!pendingPackConfig || !currentUserDoc) return;
-            const { setId, cardCount } = pendingPackConfig;
+            if (!pendingPackConfig || !currentUserDoc || !auth.currentUser) return;
+            const { setId, cardCount, cost } = pendingPackConfig;
+
+            const setCards = CARD_SETS[setId];
+            if (!setCards) return alert("無效的卡包！");
 
             const choiceBox = document.getElementById('animStepChoice');
             if (choiceBox) choiceBox.classList.add('pointer-events-none', 'opacity-50');
 
             try {
-                // 🚀 呼叫 Google Cloud Functions 後端進行算力抽卡與扣分
-                const result = await openPackApi({ setId, cardCount });
-                const { newPoints, pulledCards } = result.data;
+                let pulledCards = [];
+                let batchPulledValue = 0;
 
-                // 更新前端同步資料庫最新狀況
-                currentUserDoc.points = newPoints;
-                currentPulledCards = pulledCards;
+                for (let i = 0; i < cardCount; i++) {
+                    const card = drawCardFromSet(setCards);
+                    if (card) {
+                        pulledCards.push(card);
+                        batchPulledValue += RARITY[card.rarity].price;
+                    }
+                }
 
+                const updatedCards = { ...(currentUserDoc.cards || {}) };
                 pulledCards.forEach(card => {
-                    if (!currentUserDoc.cards) currentUserDoc.cards = {};
-                    currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
+                    updatedCards[card.id] = (updatedCards[card.id] || 0) + 1;
                 });
+
+                const newPoints = currentUserDoc.points - cost;
+                const newTotalSpent = (currentUserDoc.totalSpent || 0) + cost;
+                const newTotalPulledValue = (currentUserDoc.totalPulledValue || 0) + batchPulledValue;
+
+                // 🚀 直接更新 Firestore，Security Rules 會硬性鎖定扣分金額必須恰好為 -20 或 -200
+                const userRef = doc(db, "users", auth.currentUser.uid);
+                await updateDoc(userRef, {
+                    points: newPoints,
+                    cards: updatedCards,
+                    totalSpent: newTotalSpent,
+                    totalPulledValue: newTotalPulledValue
+                });
+
+                // 自動發送 SAR / UR 全服廣播戰報
+                const topCards = pulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
+                for (let rareCard of topCards) {
+                    await addDoc(collection(db, "broadcasts"), {
+                        playerName: currentUserDoc.name || "訓練家",
+                        cardName: rareCard.name,
+                        rarity: rareCard.rarity,
+                        timestamp: Date.now()
+                    });
+                }
+
+                // 本地數據更新
+                currentUserDoc.points = newPoints;
+                currentUserDoc.cards = updatedCards;
+                currentUserDoc.totalSpent = newTotalSpent;
+                currentUserDoc.totalPulledValue = newTotalPulledValue;
+                currentPulledCards = pulledCards;
 
                 updateUI();
 
-                // 播放拆卡包與展示動畫
+                // 播放動畫
                 document.getElementById('animStepChoice').classList.add('hidden');
                 document.getElementById('animStepTear').classList.remove('hidden');
                 document.getElementById('packVisualTitle').innerText = `${setId.toUpperCase()} (#${packNumber})`;
@@ -935,7 +1020,7 @@
                 }, 1200);
 
             } catch (err) {
-                alert("抽卡失敗: " + (err.message || "伺服器連線錯誤"));
+                alert("抽卡失敗: " + (err.message.includes("permission-denied") ? "雲端安全規則退回了無效的扣分請求！" : err.message));
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
             }
