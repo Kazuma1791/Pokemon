@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - 9大全系列卡包版</title>
+    <title>寶可夢卡牌模擬器 - 店鋪55:45勝率版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -23,6 +23,43 @@
 
         .card-locked {
             filter: grayscale(100%) brightness(0.3);
+        }
+
+        /* 3D 翻牌動畫樣式 */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        @keyframes packShake {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            20% { transform: rotate(-5deg) scale(1.05); }
+            40% { transform: rotate(5deg) scale(1.05); }
+            60% { transform: rotate(-3deg) scale(1.08); }
+            80% { transform: rotate(3deg) scale(1.08); }
+        }
+        .animate-pack-shake {
+            animation: packShake 0.6s ease-in-out infinite;
         }
     </style>
 </head>
@@ -112,7 +149,7 @@
 
             <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-xs text-slate-400 font-bold block">🏪 卡店累積營運損益</span>
+                    <span class="text-xs text-slate-400 font-bold block">🏪 卡店累積營運損益 (勝率 55%)</span>
                     <span id="statShopLoss" class="text-2xl font-black text-red-400">--</span>
                     <span class="text-xs text-slate-500 ml-1">分</span>
                 </div>
@@ -141,8 +178,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('m6a', 1)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-2 rounded-xl text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('m6a', 10)" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black py-2 rounded-xl text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('m6a', 1)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-2 rounded-xl text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('m6a', 10)" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black py-2 rounded-xl text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -160,8 +197,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('sv2a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('sv2a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('sv2a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('sv2a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -179,8 +216,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('sv3', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('sv3', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('sv3', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('sv3', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -198,8 +235,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('sv4a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('sv4a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('sv4a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('sv4a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -217,8 +254,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('sv5a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('sv5a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('sv5a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('sv5a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -236,8 +273,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('sv6', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('sv6', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('sv6', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('sv6', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -255,8 +292,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('sv7', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('sv7', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('sv7', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('sv7', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -274,8 +311,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('sv8', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('sv8', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('sv8', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('sv8', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -293,8 +330,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openPack('s12a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (100分)</button>
-                        <button onclick="openPack('s12a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (1000分)</button>
+                        <button onclick="triggerPackAnimation('s12a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="triggerPackAnimation('s12a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -303,17 +340,17 @@
             <!-- 告示牌 -->
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
-                    <span class="font-bold text-amber-400"><i class="fa-solid fa-building-columns mr-1"></i>賒帳機制：</span>
-                    允許透支分數抽卡（上限 <span class="text-red-400 font-bold">-10,000 分</span>）。負分時可用賣卡或每日 +500 分還債！
+                    <span class="font-bold text-amber-400"><i class="fa-solid fa-scale-balanced mr-1"></i>期望值平衡：</span>
+                    系統精準維護 **店鋪 55% : 玩家 45%** 的收益勝率（每抽平均卡價 9 分 / 成本 20 分）。
                 </div>
-                <div class="text-slate-500">每日跨天自動領取補給</div>
+                <div class="text-slate-500">透支上限 -10,000 分 | 每日登入 +500 分</div>
             </div>
 
-            <!-- 抽卡結果 -->
+            <!-- 主頁抽卡紀錄區域 -->
             <div id="pullResultsArea" class="hidden space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-2">
                     <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-sparkles"></i> 獲得卡牌清單
+                        <i class="fa-solid fa-sparkles"></i> 上次獲得卡牌紀錄
                     </h3>
                     <button onclick="sellAllDuplicates()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg font-bold text-white shadow">一鍵售出重複卡</button>
                 </div>
@@ -404,6 +441,40 @@
 
     </main>
 
+    <!-- 🎴 3D 拆卡包動畫 Modal -->
+    <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-4">
+        
+        <!-- 動畫階段 1：撕卡包 -->
+        <div id="animStepTear" class="flex flex-col items-center space-y-6 text-center">
+            <h2 class="text-2xl font-black text-amber-400 animate-pulse">正在準備擴充卡包...</h2>
+            <div id="packVisualBox" class="w-48 h-72 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center p-4 cursor-pointer hover:scale-105 transition animate-pack-shake">
+                <i class="fa-solid fa-box-open text-6xl text-slate-950 mb-3"></i>
+                <span id="packVisualTitle" class="text-slate-950 font-black text-lg">POKÉMON</span>
+                <span class="text-[10px] text-slate-900 font-bold tracking-widest mt-1">CLICK TO UNBOX</span>
+            </div>
+            <p class="text-xs text-slate-400">點擊卡包或等待自動拆封</p>
+        </div>
+
+        <!-- 動畫階段 2：翻卡片與展示 -->
+        <div id="animStepReveal" class="hidden w-full max-w-5xl flex flex-col items-center space-y-6">
+            <div class="flex justify-between items-center w-full px-2">
+                <h3 class="text-xl font-bold text-amber-300 flex items-center gap-2">
+                    <i class="fa-solid fa-sparkles text-yellow-400"></i> 開卡展示 (點擊卡牌翻面)
+                </h3>
+                <button onclick="flipAllCards()" class="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 一鍵全部翻開
+                </button>
+            </div>
+
+            <!-- 卡牌展示網格 -->
+            <div id="modalCardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-h-[70vh] overflow-y-auto p-2"></div>
+
+            <button onclick="closePackModal()" id="finishUnboxBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-8 py-3 rounded-2xl text-sm shadow-xl hover:scale-105 transition">
+                收下卡牌並結束
+            </button>
+        </div>
+    </div>
+
     <!-- 登入 Modal -->
     <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
@@ -448,6 +519,7 @@
 
         let currentUserDoc = null;
         let isRegisterMode = false;
+        let currentPulledCards = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -553,15 +625,16 @@
             fetchGlobalStatsAndLeaderboard();
         }
 
+        // 精準調整：每張卡牌回收價值調至期望值 = 9.00 分 (單抽成本 20 分 => 勝率 55:45)
         const RARITY = {
-            'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' },
-            'U':   { price: 10,   rate: 0.2200, color: '#60a5fa' },
-            'R':   { price: 25,   rate: 0.0700, color: '#fbbf24' },
-            'RR':  { price: 80,   rate: 0.0230, color: '#f43f5e' },
-            'AR':  { price: 200,  rate: 0.0050, color: '#a855f7' },
-            'SR':  { price: 500,  rate: 0.0015, color: '#ec4899' },
-            'SAR': { price: 1500, rate: 0.0004, color: '#10b981' },
-            'UR':  { price: 3000, rate: 0.0001, color: '#eab308' }
+            'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' }, // EV = 2.04
+            'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' }, // EV = 1.76
+            'R':   { price: 20,   rate: 0.0700, color: '#fbbf24' }, // EV = 1.40
+            'RR':  { price: 70,   rate: 0.0230, color: '#f43f5e' }, // EV = 1.61
+            'AR':  { price: 180,  rate: 0.0050, color: '#a855f7' }, // EV = 0.90
+            'SR':  { price: 400,  rate: 0.0015, color: '#ec4899' }, // EV = 0.60
+            'SAR': { price: 1200, rate: 0.0004, color: '#10b981' }, // EV = 0.48
+            'UR':  { price: 2100, rate: 0.0001, color: '#eab308' }  // EV = 0.21 -> 總和 = 9.00 分
         };
 
         // 包含 9 大熱門卡包的完整資料庫
@@ -707,51 +780,62 @@
             }
         }
 
-        window.openPack = async (setId, count) => {
+        // 🎴 觸發拆卡包動畫 modal
+        window.triggerPackAnimation = async (setId, cardCount) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
-            const cost = count * 100;
+            
+            // 單抽 (1張) 20分，10連抽 (10張) 200分
+            const cost = cardCount * 20;
             const currentPoints = currentUserDoc.points || 0;
 
             if (currentPoints - cost < MAX_DEBT_LIMIT) {
                 return alert(`⚠️ 賒帳金額已達極限 (${MAX_DEBT_LIMIT} 分)！\n無法繼續透支，請先在「出售卡牌」賣卡換分！`);
             }
 
-            try {
-                currentUserDoc.points = currentPoints - cost;
-                const pulled = [];
-                const set = CARD_SETS[setId];
+            // 扣除分數並抽取卡牌
+            currentUserDoc.points = currentPoints - cost;
+            const set = CARD_SETS[setId];
+            if (!set || set.length === 0) return alert("無效的卡包！");
 
-                if (!set || set.length === 0) return alert("無效的卡包！");
-
-                for (let i = 0; i < count * 5; i++) {
-                    const rand = Math.random();
-                    let cum = 0, rarity = 'C';
-                    for (let r in RARITY) {
-                        cum += RARITY[r].rate;
-                        if (rand <= cum) { rarity = r; break; }
-                    }
-                    
-                    let pool = set.filter(c => c.rarity === rarity);
-                    if (!pool || pool.length === 0) pool = set;
-
-                    const card = pool[Math.floor(Math.random() * pool.length)];
-                    if (card) {
-                        if (!currentUserDoc.cards) currentUserDoc.cards = {};
-                        currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
-                        pulled.push(card);
-                    }
+            currentPulledCards = [];
+            for (let i = 0; i < cardCount; i++) {
+                const rand = Math.random();
+                let cum = 0, rarity = 'C';
+                for (let r in RARITY) {
+                    cum += RARITY[r].rate;
+                    if (rand <= cum) { rarity = r; break; }
                 }
+                
+                let pool = set.filter(c => c.rarity === rarity);
+                if (!pool || pool.length === 0) pool = set;
 
-                await syncToCloud();
-                renderResults(pulled);
-
-                if (pulled.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
-                    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+                const card = pool[Math.floor(Math.random() * pool.length)];
+                if (card) {
+                    if (!currentUserDoc.cards) currentUserDoc.cards = {};
+                    currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
+                    currentPulledCards.push(card);
                 }
-            } catch (err) {
-                console.error("抽卡失敗:", err);
-                alert("抽卡過程發生錯誤: " + err.message);
             }
+
+            await syncToCloud();
+
+            // 開啟拆包 Modal 動畫
+            const modal = document.getElementById('packModal');
+            const animTear = document.getElementById('animStepTear');
+            const animReveal = document.getElementById('animStepReveal');
+
+            modal.classList.remove('hidden');
+            animTear.classList.remove('hidden');
+            animReveal.classList.add('hidden');
+
+            document.getElementById('packVisualTitle').innerText = setId.toUpperCase();
+
+            // 1.2 秒後自動撕卡包並呈現卡片
+            setTimeout(() => {
+                animTear.classList.add('hidden');
+                animReveal.classList.remove('hidden');
+                renderModalFlipCards(currentPulledCards);
+            }, 1200);
         };
 
         function getImgSrcWithFallback(card) {
@@ -759,9 +843,60 @@
             return `src="${card.image}" onerror="this.onerror=null;this.src='${fallback}';"`;
         }
 
+        // 渲染 Modal 內的 3D 翻牌列表
+        function renderModalFlipCards(cards) {
+            const grid = document.getElementById('modalCardsGrid');
+            grid.innerHTML = cards.map((c, idx) => `
+                <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer" onclick="flipCard(${idx})">
+                    <div id="cardInner-${idx}" class="card-inner">
+                        <!-- 卡背 (預設正面顯示) -->
+                        <div class="card-front bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center p-2 shadow-2xl">
+                            <i class="fa-solid fa-shield-cat text-4xl text-amber-400 mb-2 animate-bounce"></i>
+                            <span class="text-xs font-black text-amber-300">POKÉMON</span>
+                            <span class="text-[9px] text-slate-500 mt-1">點擊翻牌</span>
+                        </div>
+                        <!-- 卡面正面 (翻轉後) -->
+                        <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
+                            <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg shadow-md">
+                            <span class="text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
+                            <div class="flex items-center gap-1 mt-0.5">
+                                <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
+                                <span class="text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
+                                    <i class="fa-solid fa-gem text-cyan-400 text-[8px]"></i>${RARITY[c.rarity].price}分
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 若有高稀有度卡牌，發放慶祝彩花
+            if (cards.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+            }
+        }
+
+        window.flipCard = (idx) => {
+            const el = document.getElementById(`cardInner-${idx}`);
+            if (el) el.classList.toggle('flipped');
+        };
+
+        window.flipAllCards = () => {
+            currentPulledCards.forEach((_, idx) => {
+                const el = document.getElementById(`cardInner-${idx}`);
+                if (el) el.classList.add('flipped');
+            });
+        };
+
+        window.closePackModal = () => {
+            document.getElementById('packModal').classList.add('hidden');
+            renderResults(currentPulledCards);
+        };
+
         function renderResults(cards) {
             const area = document.getElementById('pullResultsArea');
             const grid = document.getElementById('cardsGrid');
+            if (!area || !grid || cards.length === 0) return;
             area.classList.remove('hidden');
             grid.innerHTML = cards.map(c => `
                 <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center hover:scale-105 transition shadow-lg">
