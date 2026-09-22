@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - 營運看板版</title>
+    <title>寶可夢卡牌模擬器 - M6a 30th CELEBRATION 官方版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -69,7 +69,7 @@
                 </h1>
             </div>
 
-            <!-- 玩家雲端資訊 (含負分警告標籤) -->
+            <!-- 玩家雲端資訊 -->
             <div id="userHeaderInfo" class="hidden flex items-center gap-4 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-user text-cyan-400"></i>
@@ -154,18 +154,18 @@
         <section id="tab-pack" class="tab-content space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
-                <!-- M6a 超級進化擴充包 -->
+                <!-- M6a 超級進化擴充包 (香港官方 30th CELEBRATION) -->
                 <div class="bg-gradient-to-br from-slate-800 via-amber-950 to-purple-950 p-5 rounded-2xl border border-amber-400/50 shadow-2xl flex flex-col justify-between space-y-4 ring-2 ring-amber-500/20">
                     <div class="flex gap-4 items-center">
                         <div class="w-24 h-36 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/40 shrink-0">
                             <span class="text-xs font-black bg-slate-950/80 px-2 py-0.5 rounded-full text-amber-300 mb-1 border border-amber-400">M6a</span>
                             <i class="fa-solid fa-crown text-3xl text-slate-900 my-1 animate-bounce"></i>
-                            <span class="text-[10px] font-black text-slate-950 uppercase tracking-tighter">超級進化</span>
+                            <span class="text-[10px] font-black text-slate-950 uppercase tracking-tighter">30th Celebration</span>
                         </div>
                         <div>
-                            <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">HK 官方最新</span>
-                            <h3 class="text-base font-bold text-amber-300 mt-1">超級進化擴充包 M6a</h3>
-                            <p class="text-xs text-slate-300 mt-1">收錄超級噴火龍X ex、夢幻 ex、超級耿鬼 ex 與多款 SAR 密卡！</p>
+                            <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">HK 官方資料</span>
+                            <h3 class="text-base font-bold text-amber-300 mt-1">擴充包「30th CELEBRATION」M6a</h3>
+                            <p class="text-xs text-slate-300 mt-1">收錄 FUR 夢幻 ex、超夢 ex、皮卡丘 ex SAR 與 30 週年經典卡牌！</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -258,7 +258,7 @@
         <section id="tab-binder" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
                 <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-bold text-white">
-                    <option value="m6a">超級進化 M6a (全 10 張)</option>
+                    <option value="m6a">M6a 30th CELEBRATION (全 16 張)</option>
                     <option value="sv2a">SV2a 寶可夢 151 (全 16 張)</option>
                     <option value="sv5a">SV5a 狂野意志 (全 12 張)</option>
                     <option value="sv6">SV6 變幻面具 (全 10 張)</option>
@@ -359,7 +359,7 @@
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const MAX_DEBT_LIMIT = -10000;
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/1_hires.png";
-        const INITIAL_GIFT_POINTS = 1000; // 每位創號玩家初始資金
+        const INITIAL_GIFT_POINTS = 1000;
 
         const firebaseConfig = {
             apiKey: "AIzaSyALGt-dWSJLf4Qa03AWoFo22u87LMFErIE",
@@ -492,18 +492,25 @@
             'UR':  { price: 3000, rate: 0.0001, color: '#eab308' }
         };
 
+        // 來自香港寶可夢官網 (asia.pokemon-card.com/hk) M6a 30th CELEBRATION 完整卡牌池
         const CARD_SETS = {
             'm6a': [
-                { id: 'm6a-001', name: '妙蛙種子', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008548.png', fallback: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
-                { id: 'm6a-002', name: '小火龍', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008551.png', fallback: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
-                { id: 'm6a-003', name: '傑尼龜', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008554.png', fallback: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
-                { id: 'm6a-004', name: '皮卡丘', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008572.png', fallback: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
-                { id: 'm6a-005', name: '超夢', rarity: 'R', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008697.png', fallback: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
-                { id: 'm6a-006', name: '超級噴火龍X ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008553.png', fallback: 'https://images.pokemontcg.io/xy1/12_hires.png' },
-                { id: 'm6a-007', name: '超級耿鬼 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008641.png', fallback: 'https://images.pokemontcg.io/xy4/35_hires.png' },
-                { id: 'm6a-008', name: '超級沙奈朵 ex', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008658.png', fallback: 'https://images.pokemontcg.io/xy11/79_hires.png' },
-                { id: 'm6a-009', name: '夢幻 ex', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008752.png', fallback: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
-                { id: 'm6a-010', name: '超夢 ex', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008754.png', fallback: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' }
+                { id: 'm6a-001', name: '喵喵 (30th)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008548.png', fallback: 'https://images.pokemontcg.io/cel25/11_hires.png' },
+                { id: 'm6a-002', name: '洗翠索羅亞 (30th)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008551.png', fallback: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
+                { id: 'm6a-003', name: '寶寶丁 (30th)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008554.png', fallback: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
+                { id: 'm6a-004', name: '洛奇亞 (30th)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008572.png', fallback: 'https://images.pokemontcg.io/cel25/22_hires.png' },
+                { id: 'm6a-005', name: '索爾迦雷歐 (30th)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008575.png', fallback: 'https://images.pokemontcg.io/cel25/21_hires.png' },
+                { id: 'm6a-006', name: '蒼響 (30th)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008580.png', fallback: 'https://images.pokemontcg.io/cel25/16_hires.png' },
+                { id: 'm6a-007', name: '基拉祈 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008641.png', fallback: 'https://images.pokemontcg.io/xy4/35_hires.png' },
+                { id: 'm6a-008', name: '暴飛龍 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008658.png', fallback: 'https://images.pokemontcg.io/xy11/79_hires.png' },
+                { id: 'm6a-009', name: '顫弦蠑螈 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008680.png', fallback: 'https://images.pokemontcg.io/swsh45/18_hires.png' },
+                { id: 'm6a-010', name: '莫魯貝可 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008697.png', fallback: 'https://images.pokemontcg.io/swsh45/35_hires.png' },
+                { id: 'm6a-011', name: '暴飛龍 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008733.png', fallback: 'https://images.pokemontcg.io/sv3pt5/198_hires.png' },
+                { id: 'm6a-012', name: '耿鬼 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008735.png', fallback: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
+                { id: 'm6a-013', name: '皮卡丘 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008740.png', fallback: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
+                { id: 'm6a-014', name: '夢幻 ex FUR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008752.png', fallback: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
+                { id: 'm6a-015', name: '超夢 ex FUR', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008754.png', fallback: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' },
+                { id: 'm6a-016', name: '皮卡丘 30th 周年金色紀念卡', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00008760.png', fallback: 'https://images.pokemontcg.io/cel25/25_hires.png' }
             ],
             'sv2a': [
                 { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
@@ -777,9 +784,8 @@
                 const userCount = usersList.length;
                 const totalInitialCapital = userCount * INITIAL_GIFT_POINTS;
                 const netPlayerProfit = totalCurrentPoints - totalInitialCapital;
-                const shopNetLoss = netPlayerProfit; // 玩家淨收益即為卡店淨虧損
+                const shopNetLoss = netPlayerProfit;
 
-                // 更新頂部營運看板數據
                 document.getElementById('statTotalUsers').innerText = userCount.toLocaleString();
                 
                 const profitEl = document.getElementById('statPlayerProfit');
@@ -800,7 +806,6 @@
                     lossIconEl.innerHTML = `<i class="fa-solid fa-building-circle-check"></i>`;
                 }
 
-                // 按分數高低排序排行榜
                 usersList.sort((a, b) => b.points - a.points);
 
                 if (listEl) {
