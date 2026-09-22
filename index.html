@@ -223,8 +223,8 @@
             <!-- 告示牌 -->
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
-                    <span class="font-bold text-amber-400"><i class="fa-solid fa-scale-balanced mr-1"></i>全服動態平衡機制：</span>
-                    系統根據全服玩家總體戰況即時微調卡池熱度，維護永續營運環境。
+                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Cloud Functions 雲端防護已啟用：</span>
+                    所有抽卡與計算皆由 Google 雲端伺服器安全執行，100% 防止竄改。
                 </div>
                 <div class="text-slate-500">透支上限：無上限（無限負債） | 每日登入 +500 分</div>
             </div>
@@ -261,7 +261,7 @@
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
         </section>
 
-        <!-- TAB 4: 🏆 全服排行榜 (含幸運歐皇榜與非洲黑人榜切換) -->
+        <!-- TAB 4: 🏆 全服排行榜 -->
         <section id="tab-leaderboard" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/30 shadow-xl space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-3 gap-3">
@@ -276,7 +276,7 @@
                     </button>
                 </div>
 
-                <!-- 🌟 榜單類別切換按鈕 (幸運歐皇榜 vs 非洲黑人榜) -->
+                <!-- 🌟 榜單類別切換 -->
                 <div class="flex gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700/80">
                     <button id="lbBtnLucky" onclick="switchLbSubTab('lucky')" class="flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow">
                         <i class="fa-solid fa-crown text-amber-950"></i> 👑 幸運歐皇榜 (最高分數)
@@ -344,15 +344,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                    <h4 class="font-bold text-sm text-slate-300">備用：輸入指定 UID 修改分數</h4>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <input type="text" id="targetUserUid" placeholder="貼上玩家的 Firebase UID..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
-                        <input type="number" id="targetUserPoints" placeholder="設定目標分數" class="w-full sm:w-48 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
-                        <button onclick="adminSetPlayerPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-6 py-2 rounded-xl text-sm font-bold text-white shadow">替換分數</button>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -410,7 +401,6 @@
                 </button>
             </div>
 
-            <!-- 卡牌展示網格 -->
             <div id="modalCardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-h-[70vh] overflow-y-auto p-2"></div>
 
             <button onclick="closePackModal()" id="finishUnboxBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-8 py-3 rounded-2xl text-sm shadow-xl hover:scale-105 transition">
@@ -437,11 +427,13 @@
         </div>
     </div>
 
-    <!-- Firebase SDK 與邏輯 -->
+    <!-- Firebase SDK 與雲端邏輯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // 🔒 1. 匯入 Cloud Functions SDK
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
@@ -459,6 +451,10 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
+        // 🚀 初始化 Functions 並綁定 openPack 雲端 API
+        const functions = getFunctions(app);
+        const openPackApi = httpsCallable(functions, 'openPack');
 
         let currentUserDoc = null;
         let isRegisterMode = false;
@@ -467,9 +463,19 @@
         let allUsersCache = [];
         let broadcastTimer = null;
         let lastBroadcastTimestamp = Date.now();
-        let currentLbSubTab = 'lucky'; // 'lucky' | 'unlucky'
+        let currentLbSubTab = 'lucky';
 
-        // 📦 卡包定義檔
+        const RARITY = {
+            'C':   { price: 4,    color: '#9ca3af' },
+            'U':   { price: 8,    color: '#60a5fa' },
+            'R':   { price: 20,   color: '#fbbf24' },
+            'RR':  { price: 70,   color: '#f43f5e' },
+            'AR':  { price: 180,  color: '#a855f7' },
+            'SR':  { price: 400,  color: '#ec4899' },
+            'SAR': { price: 1500, color: '#10b981' },
+            'UR':  { price: 4100, color: '#eab308' }
+        };
+
         const PACK_DEFINITIONS = [
             { id: 'm6a', title: '「30th CELEBRATION」M6a', tag: '30th', desc: 'FUR 夢幻 ex、超夢 ex 與皮卡丘 ex 晝夜 SAR！', bg: 'from-slate-800 via-amber-950 to-purple-950', border: 'border-amber-400/50', icon: 'fa-crown', badge: '限定紀念包' },
             { id: 'sv2a', title: '強化擴充包「寶可夢 151」', tag: '151', desc: '收錄經典 151 陣容！噴火龍 ex SAR 與超夢！', bg: 'from-slate-800 to-indigo-950', border: 'border-indigo-500/30', icon: 'fa-dragon', badge: '熱門擴充包' },
@@ -482,7 +488,127 @@
             { id: 's12a', title: '高級包「VSTAR 宇宙」', tag: 'VSTAR', desc: '阿爾宙斯、騎拉帝納 UR 神級繪圖！', bg: 'from-slate-800 to-indigo-950', border: 'border-purple-500/30', icon: 'fa-shuttle-space', badge: '經典高級包' }
         ];
 
-        // 👑 即時監聽全服歐皇戰報紀錄庫
+        const CARD_SETS = {
+            'm6a': [
+                { id: 'm6a-017', name: '皮卡丘 (30th 繪師卡)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019746.png' },
+                { id: 'm6a-047', name: '皮卡丘 ex (日間篇)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019661.png' },
+                { id: 'm6a-048', name: '皮卡丘 ex (夜間篇)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019662.png' },
+                { id: 'm6a-054', name: '超夢 ex', rarity: 'R', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019669.png' },
+                { id: 'm6a-055', name: '基拉祈 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019695.png' },
+                { id: 'm6a-057', name: '夢幻 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019671.png' },
+                { id: 'm6a-076', name: '耿鬼 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019690.png' },
+                { id: 'm6a-081', name: '仙子伊布 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019673.png' },
+                { id: 'm6a-109', name: '賽富豪 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019732.png' },
+                { id: 'm6a-110', name: '喵喵 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019733.png' },
+                { id: 'm6a-126', name: '皮卡丘 ex SAR (日間祭典)', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019739.png' },
+                { id: 'm6a-127', name: '皮卡丘 ex SAR (夜間煙火)', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019740.png' },
+                { id: 'm6a-128', name: '甲賀忍蛙 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019738.png' },
+                { id: 'm6a-131', name: '基拉祈 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019742.png' },
+                { id: 'm6a-134', name: '超夢 ex FUR', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019744.png' },
+                { id: 'm6a-135', name: '夢幻 ex FUR', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019745.png' }
+            ],
+            'sv2a': [
+                { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
+                { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
+                { id: 'sv2a-007', name: '傑尼龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
+                { id: 'sv2a-025', name: '皮卡丘', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'sv2a-054', name: '可達鴨', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/54_hires.png' },
+                { id: 'sv2a-094', name: '耿鬼', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/94_hires.png' },
+                { id: 'sv2a-150', name: '超夢', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'sv2a-003', name: '妙蛙花 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/3_hires.png' },
+                { id: 'sv2a-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/6_hires.png' },
+                { id: 'sv2a-009', name: '水箭龜 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/9_hires.png' },
+                { id: 'sv2a-166', name: '妙蛙種子 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/166_hires.png' },
+                { id: 'sv2a-173', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
+                { id: 'sv2a-188', name: '莉佳的招待 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3pt5/196_hires.png' },
+                { id: 'sv2a-198', name: '妙蛙花 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/198_hires.png' },
+                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
+                { id: 'sv2a-205', name: '夢幻 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' }
+            ],
+            'sv3': [
+                { id: 'sv3-001', name: '波波', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/106_hires.png' },
+                { id: 'sv3-002', name: '刺甲貝', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/28_hires.png' },
+                { id: 'sv3-003', name: '戴魯比', rarity: 'U', image: 'https://images.pokemontcg.io/sv3/113_hires.png' },
+                { id: 'sv3-004', name: '班基拉斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/66_hires.png' },
+                { id: 'sv3-005', name: '大比鳥 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/108_hires.png' },
+                { id: 'sv3-006', name: '惡體系噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/125_hires.png' },
+                { id: 'sv3-007', name: '波琵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3/220_hires.png' },
+                { id: 'sv3-008', name: '惡體系噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3/223_hires.png' },
+                { id: 'sv3-009', name: '惡體系噴火龍 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3/228_hires.png' }
+            ],
+            'sv4a': [
+                { id: 'sv4a-001', name: '色違榛果球', rarity: 'C', image: 'https://images.pokemontcg.io/sv4pt5/1_hires.png' },
+                { id: 'sv4a-002', name: '色違小火龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv4pt5/109_hires.png' },
+                { id: 'sv4a-003', name: '色違傑尼龜', rarity: 'U', image: 'https://images.pokemontcg.io/sv4pt5/112_hires.png' },
+                { id: 'sv4a-004', name: '色違皮卡丘', rarity: 'R', image: 'https://images.pokemontcg.io/sv4pt5/131_hires.png' },
+                { id: 'sv4a-005', name: '故勒頓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv4pt5/54_hires.png' },
+                { id: 'sv4a-006', name: '密勒頓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv4pt5/68_hires.png' },
+                { id: 'sv4a-007', name: '色違噴火龍 ex SSR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv4pt5/234_hires.png' },
+                { id: 'sv4a-008', name: '色違夢幻 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv4pt5/232_hires.png' },
+                { id: 'sv4a-009', name: '奇樹 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv4pt5/238_hires.png' },
+                { id: 'sv4a-010', name: '黃金故勒頓 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv4pt5/244_hires.png' }
+            ],
+            'sv5a': [
+                { id: 'sv5a-001', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/1_hires.png' },
+                { id: 'sv5a-026', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/26_hires.png' },
+                { id: 'sv5a-061', name: '頭蓋龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv5/61_hires.png' },
+                { id: 'sv5a-067', name: '達克萊伊', rarity: 'R', image: 'https://images.pokemontcg.io/sv5/67_hires.png' },
+                { id: 'sv5a-038', name: '破空焰 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/38_hires.png' },
+                { id: 'sv5a-123', name: '猛雷鼓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/123_hires.png' },
+                { id: 'sv5a-154', name: '鐵頭殼 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/81_hires.png' },
+                { id: 'sv5a-155', name: '鐵磐岩 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/99_hires.png' },
+                { id: 'sv5a-160', name: '暗黑誓約 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv5/199_hires.png' },
+                { id: 'sv5a-161', name: '猛雷鼓 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/208_hires.png' },
+                { id: 'sv5a-162', name: '破空焰 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/204_hires.png' },
+                { id: 'sv5a-165', name: '英雄披風 ACE', rarity: 'UR', image: 'https://images.pokemontcg.io/sv5/152_hires.png' }
+            ],
+            'sv6': [
+                { id: 'sv6-025', name: '厄鬼椪 碧草面具', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
+                { id: 'sv6-079', name: '多龍梅西亞', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/79_hires.png' },
+                { id: 'sv6-054', name: '奇魯莉安', rarity: 'U', image: 'https://images.pokemontcg.io/sv6/54_hires.png' },
+                { id: 'sv6-112', name: '厄鬼椪 礎石面具 ex', rarity: 'R', image: 'https://images.pokemontcg.io/sv6/112_hires.png' },
+                { id: 'sv6-026', name: '厄鬼椪 碧草面具 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
+                { id: 'sv6-081', name: '多龍巴魯托 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/81_hires.png' },
+                { id: 'sv6-158', name: '厄鬼椪 水井面具 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv6/182_hires.png' },
+                { id: 'sv6-165', name: '丹帝 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv6/204_hires.png' },
+                { id: 'sv6-168', name: '厄鬼椪 碧草面具 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv6/211_hires.png' },
+                { id: 'sv6-172', name: '厄鬼椪 碧草面具 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv6/221_hires.png' }
+            ],
+            'sv7': [
+                { id: 'sv7-001', name: '刺角海膽', rarity: 'C', image: 'https://images.pokemontcg.io/sv7/40_hires.png' },
+                { id: 'sv7-002', name: '咕咕', rarity: 'C', image: 'https://images.pokemontcg.io/sv7/116_hires.png' },
+                { id: 'sv7-003', name: '零之大空洞', rarity: 'U', image: 'https://images.pokemontcg.io/sv7/138_hires.png' },
+                { id: 'sv7-004', name: '蜜集大蛇 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv7/14_hires.png' },
+                { id: 'sv7-005', name: '太晶太樂巴戈斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv7/128_hires.png' },
+                { id: 'sv7-006', name: '蜜集大蛇 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv7/167_hires.png' },
+                { id: 'sv7-007', name: '太晶太樂巴戈斯 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv7/173_hires.png' },
+                { id: 'sv7-008', name: '水晶太晶 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv7/175_hires.png' }
+            ],
+            'sv8': [
+                { id: 'sv8-001', name: '小磁怪', rarity: 'C', image: 'https://images.pokemontcg.io/sv8/30_hires.png' },
+                { id: 'sv8-002', name: '托戈德瑪爾', rarity: 'C', image: 'https://images.pokemontcg.io/sv8/36_hires.png' },
+                { id: 'sv8-003', name: '奇樹的伸展', rarity: 'U', image: 'https://images.pokemontcg.io/sv8/102_hires.png' },
+                { id: 'sv8-004', name: '美納斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv8/26_hires.png' },
+                { id: 'sv8-005', name: '太晶皮卡丘 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv8/32_hires.png' },
+                { id: 'sv8-006', name: '美納斯 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv8/131_hires.png' },
+                { id: 'sv8-007', name: '太晶皮卡丘 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv8/132_hires.png' },
+                { id: 'sv8-008', name: '太晶皮卡丘 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv8/135_hires.png' }
+            ],
+            's12a': [
+                { id: 's12a-001', name: '飛天螳螂 AR', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/GG01_hires.png' },
+                { id: 's12a-002', name: '皮卡丘 AR', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/GG30_hires.png' },
+                { id: 's12a-003', name: '立向葵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/150_hires.png' },
+                { id: 's12a-004', name: '噴火龍 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG05_hires.png' },
+                { id: 's12a-005', name: '路卡利歐 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG10_hires.png' },
+                { id: 's12a-006', name: '超夢 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG44_hires.png' },
+                { id: 's12a-007', name: '帕路奇亞 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG67_hires.png' },
+                { id: 's12a-008', name: '帝牙盧卡 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG68_hires.png' },
+                { id: 's12a-009', name: '騎拉帝納 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG69_hires.png' },
+                { id: 's12a-010', name: '阿爾宙斯 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG70_hires.png' }
+            ]
+        };
+
+        // 👑 即時監聽全服歐皇戰報
         const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
         onSnapshot(broadcastQuery, (snapshot) => {
             const listEl = document.getElementById('broadcastHistoryList');
@@ -618,21 +744,6 @@
 
         window.handleSignOut = () => signOut(auth);
 
-        window.adminSetPlayerPoints = async () => {
-            const targetUid = document.getElementById('targetUserUid').value.trim();
-            const newPoints = parseInt(document.getElementById('targetUserPoints').value);
-            if (!targetUid || isNaN(newPoints)) return alert("請輸入正確的 UID 與數字！");
-            try {
-                const targetRef = doc(db, "users", targetUid);
-                await setDoc(targetRef, { points: newPoints }, { merge: true });
-                alert(`👑 已將玩家 UID [${targetUid}] 的分數修改為 ${newPoints} 分！`);
-                fetchGlobalStatsAndLeaderboard();
-                fetchAdminUserList();
-            } catch (err) {
-                alert("修改失敗: " + err.message);
-            }
-        };
-
         window.fetchAdminUserList = async () => {
             const selectEl = document.getElementById('adminUserSelect');
             if (!selectEl) return;
@@ -723,137 +834,6 @@
             fetchGlobalStatsAndLeaderboard();
         }
 
-        const RARITY = {
-            'C':   { price: 4,    rate: 0.6800, color: '#9ca3af' },
-            'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' },
-            'R':   { price: 20,   rate: 0.0700, color: '#fbbf24' },
-            'RR':  { price: 70,   rate: 0.0230, color: '#f43f5e' },
-            'AR':  { price: 180,  rate: 0.0050, color: '#a855f7' },
-            'SR':  { price: 400,  rate: 0.0015, color: '#ec4899' },
-            'SAR': { price: 1500, rate: 0.0004, color: '#10b981' },
-            'UR':  { price: 4100, rate: 0.0001, color: '#eab308' }
-        };
-
-        const CARD_SETS = {
-            'm6a': [
-                { id: 'm6a-017', name: '皮卡丘 (30th 繪師卡)', rarity: 'C', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019746.png' },
-                { id: 'm6a-047', name: '皮卡丘 ex (日間篇)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019661.png' },
-                { id: 'm6a-048', name: '皮卡丘 ex (夜間篇)', rarity: 'U', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019662.png' },
-                { id: 'm6a-054', name: '超夢 ex', rarity: 'R', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019669.png' },
-                { id: 'm6a-055', name: '基拉祈 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019695.png' },
-                { id: 'm6a-057', name: '夢幻 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019671.png' },
-                { id: 'm6a-076', name: '耿鬼 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019690.png' },
-                { id: 'm6a-081', name: '仙子伊布 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019673.png' },
-                { id: 'm6a-109', name: '賽富豪 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019732.png' },
-                { id: 'm6a-110', name: '喵喵 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019733.png' },
-                { id: 'm6a-126', name: '皮卡丘 ex SAR (日間祭典)', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019739.png' },
-                { id: 'm6a-127', name: '皮卡丘 ex SAR (夜間煙火)', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019740.png' },
-                { id: 'm6a-128', name: '甲賀忍蛙 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019738.png' },
-                { id: 'm6a-131', name: '基拉祈 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019742.png' },
-                { id: 'm6a-134', name: '超夢 ex FUR', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019744.png' },
-                { id: 'm6a-135', name: '夢幻 ex FUR', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019745.png' }
-            ],
-            'sv2a': [
-                { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
-                { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
-                { id: 'sv2a-007', name: '傑尼龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
-                { id: 'sv2a-025', name: '皮卡丘', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
-                { id: 'sv2a-054', name: '可達鴨', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/54_hires.png' },
-                { id: 'sv2a-094', name: '耿鬼', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/94_hires.png' },
-                { id: 'sv2a-150', name: '超夢', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
-                { id: 'sv2a-003', name: '妙蛙花 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/3_hires.png' },
-                { id: 'sv2a-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/6_hires.png' },
-                { id: 'sv2a-009', name: '水箭龜 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/9_hires.png' },
-                { id: 'sv2a-166', name: '妙蛙種子 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/166_hires.png' },
-                { id: 'sv2a-173', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
-                { id: 'sv2a-188', name: '莉佳的招待 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3pt5/196_hires.png' },
-                { id: 'sv2a-198', name: '妙蛙花 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/198_hires.png' },
-                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
-                { id: 'sv2a-205', name: '夢幻 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' }
-            ],
-            'sv3': [
-                { id: 'sv3-001', name: '波波', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/106_hires.png' },
-                { id: 'sv3-002', name: '刺甲貝', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/28_hires.png' },
-                { id: 'sv3-003', name: '戴魯比', rarity: 'U', image: 'https://images.pokemontcg.io/sv3/113_hires.png' },
-                { id: 'sv3-004', name: '班基拉斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/66_hires.png' },
-                { id: 'sv3-005', name: '大比鳥 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/108_hires.png' },
-                { id: 'sv3-006', name: '惡體系噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/125_hires.png' },
-                { id: 'sv3-007', name: '波琵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3/220_hires.png' },
-                { id: 'sv3-008', name: '惡體系噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3/223_hires.png' },
-                { id: 'sv3-009', name: '惡體系噴火龍 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3/228_hires.png' }
-            ],
-            'sv4a': [
-                { id: 'sv4a-001', name: '色違榛果球', rarity: 'C', image: 'https://images.pokemontcg.io/sv4pt5/1_hires.png' },
-                { id: 'sv4a-002', name: '色違小火龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv4pt5/109_hires.png' },
-                { id: 'sv4a-003', name: '色違傑尼龜', rarity: 'U', image: 'https://images.pokemontcg.io/sv4pt5/112_hires.png' },
-                { id: 'sv4a-004', name: '色違皮卡丘', rarity: 'R', image: 'https://images.pokemontcg.io/sv4pt5/131_hires.png' },
-                { id: 'sv4a-005', name: '故勒頓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv4pt5/54_hires.png' },
-                { id: 'sv4a-006', name: '密勒頓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv4pt5/68_hires.png' },
-                { id: 'sv4a-007', name: '色違噴火龍 ex SSR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv4pt5/234_hires.png' },
-                { id: 'sv4a-008', name: '色違夢幻 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv4pt5/232_hires.png' },
-                { id: 'sv4a-009', name: '奇樹 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv4pt5/238_hires.png' },
-                { id: 'sv4a-010', name: '黃金故勒頓 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv4pt5/244_hires.png' }
-            ],
-            'sv5a': [
-                { id: 'sv5a-001', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/1_hires.png' },
-                { id: 'sv5a-026', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/26_hires.png' },
-                { id: 'sv5a-061', name: '頭蓋龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv5/61_hires.png' },
-                { id: 'sv5a-067', name: '達克萊伊', rarity: 'R', image: 'https://images.pokemontcg.io/sv5/67_hires.png' },
-                { id: 'sv5a-038', name: '破空焰 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/38_hires.png' },
-                { id: 'sv5a-123', name: '猛雷鼓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/123_hires.png' },
-                { id: 'sv5a-154', name: '鐵頭殼 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/81_hires.png' },
-                { id: 'sv5a-155', name: '鐵磐岩 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/99_hires.png' },
-                { id: 'sv5a-160', name: '暗黑誓約 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv5/199_hires.png' },
-                { id: 'sv5a-161', name: '猛雷鼓 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/208_hires.png' },
-                { id: 'sv5a-162', name: '破空焰 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/204_hires.png' },
-                { id: 'sv5a-165', name: '英雄披風 ACE', rarity: 'UR', image: 'https://images.pokemontcg.io/sv5/152_hires.png' }
-            ],
-            'sv6': [
-                { id: 'sv6-025', name: '厄鬼椪 碧草面具', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
-                { id: 'sv6-079', name: '多龍梅西亞', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/79_hires.png' },
-                { id: 'sv6-054', name: '奇魯莉安', rarity: 'U', image: 'https://images.pokemontcg.io/sv6/54_hires.png' },
-                { id: 'sv6-112', name: '厄鬼椪 礎石面具 ex', rarity: 'R', image: 'https://images.pokemontcg.io/sv6/112_hires.png' },
-                { id: 'sv6-026', name: '厄鬼椪 碧草面具 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
-                { id: 'sv6-081', name: '多龍巴魯托 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/81_hires.png' },
-                { id: 'sv6-158', name: '厄鬼椪 水井面具 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv6/182_hires.png' },
-                { id: 'sv6-165', name: '丹帝 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv6/204_hires.png' },
-                { id: 'sv6-168', name: '厄鬼椪 碧草面具 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv6/211_hires.png' },
-                { id: 'sv6-172', name: '厄鬼椪 碧草面具 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv6/221_hires.png' }
-            ],
-            'sv7': [
-                { id: 'sv7-001', name: '刺角海膽', rarity: 'C', image: 'https://images.pokemontcg.io/sv7/40_hires.png' },
-                { id: 'sv7-002', name: '咕咕', rarity: 'C', image: 'https://images.pokemontcg.io/sv7/116_hires.png' },
-                { id: 'sv7-003', name: '零之大空洞', rarity: 'U', image: 'https://images.pokemontcg.io/sv7/138_hires.png' },
-                { id: 'sv7-004', name: '蜜集大蛇 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv7/14_hires.png' },
-                { id: 'sv7-005', name: '太晶太樂巴戈斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv7/128_hires.png' },
-                { id: 'sv7-006', name: '蜜集大蛇 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv7/167_hires.png' },
-                { id: 'sv7-007', name: '太晶太樂巴戈斯 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv7/173_hires.png' },
-                { id: 'sv7-008', name: '水晶太晶 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv7/175_hires.png' }
-            ],
-            'sv8': [
-                { id: 'sv8-001', name: '小磁怪', rarity: 'C', image: 'https://images.pokemontcg.io/sv8/30_hires.png' },
-                { id: 'sv8-002', name: '托戈德瑪爾', rarity: 'C', image: 'https://images.pokemontcg.io/sv8/36_hires.png' },
-                { id: 'sv8-003', name: '奇樹的伸展', rarity: 'U', image: 'https://images.pokemontcg.io/sv8/102_hires.png' },
-                { id: 'sv8-004', name: '美納斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv8/26_hires.png' },
-                { id: 'sv8-005', name: '太晶皮卡丘 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv8/32_hires.png' },
-                { id: 'sv8-006', name: '美納斯 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv8/131_hires.png' },
-                { id: 'sv8-007', name: '太晶皮卡丘 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv8/132_hires.png' },
-                { id: 'sv8-008', name: '太晶皮卡丘 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv8/135_hires.png' }
-            ],
-            's12a': [
-                { id: 's12a-001', name: '飛天螳螂 AR', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/GG01_hires.png' },
-                { id: 's12a-002', name: '皮卡丘 AR', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/GG30_hires.png' },
-                { id: 's12a-003', name: '立向葵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/swsh12pt5/150_hires.png' },
-                { id: 's12a-004', name: '噴火龍 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG05_hires.png' },
-                { id: 's12a-005', name: '路卡利歐 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG10_hires.png' },
-                { id: 's12a-006', name: '超夢 VSTAR SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/swsh12pt5/GG44_hires.png' },
-                { id: 's12a-007', name: '帕路奇亞 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG67_hires.png' },
-                { id: 's12a-008', name: '帝牙盧卡 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG68_hires.png' },
-                { id: 's12a-009', name: '騎拉帝納 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG69_hires.png' },
-                { id: 's12a-010', name: '阿爾宙斯 VSTAR UR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG70_hires.png' }
-            ]
-        };
-
         function renderPackList() {
             const container = document.getElementById('packListGrid');
             if (!container) return;
@@ -902,7 +882,6 @@
             }
         }
 
-        // 🎴 抽卡入口 (允許負無限分)
         window.startPackChoice = (setId, cardCount) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             
@@ -920,98 +899,46 @@
             modal.classList.remove('hidden');
         };
 
+        // 🔒 2. 安全對接 Cloud Functions 後端抽卡 API 核心函式
         window.choosePackAndTear = async (packNumber) => {
             if (!pendingPackConfig || !currentUserDoc) return;
-            const { setId, cardCount, cost } = pendingPackConfig;
+            const { setId, cardCount } = pendingPackConfig;
 
-            let globalSpent = 0;
-            let globalPulledValue = 0;
+            const choiceBox = document.getElementById('animStepChoice');
+            if (choiceBox) choiceBox.classList.add('pointer-events-none', 'opacity-50');
 
             try {
-                const snap = await getDocs(collection(db, "users"));
-                snap.forEach(d => {
-                    const data = d.data();
-                    globalSpent += (data.totalSpent || 0);
-                    globalPulledValue += (data.totalPulledValue || 0);
-                });
-            } catch (err) {
-                console.error("抓取全服狀態失敗，採用基準機率", err);
-            }
+                // 🚀 呼叫 Google Cloud Functions 後端進行算力抽卡與扣分
+                const result = await openPackApi({ setId, cardCount });
+                const { newPoints, pulledCards } = result.data;
 
-            globalSpent += cost;
+                // 更新前端同步資料庫最新狀況
+                currentUserDoc.points = newPoints;
+                currentPulledCards = pulledCards;
 
-            let currentGlobalRTP = globalSpent > 0 ? (globalPulledValue / globalSpent) : 0.50;
-            let rtpModifier = 0.50 / Math.max(currentGlobalRTP, 0.1);
-            rtpModifier = Math.max(0.15, Math.min(rtpModifier, 3.0));
-
-            let dynamicRarity = JSON.parse(JSON.stringify(RARITY));
-            let rareKeys = ['R', 'RR', 'AR', 'SR', 'SAR', 'UR'];
-            let totalRareRate = 0;
-
-            rareKeys.forEach(k => {
-                dynamicRarity[k].rate = dynamicRarity[k].rate * rtpModifier;
-                totalRareRate += dynamicRarity[k].rate;
-            });
-
-            dynamicRarity['U'].rate = Math.min(0.22, Math.max(0.05, 1.0 - totalRareRate - 0.1));
-            dynamicRarity['C'].rate = Math.max(0.1, 1.0 - totalRareRate - dynamicRarity['U'].rate);
-
-            currentUserDoc.points = (currentUserDoc.points || 0) - cost;
-            currentUserDoc.totalSpent = (currentUserDoc.totalSpent || 0) + cost;
-
-            const set = CARD_SETS[setId];
-            if (!set || set.length === 0) return alert("無效的卡包！");
-
-            currentPulledCards = [];
-            let batchPulledValue = 0;
-
-            for (let i = 0; i < cardCount; i++) {
-                const rand = Math.random();
-                let cum = 0, rarity = 'C';
-                for (let r in dynamicRarity) {
-                    cum += dynamicRarity[r].rate;
-                    if (rand <= cum) { rarity = r; break; }
-                }
-                
-                let pool = set.filter(c => c.rarity === rarity);
-                if (!pool || pool.length === 0) pool = set;
-
-                const card = pool[Math.floor(Math.random() * pool.length)];
-                if (card) {
+                pulledCards.forEach(card => {
                     if (!currentUserDoc.cards) currentUserDoc.cards = {};
                     currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
-                    currentPulledCards.push(card);
-                    batchPulledValue += RARITY[card.rarity].price;
-                }
+                });
+
+                updateUI();
+
+                // 播放拆卡包與展示動畫
+                document.getElementById('animStepChoice').classList.add('hidden');
+                document.getElementById('animStepTear').classList.remove('hidden');
+                document.getElementById('packVisualTitle').innerText = `${setId.toUpperCase()} (#${packNumber})`;
+
+                setTimeout(() => {
+                    document.getElementById('animStepTear').classList.add('hidden');
+                    document.getElementById('animStepReveal').classList.remove('hidden');
+                    renderModalFlipCards(currentPulledCards);
+                }, 1200);
+
+            } catch (err) {
+                alert("抽卡失敗: " + (err.message || "伺服器連線錯誤"));
+            } finally {
+                if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
             }
-
-            currentUserDoc.totalPulledValue = (currentUserDoc.totalPulledValue || 0) + batchPulledValue;
-
-            await syncToCloud();
-
-            const topCards = currentPulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
-            for (let rareCard of topCards) {
-                try {
-                    await addDoc(collection(db, "broadcasts"), {
-                        playerName: currentUserDoc.name || "訓練家",
-                        cardName: rareCard.name,
-                        rarity: rareCard.rarity,
-                        timestamp: Date.now()
-                    });
-                } catch (e) {
-                    console.error("寫入歐皇戰報失敗:", e);
-                }
-            }
-
-            document.getElementById('animStepChoice').classList.add('hidden');
-            document.getElementById('animStepTear').classList.remove('hidden');
-            document.getElementById('packVisualTitle').innerText = `${setId.toUpperCase()} (#${packNumber})`;
-
-            setTimeout(() => {
-                document.getElementById('animStepTear').classList.add('hidden');
-                document.getElementById('animStepReveal').classList.remove('hidden');
-                renderModalFlipCards(currentPulledCards);
-            }, 1200);
         };
 
         function getImgSrcWithFallback(card) {
@@ -1191,7 +1118,6 @@
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
-        // 🏆 切換幸運歐皇榜 / 非洲黑人榜
         window.switchLbSubTab = (subTab) => {
             currentLbSubTab = subTab;
             
@@ -1209,7 +1135,6 @@
             fetchGlobalStatsAndLeaderboard();
         };
 
-        // 📊 即時計算全服數據與分榜渲染
         window.fetchGlobalStatsAndLeaderboard = async () => {
             const listEl = document.getElementById('leaderboardList');
             if (listEl) {
@@ -1269,7 +1194,6 @@
                         return;
                     }
 
-                    // 排序邏輯：幸運榜 (高到低)，非洲榜 (低到高)
                     if (currentLbSubTab === 'lucky') {
                         usersList.sort((a, b) => b.points - a.points);
                     } else {
@@ -1292,7 +1216,6 @@
                                 bgStyle = "bg-gradient-to-r from-amber-900/30 to-slate-900 border-amber-700/50";
                             }
                         } else {
-                            // 非洲黑人榜專用徽章標籤
                             if (idx === 0) {
                                 rankBadge = `<span class="w-8 text-center text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
                                 bgStyle = "bg-gradient-to-r from-red-950/80 via-slate-900 to-slate-900 border-red-600/60 ring-1 ring-red-500/40";
