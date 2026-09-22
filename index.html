@@ -1,1363 +1,709 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="dark">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌抽卡模擬器 | Pokémon TCG Pack Simulator</title>
+    <title>寶可夢卡牌模擬器 - 帳號與圖鑑系統</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        pokered: '#FF0000',
-                        pokeblue: '#2A75BB',
-                        pokeyellow: '#FFCB05',
-                        pokedark: '#121216',
-                        pokecard: '#1C1D24'
-                    },
-                    boxShadow: {
-                        'neon-yellow': '0 0 15px rgba(255, 203, 5, 0.5)',
-                        'neon-blue': '0 0 15px rgba(42, 117, 187, 0.6)',
-                        'neon-purple': '0 0 20px rgba(168, 85, 247, 0.7)',
-                        'neon-gold': '0 0 25px rgba(234, 179, 8, 0.8)',
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;800;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
         body {
-            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
-            background-color: #0b0c10;
-            color: #f1f5f9;
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
             user-select: none;
-            overflow-x: hidden;
         }
 
-        /* Glassmorphism elements */
-        .glass-panel {
-            background: rgba(22, 27, 38, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .glass-card {
-            background: rgba(30, 35, 48, 0.6);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* 3D Card tilt container */
-        .card-container {
-            perspective: 1200px;
-            transform-style: preserve-3d;
+        /* 全息閃卡光澤特效 */
+        .card-wrapper {
+            perspective: 1000px;
         }
 
         .card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
-            cursor: pointer;
         }
 
         .card-inner.flipped {
             transform: rotateY(180deg);
         }
 
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
+        .card-front, .card-back {
             backface-visibility: hidden;
-            border-radius: 12px;
+            border-radius: 0.75rem;
             overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
 
         .card-back {
-            transform: rotateY(0deg);
-            background: #111827;
-            border: 2px solid #374151;
-        }
-
-        .card-front {
             transform: rotateY(180deg);
-            background: #1e293b;
         }
 
-        /* Holographic & Shiny Foil Overlay Effects */
-        .holo-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 10;
-            border-radius: 12px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            mix-blend-mode: color-dodge;
-        }
-
-        /* Rarity-based Dynamic Glows */
-        .rarity-C { border: 2px solid #4b5563; }
-        .rarity-U { border: 2px solid #3b82f6; }
-        .rarity-R { border: 2px solid #eab308; box-shadow: 0 0 12px rgba(234, 179, 8, 0.4); }
-        .rarity-RR { border: 2px solid #a855f7; box-shadow: 0 0 18px rgba(168, 85, 247, 0.6); }
-        .rarity-AR { border: 2px solid #ec4899; box-shadow: 0 0 22px rgba(236, 72, 153, 0.7); }
-        .rarity-SAR { border: 3px solid #38bdf8; box-shadow: 0 0 30px rgba(56, 189, 248, 0.9); }
-        .rarity-UR { border: 3px solid #f59e0b; box-shadow: 0 0 35px rgba(245, 158, 11, 1); }
-
-        /* Holo shimmer animation for SAR / UR */
-        @keyframes holoShimmer {
-            0% { background-position: 0% 0%; }
-            50% { background-position: 100% 100%; }
-            100% { background-position: 0% 0%; }
-        }
-
-        .rainbow-foil {
-            background: linear-gradient(
-                115deg, 
-                transparent 20%, 
-                rgba(255, 0, 0, 0.35) 30%, 
-                rgba(255, 255, 0, 0.35) 40%, 
-                rgba(0, 255, 0, 0.35) 50%, 
-                rgba(0, 255, 255, 0.35) 60%, 
-                rgba(0, 0, 255, 0.35) 70%, 
-                rgba(255, 0, 255, 0.35) 80%, 
-                transparent 90%
-            );
-            background-size: 300% 300%;
-            animation: holoShimmer 6s ease infinite;
-        }
-
-        /* Interactive Booster Pack */
-        .booster-pack-wrapper {
-            perspective: 1000px;
-        }
-
-        .booster-pack {
+        /* 反光雷射特效 */
+        .holo-foil {
             position: relative;
-            width: 260px;
-            height: 420px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #2b1055 0%, #7597de 100%);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.4);
-            cursor: pointer;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s;
             overflow: hidden;
         }
-
-        .booster-pack:hover {
-            transform: translateY(-8px) scale(1.02) rotate(0.5deg);
-            box-shadow: 0 30px 50px rgba(0,0,0,0.8), 0 0 30px rgba(255, 203, 5, 0.4);
-        }
-
-        /* Top foil tear section */
-        .pack-top-foil {
+        
+        .holo-foil::after {
+            content: "";
             position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 70px;
-            background: inherit;
-            border-bottom: 2px dashed rgba(255, 255, 255, 0.4);
-            z-index: 20;
-            transition: transform 0.5s ease, opacity 0.5s ease;
-        }
-
-        .pack-top-foil.torn {
-            transform: translateY(-80px) rotate(-15deg);
+            top: -50%; left: -50%; right: -50%; bottom: -50%;
+            background: linear-gradient(
+                115deg,
+                transparent 20%,
+                rgba(255, 255, 255, 0.4) 40%,
+                rgba(255, 0, 128, 0.3) 50%,
+                rgba(0, 255, 255, 0.3) 60%,
+                transparent 80%
+            );
+            transform: rotate(25deg);
+            pointer-events: none;
             opacity: 0;
-            pointer-events: none;
+            transition: opacity 0.3s;
         }
 
-        /* Canvas burst overlay */
-        #fxCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 100;
+        .holo-foil:hover::after {
+            opacity: 1;
+            animation: holoShift 2s infinite linear;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        @keyframes holoShift {
+            0% { transform: translateY(-30%) rotate(25deg); }
+            100% { transform: translateY(30%) rotate(25deg); }
         }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.6);
+
+        /* 灰階未解鎖卡牌 */
+        .card-locked {
+            filter: grayscale(100%) brightness(0.3);
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 203, 5, 0.3);
-            border-radius: 4px;
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 203, 5, 0.6);
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-pokeyellow selection:text-black">
+<body class="min-h-screen flex flex-col justify-between">
 
-    <!-- Particle Canvas for High Rare Hits & Celebrations -->
-    <canvas id="fxCanvas"></canvas>
-
-    <!-- Navbar / Header -->
-    <header class="glass-panel sticky top-0 z-40 border-b border-slate-800/80 px-4 lg:px-8 py-3">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-            <!-- Brand Logo -->
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('simulator')">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-red-600 via-pokered to-yellow-400 p-0.5 shadow-neon-yellow flex items-center justify-center">
-                    <div class="w-full h-full bg-slate-950 rounded-full flex items-center justify-center relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1/2 bg-pokered"></div>
-                        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-slate-100"></div>
-                        <div class="absolute w-full h-1 bg-black top-1/2 -translate-y-1/2"></div>
-                        <div class="w-3 h-3 bg-white border-2 border-black rounded-full z-10 shadow"></div>
-                    </div>
+    <!-- 頂部導覽與帳號狀態欄 -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                    <div class="w-4 h-4 bg-white rounded-full border-2 border-slate-900"></div>
                 </div>
-                <div>
-                    <h1 class="font-extrabold text-lg lg:text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">
-                        寶可夢卡牌抽卡模擬器
-                    </h1>
-                    <p class="text-xs text-slate-400">Pokémon TCG Pack Opening Simulator</p>
-                </div>
+                <h1 class="text-xl font-bold tracking-wide bg-gradient-to-r from-red-500 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
+                    寶可夢抽卡模擬器
+                </h1>
             </div>
 
-            <!-- Navigation Tabs -->
-            <nav class="flex items-center bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
-                <button id="tab-simulator" onclick="switchTab('simulator')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-yellow-400 bg-slate-800/90 shadow-sm flex items-center gap-2">
-                    <i class="fa-solid font-bold fa-box-open"></i> 抽卡模擬
+            <!-- 玩家資訊與點數 -->
+            <div class="flex items-center gap-4 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user-gear text-slate-400"></i>
+                    <select id="userSelect" onchange="switchAccount(this.value)" class="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer">
+                        <!-- 動態載入帳號列表 -->
+                    </select>
+                </div>
+                
+                <div class="h-4 w-[1px] bg-slate-700"></div>
+
+                <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-gem text-cyan-400 animate-pulse"></i>
+                    <span id="userPoints" class="text-lg font-black text-cyan-300">0</span>
+                    <span class="text-xs text-slate-400">分</span>
+                </div>
+
+                <button onclick="openNewUserModal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-slate-200">
+                    <i class="fa-solid fa-plus"></i> 新增
                 </button>
-                <button id="tab-binder" onclick="switchTab('binder')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-book-open"></i> 收藏圖鑑
+            </div>
+
+            <!-- 分頁切換鈕 -->
+            <nav class="flex gap-2 w-full md:w-auto justify-center">
+                <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow">
+                    <i class="fa-solid fa-box-open mr-1"></i> 抽卡機
                 </button>
-                <button id="tab-stats" onclick="switchTab('stats')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-chart-pie"></i> 統計數據
+                <button onclick="switchTab('binder')" id="nav-binder" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">
+                    <i class="fa-solid fa-book-bookmark mr-1"></i> 集卡冊圖鑑
+                </button>
+                <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">
+                    <i class="fa-solid fa-coins mr-1"></i> 出售卡牌
                 </button>
             </nav>
-
-            <!-- Quick Controls & Sound Toggle -->
-            <div class="flex items-center space-x-3">
-                <div class="flex items-center bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-medium text-amber-400 space-x-2">
-                    <i class="fa-solid fa-coins text-yellow-400"></i>
-                    <span>卡牌總估值: <strong id="header-total-value" class="text-white text-sm">0</strong> P</span>
-                </div>
-                <button id="audioToggleBtn" onclick="toggleAudio()" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition border border-slate-700" title="切換音效">
-                    <i class="fa-solid fa-volume-high text-yellow-400" id="audioIcon"></i>
-                </button>
-            </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1">
+    <!-- 主要內容區塊 -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
 
-        <!-- ================= SECTION 1: PACK OPENING SIMULATOR ================= -->
-        <section id="view-simulator" class="space-y-6">
-            <!-- Set Selector & Controls Bar -->
-            <div class="glass-panel p-4 lg:p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="w-full md:w-auto">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">選擇卡牌彈數 / 擴充包</label>
-                    <div class="relative">
-                        <select id="setSelect" onchange="changeSet(this.value)" class="w-full md:w-72 bg-slate-900 border border-slate-700 text-amber-300 font-bold text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none cursor-pointer">
-                            <!-- Populated dynamically by JS -->
-                        </select>
-                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+        <!-- ==================== TAB 1: 抽卡機面板 ==================== -->
+        <section id="tab-pack" class="tab-content space-y-6">
+            
+            <!-- 卡包選擇卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- SV2a 寶可夢 151 -->
+                <div class="bg-gradient-to-br from-slate-800 to-indigo-950 p-5 rounded-2xl border border-indigo-500/30 shadow-xl flex gap-4 items-center">
+                    <div class="w-28 h-40 bg-gradient-to-tr from-pink-600 to-indigo-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/20">
+                        <span class="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full text-white mb-2">SV2a</span>
+                        <i class="fa-solid fa-dragon text-4xl text-amber-300 my-1"></i>
+                        <span class="text-sm font-bold text-white">寶可夢 151</span>
                     </div>
-                </div>
-
-                <!-- Pack Opening Action Buttons -->
-                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                    <button id="btn-open-single" onclick="prepareSinglePack()" class="flex-1 sm:flex-initial px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm rounded-xl shadow-neon-yellow transition transform active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-bolt"></i> 拆開啟動 (1包)
-                    </button>
-                    <button id="btn-open-box" onclick="openBoosterBox()" class="flex-1 sm:flex-initial px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-sm rounded-xl shadow-neon-purple transition transform active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-boxes-stacked"></i> 開啟一盒 (30包)
-                    </button>
-                    <button id="btn-reveal-all" onclick="revealAllCards()" disabled class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 font-semibold text-sm rounded-xl border border-slate-700 transition flex items-center gap-2">
-                        <i class="fa-solid fa-eye"></i> 全部翻開
-                    </button>
-                </div>
-            </div>
-
-            <!-- Pack Tear & Card Reveal Playmat Arena -->
-            <div class="relative min-h-[500px] lg:min-h-[560px] glass-panel rounded-3xl p-6 flex flex-col items-center justify-center border border-slate-800/90 overflow-hidden">
-                <!-- Background Pokéball Watermark Motif -->
-                <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-                    <i class="fa-solid fa-circle-dot text-[380px] text-white"></i>
-                </div>
-
-                <!-- State A: Sealed Booster Pack View -->
-                <div id="booster-stage" class="flex flex-col items-center space-y-6 z-10 transition-all duration-500">
-                    <div class="text-center space-y-1">
-                        <h2 id="current-set-title" class="text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">
-                            ---
-                        </h2>
-                        <p class="text-xs lg:text-sm text-slate-400">點擊卡包或按下上方按鈕拆開卡包！</p>
-                    </div>
-
-                    <!-- Interactive Booster Pack Envelope -->
-                    <div class="booster-pack-wrapper py-2">
-                        <div id="boosterPackObj" onclick="triggerPackTear()" class="booster-pack flex flex-col justify-between p-5 text-center relative border-2 border-yellow-400/30">
-                            <!-- Tear Line Effect -->
-                            <div id="packTopFoil" class="pack-top-foil flex items-center justify-center">
-                                <span class="text-[10px] uppercase font-black text-yellow-300 tracking-widest bg-black/40 px-3 py-1 rounded-full border border-yellow-400/30">
-                                    ✂️ 點擊撕開 PULL HERE
-                                </span>
-                            </div>
-
-                            <!-- Booster Pack Front Visual -->
-                            <div class="mt-8 flex flex-col items-center space-y-3">
-                                <div id="pack-set-badge" class="px-3 py-1 bg-yellow-400 text-slate-950 font-black text-xs rounded-full uppercase tracking-wider shadow">
-                                    朱 & 紫
-                                </div>
-                                <h3 id="pack-set-name" class="font-black text-xl text-white drop-shadow-md leading-tight">
-                                    ---
-                                </h3>
-                            </div>
-
-                            <div class="my-auto flex justify-center py-4">
-                                <div id="pack-cover-art" class="w-32 h-32 rounded-full border-2 border-yellow-400/40 bg-slate-900/60 p-2 flex items-center justify-center shadow-inner">
-                                    <i class="fa-solid fa-dragon text-5xl text-yellow-400 animate-pulse"></i>
-                                </div>
-                            </div>
-
-                            <div class="text-xs font-bold text-slate-300 space-y-1 bg-black/50 p-2.5 rounded-xl border border-white/10">
-                                <p>每包內含 <span class="text-yellow-400">5 張</span> 寶可夢卡牌</p>
-                                <p class="text-[11px] text-slate-400 font-normal">保證包含 1 張閃卡 / 稀有卡以上</p>
-                            </div>
+                    <div class="flex-1 space-y-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-white">強化擴充包「寶可夢 151」</h3>
+                            <p class="text-xs text-slate-400">收錄經典第一世代 151 隻寶可夢全陣容 SAR/UR</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openPack('sv2a', 1)" class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 py-2.5 rounded-xl font-bold shadow-lg transition active:scale-95 text-sm">
+                                單抽 <span class="text-xs opacity-80">(100分)</span>
+                            </button>
+                            <button onclick="openPack('sv2a', 10)" class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 py-2.5 rounded-xl font-bold shadow-lg transition active:scale-95 text-sm">
+                                10 連抽 <span class="text-xs opacity-80">(1000分)</span>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- State B: Dealt 5 Cards Playmat (Initially hidden) -->
-                <div id="cards-stage" class="hidden w-full max-w-5xl flex-col items-center space-y-8 z-10 transition-all duration-500">
-                    <div class="text-center space-y-1">
-                        <span class="text-xs font-bold text-amber-400 uppercase tracking-widest bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-                            PACK UNLOCKED
-                        </span>
-                        <p class="text-sm text-slate-300 font-medium">逐一翻開卡牌，體驗輝煌閃耀效果！</p>
+                <!-- SV5a 狂野意志 -->
+                <div class="bg-gradient-to-br from-slate-800 to-emerald-950 p-5 rounded-2xl border border-emerald-500/30 shadow-xl flex gap-4 items-center">
+                    <div class="w-28 h-40 bg-gradient-to-tr from-emerald-600 to-teal-800 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/20">
+                        <span class="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full text-white mb-2">SV5a</span>
+                        <i class="fa-solid fa-leaf text-4xl text-emerald-300 my-1"></i>
+                        <span class="text-sm font-bold text-white">狂野意志</span>
                     </div>
-
-                    <!-- 5 Dealt Cards Row -->
-                    <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 lg:gap-6 w-full px-2">
-                        <!-- Dynamically populated 5 cards -->
-                    </div>
-
-                    <!-- Summary & Next Pack Prompt -->
-                    <div id="packSummaryBar" class="hidden flex flex-col sm:flex-row items-center justify-between gap-4 w-full bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-xl bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-yellow-400 font-bold text-lg">
-                                <i class="fa-solid fa-sparkles"></i>
-                            </div>
-                            <div>
-                                <p id="pack-pull-highlight" class="text-sm font-bold text-white">本包亮點: --</p>
-                                <p id="pack-pull-value" class="text-xs text-slate-400">卡包價值: +0 PokéGold</p>
-                            </div>
+                    <div class="flex-1 space-y-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-white">擴充包「狂野意志」</h3>
+                            <p class="text-xs text-slate-400">悖論寶可夢古代尊者與專屬 AR/SAR 閃卡陣容</p>
                         </div>
-                        <button onclick="prepareSinglePack()" class="px-6 py-2.5 bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-extrabold text-sm rounded-xl shadow-neon-yellow transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
-                            再開一包 <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="openPack('sv5a', 1)" class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 py-2.5 rounded-xl font-bold shadow-lg transition active:scale-95 text-sm">
+                                單抽 <span class="text-xs opacity-80">(100分)</span>
+                            </button>
+                            <button onclick="openPack('sv5a', 10)" class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 py-2.5 rounded-xl font-bold shadow-lg transition active:scale-95 text-sm">
+                                10 連抽 <span class="text-xs opacity-80">(1000分)</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- ================= SECTION 2: BINDER / COLLECTION ================= -->
-        <section id="view-binder" class="hidden space-y-6">
-            <!-- Binder Header & Progress Bar -->
-            <div class="glass-panel p-6 rounded-2xl space-y-4">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <!-- 每日分數狀態提示面板 -->
+            <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-amber-500/20 text-amber-400 rounded-lg">
+                        <i class="fa-solid fa-calendar-check text-2xl"></i>
+                    </div>
                     <div>
-                        <h2 class="text-2xl font-black text-white flex items-center gap-2">
-                            <i class="fa-solid fa-book-bookmark text-yellow-400"></i> 寶可夢卡牌收藏冊
-                        </h2>
-                        <p class="text-xs text-slate-400">點擊任意卡牌開啟 3D 全螢幕賞析模式</p>
-                    </div>
-                    <!-- Set Switcher for Binder -->
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs font-semibold text-slate-400">展示彈數:</span>
-                        <select id="binderSetSelect" onchange="renderBinder()" class="bg-slate-900 border border-slate-700 text-yellow-400 text-xs font-bold rounded-lg px-3 py-2 focus:outline-none">
-                            <!-- JS Populated -->
-                        </select>
+                        <h4 class="font-bold text-sm">每日登入福利補給</h4>
+                        <p class="text-xs text-slate-400">每天首次開啟網站自動發放 <span class="text-amber-400 font-bold">500 分</span>（今日額度已領取）</p>
                     </div>
                 </div>
-
-                <!-- Collection Completion Progress Bar -->
-                <div class="space-y-2">
-                    <div class="flex justify-between text-xs font-bold">
-                        <span class="text-slate-300">集卡進度 (Completion)</span>
-                        <span id="binder-progress-text" class="text-yellow-400">0 / 0 種 (0%)</span>
-                    </div>
-                    <div class="w-full h-3 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-slate-800">
-                        <div id="binder-progress-bar" class="h-full bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- Filters Bar -->
-                <div class="pt-2 flex flex-wrap items-center gap-3 border-t border-slate-800">
-                    <!-- Rarity Filter -->
-                    <select id="filterRarity" onchange="renderBinder()" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none">
-                        <option value="ALL">所有稀有度 (All Rarities)</option>
-                        <option value="C">C / U (普通/罕見)</option>
-                        <option value="R">R (稀有閃卡)</option>
-                        <option value="RR">RR (ex 雙稀有)</option>
-                        <option value="AR">AR (插畫稀有)</option>
-                        <option value="SAR">SAR (特別插畫稀有)</option>
-                        <option value="UR">UR (超稀有黃金)</option>
-                    </select>
-
-                    <!-- Type Filter -->
-                    <select id="filterType" onchange="renderBinder()" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none">
-                        <option value="ALL">所有屬性 (All Energy Types)</option>
-                        <option value="草">草屬性 (Grass)</option>
-                        <option value="火">火屬性 (Fire)</option>
-                        <option value="水">水屬性 (Water)</option>
-                        <option value="雷">雷屬性 (Lightning)</option>
-                        <option value="超">超屬性 (Psychic)</option>
-                        <option value="鬥">鬥屬性 (Fighting)</option>
-                        <option value="惡">惡屬性 (Darkness)</option>
-                        <option value="鋼">鋼屬性 (Metal)</option>
-                        <option value="無">無屬性 (Colorless)</option>
-                    </select>
-
-                    <!-- Search Input -->
-                    <div class="relative flex-1 min-w-[180px]">
-                        <input type="text" id="binderSearch" oninput="renderBinder()" placeholder="搜尋寶可夢名稱..." class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:border-yellow-400">
-                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                    </div>
+                <div class="text-xs text-slate-400 text-right">
+                    缺分數？可在<span class="text-cyan-400">「出售卡牌」</span>頁面變現！
                 </div>
             </div>
 
-            <!-- Binder Card Grid -->
-            <div id="binderGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <!-- Dynamically populated -->
-            </div>
-        </section>
-
-        <!-- ================= SECTION 3: STATISTICS & RATES ================= -->
-        <section id="view-stats" class="hidden space-y-6">
-            <div class="glass-panel p-6 rounded-2xl space-y-6">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                    <div>
-                        <h2 class="text-2xl font-black text-white flex items-center gap-2">
-                            <i class="fa-solid fa-chart-line text-yellow-400"></i> 開包數據統計 (Pull Statistics)
-                        </h2>
-                        <p class="text-xs text-slate-400">系統即時記錄您的抽卡歷史與幾率分析</p>
-                    </div>
-                    <button onclick="resetUserData()" class="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-800 text-xs font-semibold rounded-lg transition">
-                        <i class="fa-solid fa-trash-can"></i> 重置數據
+            <!-- 抽卡結果展示區 -->
+            <div id="pullResultsArea" class="hidden space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                    <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-sparkles"></i> 獲得卡牌清單
+                    </h3>
+                    <button onclick="quickSellLastPull()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg font-bold text-white shadow">
+                        <i class="fa-solid fa-hand-holding-dollar mr-1"></i> 一鍵售出本次重複卡
                     </button>
                 </div>
+                <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    <!-- 動態渲染抽到的卡牌 -->
+                </div>
+            </div>
 
-                <!-- Stats Overview Cards Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl">
-                        <p class="text-xs font-semibold text-slate-400">總開啟包數</p>
-                        <h3 id="stat-total-packs" class="text-2xl lg:text-3xl font-black text-yellow-400 mt-1">0</h3>
+        </section>
+
+        <!-- ==================== TAB 2: 集卡冊圖鑑 ==================== -->
+        <section id="tab-binder" class="tab-content hidden space-y-6">
+            
+            <!-- 圖鑑數據統計與篩選器 -->
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <label class="font-bold text-sm text-slate-300">選擇彈數：</label>
+                        <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-bold text-white">
+                            <option value="sv2a">SV2a 寶可夢 151</option>
+                            <option value="sv5a">SV5a 狂野意志</option>
+                        </select>
                     </div>
-                    <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl">
-                        <p class="text-xs font-semibold text-slate-400">總獲得卡牌數</p>
-                        <h3 id="stat-total-cards" class="text-2xl lg:text-3xl font-black text-blue-400 mt-1">0</h3>
-                    </div>
-                    <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl">
-                        <p class="text-xs font-semibold text-slate-400">EX / High Rare 命中率</p>
-                        <h3 id="stat-hit-rate" class="text-2xl lg:text-3xl font-black text-purple-400 mt-1">0.0%</h3>
-                    </div>
-                    <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl">
-                        <p class="text-xs font-semibold text-slate-400">最高稀有度 Pull</p>
-                        <h3 id="stat-best-pull" class="text-lg lg:text-xl font-extrabold text-amber-300 mt-2 truncate">無 (None)</h3>
+                    
+                    <!-- 進度條 -->
+                    <div class="flex-1 max-w-md">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span>全圖鑑收集率</span>
+                            <span id="binderProgressText" class="text-cyan-400">0 / 0 (0%)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-700">
+                            <div id="binderProgressBar" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-0 transition-all duration-500"></div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Rarity Breakdown Bars -->
-                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-xl space-y-4">
-                    <h3 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">卡牌稀有度分佈 (Rarity Distribution)</h3>
-                    <div id="rarityStatsBars" class="space-y-3">
-                        <!-- Dynamically generated bars -->
-                    </div>
+            <!-- 圖鑑卡牌展示牆 -->
+            <div id="binderGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                <!-- 動態渲染圖鑑 -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: 出售卡牌面板 ==================== -->
+        <section id="tab-sell" class="tab-content hidden space-y-6">
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-vault text-amber-400 mr-2"></i>卡牌回收交易所</h3>
+                    <p class="text-xs text-slate-400 mt-1">將多餘或高稀有度的卡牌出售換取抽卡積分，罕見度越高回收價越優渥！</p>
                 </div>
+                <button onclick="sellAllDuplicates()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-5 py-2.5 rounded-xl font-bold text-white shadow-lg text-sm">
+                    <i class="fa-solid fa-broom mr-1"></i> 一鍵賣出所有重複卡 (保留各 1 張)
+                </button>
+            </div>
+
+            <!-- 卡牌價格對照表提示 -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 text-center text-xs">
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-slate-400 block">C 平卡</span><b class="text-cyan-300">10 分</b></div>
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-blue-400 block">U 非凡</span><b class="text-cyan-300">25 分</b></div>
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-amber-400 block">R 稀有</span><b class="text-cyan-300">60 分</b></div>
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-rose-400 block">RR 雙重</span><b class="text-cyan-300">200 分</b></div>
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-purple-400 block">AR 特藝</span><b class="text-cyan-300">400 分</b></div>
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-pink-400 block">SR 超級</span><b class="text-cyan-300">1000 分</b></div>
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-emerald-400 block">SAR 特別</span><b class="text-cyan-300">3000 分</b></div>
+                <div class="bg-slate-800/60 p-2 rounded-lg border border-slate-700"><span class="text-yellow-300 block">UR 極致</span><b class="text-cyan-300">8000 分</b></div>
+            </div>
+
+            <!-- 可出售清單 -->
+            <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <!-- 動態渲染玩家持有的卡牌 -->
             </div>
         </section>
 
     </main>
 
-    <!-- ================= MODAL 1: 3D CARD INSPECTOR ================= -->
-    <div id="inspectModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="relative w-full max-w-sm flex flex-col items-center space-y-6">
-            <!-- Close Button -->
-            <button onclick="closeInspectModal()" class="absolute -top-12 right-0 w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-lg border border-slate-700 shadow-lg">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <!-- 3D Large Inspect Card Container -->
-            <div id="inspectCardContainer" class="card-container w-72 h-[420px] cursor-grab active:cursor-grabbing">
-                <div id="inspectCardInner" class="card-inner relative w-full h-full rounded-2xl overflow-hidden shadow-2xl transition-transform duration-100">
-                    <img id="inspectCardImg" src="" alt="Card Inspect" class="w-full h-full object-cover rounded-2xl">
-                    <div id="inspectHoloOverlay" class="holo-overlay"></div>
-                </div>
-            </div>
-
-            <!-- Card Info Footer -->
-            <div class="w-full glass-panel p-4 rounded-xl text-center space-y-1">
-                <div id="inspectRarityBadge" class="inline-block px-3 py-0.5 rounded-full text-xs font-black bg-yellow-400 text-slate-950">
-                    --
-                </div>
-                <h3 id="inspectCardName" class="text-lg font-black text-white">---</h3>
-                <p id="inspectCardSub" class="text-xs text-slate-400">---</p>
+    <!-- 新增帳號 Modal -->
+    <div id="newUserModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-sm w-full space-y-4">
+            <h3 class="text-lg font-bold text-white">建立新玩家帳號</h3>
+            <input type="text" id="newUsernameInput" placeholder="請輸入玩家名稱..." class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-400">
+            <div class="flex gap-2 justify-end">
+                <button onclick="closeNewUserModal()" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm font-bold">取消</button>
+                <button onclick="createNewAccount()" class="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold">確認建立</button>
             </div>
         </div>
     </div>
 
-    <!-- ================= MODAL 2: BOOSTER BOX (30 PACKS) SUMMARY ================= -->
-    <div id="boxModal" class="fixed inset-0 bg-black/90 backdrop-blur-lg z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-4xl max-h-[90vh] rounded-3xl p-6 flex flex-col border border-yellow-400/20 overflow-hidden shadow-neon-yellow">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div>
-                    <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">
-                        📦 1 盒 30 包拆包開箱總結
-                    </h2>
-                    <p class="text-xs text-slate-400">一共獲得 150 張卡牌！以下為本次大抽獎高稀有度戰利品：</p>
-                </div>
-                <button onclick="closeBoxModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <!-- Box Summary Top Stats -->
-            <div class="grid grid-cols-3 gap-3 my-4">
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center">
-                    <p class="text-xs text-slate-400">總卡牌價值</p>
-                    <p id="box-total-value" class="text-lg font-black text-yellow-400">+0 P</p>
-                </div>
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center">
-                    <p class="text-xs text-slate-400">EX/RR 以上張數</p>
-                    <p id="box-ex-count" class="text-lg font-black text-purple-400">0 張</p>
-                </div>
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center">
-                    <p class="text-xs text-slate-400">SAR / UR 爆光大獎</p>
-                    <p id="box-secret-count" class="text-lg font-black text-amber-300">0 張</p>
-                </div>
-            </div>
-
-            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">極稀有卡牌展示 (Rare Hits Highlight)</h3>
-
-            <!-- Scrollable Hits Grid -->
-            <div id="boxHitsGrid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 p-2 bg-slate-950/60 rounded-2xl border border-slate-800/80">
-                <!-- Dynamically inserted top pulls -->
-            </div>
-
-            <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
-                <button onclick="closeBoxModal()" class="px-6 py-2.5 bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-extrabold text-sm rounded-xl shadow-neon-yellow">
-                    收下所有卡牌並放入收藏冊
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="glass-panel border-t border-slate-900 py-4 px-6 text-center text-xs text-slate-500">
-        <p>Pokémon TCG Fan Simulation Web Application. Pokémon and Pokémon character names are trademarks of Nintendo / Creatures Inc. / GAME FREAK inc.</p>
+    <!-- 腳頁 -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        Pokémon Card Pack Opening Simulator • 僅供社群娛樂與體驗測試
     </footer>
 
+    <!-- JavaScript 邏輯程式碼 -->
     <script>
-        /* ==========================================================================
-           1. CARD DATABASE & BOOSTER SETS DATA
-           ========================================================================== */
-        const CARD_SETS = [
-            {
-                id: 'sv3pt5',
-                name: '寶可夢 151 (Pokémon 151)',
-                badge: '朱 & 紫',
-                coverIcon: 'fa-dragon',
-                colorGradient: 'from-red-600 via-rose-700 to-slate-900',
-                cards: [
-                    { id: '151-001', name: '妙蛙花 ex', rarity: 'RR', type: '草', hp: 340, value: 350, img: 'https://images.pokemontcg.io/sv3pt5/3_hires.png' },
-                    { id: '151-002', name: '噴火龍 ex', rarity: 'SAR', type: '火', hp: 330, value: 2800, img: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
-                    { id: '151-003', name: '水箭龜 ex', rarity: 'RR', type: '水', hp: 330, value: 380, img: 'https://images.pokemontcg.io/sv3pt5/9_hires.png' },
-                    { id: '151-004', name: '皮卡丘', rarity: 'AR', type: '雷', hp: 70, value: 1200, img: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
-                    { id: '151-005', name: '超夢 ex', rarity: 'SAR', type: '超', hp: 310, value: 3500, img: 'https://images.pokemontcg.io/sv3pt5/183_hires.png' },
-                    { id: '151-006', name: '夢幻 ex', rarity: 'UR', type: '超', hp: 180, value: 4200, img: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
-                    { id: '151-007', name: '耿鬼', rarity: 'R', type: '超', hp: 130, value: 120, img: 'https://images.pokemontcg.io/sv3pt5/94_hires.png' },
-                    { id: '151-008', name: '卡比獸', rarity: 'AR', type: '無', hp: 150, value: 850, img: 'https://images.pokemontcg.io/sv3pt5/181_hires.png' },
-                    { id: '151-009', name: '伊布', rarity: 'C', type: '無', hp: 70, value: 15, img: 'https://images.pokemontcg.io/sv3pt5/133_hires.png' },
-                    { id: '151-010', name: '小火龍', rarity: 'C', type: '火', hp: 70, value: 20, img: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
-                    { id: '151-011', name: '傑尼龜', rarity: 'C', type: '水', hp: 60, value: 20, img: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
-                    { id: '151-012', name: '妙蛙種子', rarity: 'C', type: '草', hp: 70, value: 20, img: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
-                    { id: '151-013', name: '胖丁', rarity: 'C', type: '無', hp: 70, value: 15, img: 'https://images.pokemontcg.io/sv3pt5/39_hires.png' },
-                    { id: '151-014', name: '可達鴨', rarity: 'U', type: '水', hp: 70, value: 35, img: 'https://images.pokemontcg.io/sv3pt5/54_hires.png' },
-                    { id: '151-015', name: '風速狗', rarity: 'R', type: '火', hp: 130, value: 90, img: 'https://images.pokemontcg.io/sv3pt5/59_hires.png' }
-                ]
-            },
-            {
-                id: 'sv8',
-                name: '超電突擊 (Surging Sparks)',
-                badge: '新彈登場',
-                coverIcon: 'fa-bolt-lightning',
-                colorGradient: 'from-amber-500 via-yellow-600 to-slate-900',
-                cards: [
-                    { id: 'sv8-001', name: '皮卡丘 ex', rarity: 'SAR', type: '雷', hp: 200, value: 4500, img: 'https://images.pokemontcg.io/sv8/238_hires.png' },
-                    { id: 'sv8-002', name: '拉帝亞斯 ex', rarity: 'RR', type: '超', hp: 210, value: 400, img: 'https://images.pokemontcg.io/sv8/76_hires.png' },
-                    { id: 'sv8-003', name: '磁場炸彈', rarity: 'AR', type: '雷', hp: 90, value: 750, img: 'https://images.pokemontcg.io/sv8/193_hires.png' },
-                    { id: 'sv8-004', name: '仙子伊布 ex', rarity: 'SAR', type: '超', hp: 270, value: 3800, img: 'https://images.pokemontcg.io/sv8/231_hires.png' },
-                    { id: 'sv8-005', name: '托戈德瑪爾', rarity: 'C', type: '雷', hp: 80, value: 15, img: 'https://images.pokemontcg.io/sv8/69_hires.png' },
-                    { id: 'sv8-006', name: '電擊獸', rarity: 'U', type: '雷', hp: 90, value: 30, img: 'https://images.pokemontcg.io/sv8/63_hires.png' },
-                    { id: 'sv8-007', name: '龐岩怪', rarity: 'R', type: '鬥', hp: 180, value: 100, img: 'https://images.pokemontcg.io/sv8/100_hires.png' },
-                    { id: 'sv8-008', name: '黃金巨鍛匠 ex', rarity: 'UR', type: '超', hp: 300, value: 5000, img: 'https://images.pokemontcg.io/sv8/252_hires.png' },
-                    { id: 'sv8-009', name: '倫琴貓 ex', rarity: 'RR', type: '雷', hp: 310, value: 320, img: 'https://images.pokemontcg.io/sv8/68_hires.png' },
-                    { id: 'sv8-010', name: '小磁怪', rarity: 'C', type: '雷', hp: 60, value: 15, img: 'https://images.pokemontcg.io/sv8/65_hires.png' }
-                ]
-            },
-            {
-                id: 'sv5',
-                name: '狂野意志 (Wild Force)',
-                badge: '古代與未來',
-                coverIcon: 'fa-fire-flame-curved',
-                colorGradient: 'from-emerald-600 via-teal-800 to-slate-900',
-                cards: [
-                    { id: 'sv5-001', name: '破空焰 ex', rarity: 'SAR', type: '火', hp: 230, value: 3200, img: 'https://images.pokemontcg.io/sv5/122_hires.png' },
-                    { id: 'sv5-002', name: '猛雷鼓 ex', rarity: 'SAR', type: '雷', hp: 240, value: 3600, img: 'https://images.pokemontcg.io/sv5/123_hires.png' },
-                    { id: 'sv5-003', name: '波盪水 ex', rarity: 'RR', type: '水', hp: 220, value: 380, img: 'https://images.pokemontcg.io/sv5/24_hires.png' },
-                    { id: 'sv5-004', name: '故勒頓 ex', rarity: 'UR', type: '鬥', hp: 230, value: 4800, img: 'https://images.pokemontcg.io/sv5/139_hires.png' },
-                    { id: 'sv5-005', name: '熊徒弟', rarity: 'U', type: '鬥', hp: 70, value: 25, img: 'https://images.pokemontcg.io/sv5/70_hires.png' },
-                    { id: 'sv5-006', name: '武道熊師', rarity: 'R', type: '鬥', hp: 140, value: 110, img: 'https://images.pokemontcg.io/sv5/71_hires.png' },
-                    { id: 'sv5-007', name: '密勒頓', rarity: 'AR', type: '雷', hp: 120, value: 900, img: 'https://images.pokemontcg.io/sv5/110_hires.png' },
-                    { id: 'sv5-008', name: '盾甲龍', rarity: 'C', type: '鋼', hp: 100, value: 15, img: 'https://images.pokemontcg.io/sv5/82_hires.png' }
-                ]
-            }
-        ];
-
-        /* ==========================================================================
-           2. APP STATE MANAGEMENT & LOCAL STORAGE PERSISTENCE
-           ========================================================================== */
-        let state = {
-            activeSetId: 'sv3pt5',
-            audioEnabled: true,
-            userCollection: {}, // cardId -> quantity
-            totalPacksOpened: 0,
-            totalCardsPulled: 0,
-            totalValueGained: 0,
-            rarityCounts: { C: 0, U: 0, R: 0, RR: 0, AR: 0, SAR: 0, UR: 0 },
-            currentPackCards: [], // 5 cards current single pack
-            flippedCardIndices: new Set()
+        // ==================== 1. 卡牌與稀有度資料庫 ====================
+        const RARITY = {
+            'C':   { name: 'C',   price: 10,   color: '#9ca3af', rate: 0.52 },
+            'U':   { name: 'U',   price: 25,   color: '#60a5fa', rate: 0.28 },
+            'R':   { name: 'R',   price: 60,   color: '#fbbf24', rate: 0.12 },
+            'RR':  { name: 'RR',  price: 200,  color: '#f43f5e', rate: 0.05 },
+            'AR':  { name: 'AR',  price: 400,  color: '#a855f7', rate: 0.02 },
+            'SR':  { name: 'SR',  price: 1000, color: '#ec4899', rate: 0.007 },
+            'SAR': { name: 'SAR', price: 3000, color: '#10b981', rate: 0.002 },
+            'UR':  { name: 'UR',  price: 8000, color: '#eab308', rate: 0.001 }
         };
 
-        // Load persisted state
-        function loadSavedData() {
-            try {
-                const saved = localStorage.getItem('poke_sim_save');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    state.userCollection = parsed.userCollection || {};
-                    state.totalPacksOpened = parsed.totalPacksOpened || 0;
-                    state.totalCardsPulled = parsed.totalCardsPulled || 0;
-                    state.totalValueGained = parsed.totalValueGained || 0;
-                    state.rarityCounts = parsed.rarityCounts || state.rarityCounts;
-                }
-            } catch (e) {
-                console.warn('Could not load localStorage', e);
-            }
-            updateHeaderAndStatsUI();
-        }
+        const CARD_SETS = {
+            'sv2a': [
+                { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
+                { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
+                { id: 'sv2a-007', name: '傑尼龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
+                { id: 'sv2a-025', name: '皮卡丘', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'sv2a-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/6_hires.png' },
+                { id: 'sv2a-150', name: '超夢', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'sv2a-183', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
+                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
+                { id: 'sv2a-207', name: '繆斯 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' }
+            ],
+            'sv5a': [
+                { id: 'sv5a-001', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/1_hires.png' },
+                { id: 'sv5a-012', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/26_hires.png' },
+                { id: 'sv5a-030', name: '猛雷鼓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/38_hires.png' },
+                { id: 'sv5a-075', name: '破空焰 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/75_hires.png' },
+                { id: 'sv5a-092', name: '鐵頭殼 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/154_hires.png' },
+                { id: 'sv5a-101', name: '猛雷鼓 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/161_hires.png' }
+            ]
+        };
 
-        function saveData() {
-            try {
-                localStorage.setItem('poke_sim_save', JSON.stringify({
-                    userCollection: state.userCollection,
-                    totalPacksOpened: state.totalPacksOpened,
-                    totalCardsPulled: state.totalCardsPulled,
-                    totalValueGained: state.totalValueGained,
-                    rarityCounts: state.rarityCounts
-                }));
-            } catch (e) {
-                console.warn('Could not save localStorage', e);
-            }
-            updateHeaderAndStatsUI();
-        }
+        // ==================== 2. 全域狀態管理 ====================
+        let db = {
+            accounts: {},
+            currentUserId: null
+        };
 
-        /* ==========================================================================
-           3. WEB AUDIO API SOUND SYNTHESIZER (No external audio files needed!)
-           ========================================================================== */
-        let audioCtx = null;
+        let lastPullCards = []; // 紀錄最後一次抽卡的卡片
 
-        function getAudioContext() {
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            return audioCtx;
-        }
+        // 頁面載入初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDatabase();
+            checkDailyPoints();
+            updateUI();
+            renderBinder();
+        });
 
-        function toggleAudio() {
-            state.audioEnabled = !state.audioEnabled;
-            const btn = document.getElementById('audioIcon');
-            if (state.audioEnabled) {
-                btn.className = 'fa-solid fa-volume-high text-yellow-400';
+        // 載入 localStorage 資料
+        function loadDatabase() {
+            const saved = localStorage.getItem('pokemon_simulator_db');
+            if (saved) {
+                db = JSON.parse(saved);
             } else {
-                btn.className = 'fa-solid fa-volume-xmark text-slate-500';
+                // 預設建立第一個玩家
+                db.accounts['Player1'] = {
+                    name: '訓練家小明',
+                    points: 500,
+                    lastDailyDate: '',
+                    cards: {} // { 'sv2a-001': 3 }
+                };
+                db.currentUserId = 'Player1';
+                saveDatabase();
             }
         }
 
-        // Sound 1: Pack Foil Tear (Noise sweep)
-        function playTearSound() {
-            if (!state.audioEnabled) return;
-            try {
-                const ctx = getAudioContext();
-                const bufferSize = ctx.sampleRate * 0.35;
-                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-                const output = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    output[i] = Math.random() * 2 - 1;
+        function saveDatabase() {
+            localStorage.setItem('pokemon_simulator_db', JSON.stringify(db));
+        }
+
+        // 取得當前使用者
+        function getCurrentUser() {
+            return db.accounts[db.currentUserId];
+        }
+
+        // 每日 500 分補給檢查
+        function checkDailyPoints() {
+            const user = getCurrentUser();
+            if (!user) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            if (user.lastDailyDate !== today) {
+                user.lastDailyDate = today;
+                user.points += 500;
+                saveDatabase();
+                alert(`🎉 每日登入福利！已發放 500 抽卡積分給 [${user.name}]！`);
+            }
+        }
+
+        // ==================== 3. UI 畫面更新 ====================
+        function updateUI() {
+            const user = getCurrentUser();
+            if (!user) return;
+
+            // 更新點數
+            document.getElementById('userPoints').innerText = user.points.toLocaleString();
+
+            // 更新選單下拉選單
+            const userSelect = document.getElementById('userSelect');
+            userSelect.innerHTML = '';
+            Object.keys(db.accounts).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = db.accounts[id].name;
+                if (id === db.currentUserId) opt.selected = true;
+                userSelect.appendChild(opt);
+            });
+        }
+
+        // 分頁切換
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-red-600', 'text-white');
+                btn.classList.add('bg-slate-700', 'text-slate-300');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            activeNav.classList.remove('bg-slate-700', 'text-slate-300');
+            activeNav.classList.add('bg-red-600', 'text-white');
+
+            if (tabName === 'binder') renderBinder();
+            if (tabName === 'sell') renderSellInventory();
+        }
+
+        // 切換帳號
+        function switchAccount(userId) {
+            db.currentUserId = userId;
+            saveDatabase();
+            checkDailyPoints();
+            updateUI();
+            renderBinder();
+            renderSellInventory();
+        }
+
+        // 開啟/關閉 Modal
+        function openNewUserModal() { document.getElementById('newUserModal').classList.remove('hidden'); }
+        function closeNewUserModal() { document.getElementById('newUserModal').classList.add('hidden'); }
+
+        // 新增帳號
+        function createNewAccount() {
+            const nameInput = document.getElementById('newUsernameInput').value.trim();
+            if (!nameInput) return;
+
+            const newId = 'User_' + Date.now();
+            db.accounts[newId] = {
+                name: nameInput,
+                points: 500,
+                lastDailyDate: new Date().toISOString().split('T')[0],
+                cards: {}
+            };
+            db.currentUserId = newId;
+            saveDatabase();
+            updateUI();
+            closeNewUserModal();
+            document.getElementById('newUsernameInput').value = '';
+        }
+
+        // ==================== 4. 抽卡核心邏輯 ====================
+        function openPack(setId, count) {
+            const user = getCurrentUser();
+            const cost = count * 100;
+
+            if (user.points < cost) {
+                alert(`❌ 積分不足！需要 ${cost} 分，目前僅有 ${user.points} 分。\n您可以前往「出售卡牌」賣掉重複卡換取分數！`);
+                return;
+            }
+
+            // 扣除分數
+            user.points -= cost;
+            lastPullCards = [];
+
+            const setCards = CARD_SETS[setId];
+
+            // 進行抽卡算術
+            for (let i = 0; i < count * 5; i++) { // 每包 5 張
+                const rand = Math.random();
+                let cum = 0;
+                let selectedRarity = 'C';
+
+                for (let r in RARITY) {
+                    cum += RARITY[r].rate;
+                    if (rand <= cum) {
+                        selectedRarity = r;
+                        break;
+                    }
                 }
-                const whiteNoise = ctx.createBufferSource();
-                whiteNoise.buffer = buffer;
 
-                const filter = ctx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(800, ctx.currentTime);
-                filter.frequency.exponentialRampToValueAtTime(3000, ctx.currentTime + 0.35);
+                // 篩選該稀有度的卡，若無則降級選卡
+                let availableCards = setCards.filter(c => c.rarity === selectedRarity);
+                if (availableCards.length === 0) availableCards = setCards;
 
-                const gain = ctx.createGain();
-                gain.gain.setValueAtTime(0.6, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                const card = availableCards[Math.floor(Math.random() * availableCards.length)];
 
-                whiteNoise.connect(filter);
-                filter.connect(gain);
-                gain.connect(ctx.destination);
-                whiteNoise.start();
-            } catch(e){}
-        }
-
-        // Sound 2: Card Flip (Short pitch swoop)
-        function playFlipSound() {
-            if (!state.audioEnabled) return;
-            try {
-                const ctx = getAudioContext();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(250, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(650, ctx.currentTime + 0.12);
-
-                gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
-
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.12);
-            } catch(e){}
-        }
-
-        // Sound 3: High Rare Fanfare (Chord chime)
-        function playRareFanfare(rarity) {
-            if (!state.audioEnabled) return;
-            try {
-                const ctx = getAudioContext();
-                const now = ctx.currentTime;
-                const freqs = (rarity === 'SAR' || rarity === 'UR') 
-                    ? [523.25, 659.25, 783.99, 1046.50, 1318.51] // C Major 7 Sparkle
-                    : [440, 554.37, 659.25, 880];               // A Major Chime
-
-                freqs.forEach((freq, idx) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = (rarity === 'SAR' || rarity === 'UR') ? 'sawtooth' : 'sine';
-                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-
-                    gain.gain.setValueAtTime(0.25, now + idx * 0.08);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 1.2);
-
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now + idx * 0.08);
-                    osc.stop(now + idx * 0.08 + 1.2);
-                });
-            } catch(e){}
-        }
-
-        /* ==========================================================================
-           4. PACK BOOSTER PULL ALGORITHM
-           ========================================================================== */
-        function getRandomCardFromSet(setId, slotType) {
-            const currentSet = CARD_SETS.find(s => s.id === setId);
-            if (!currentSet) return null;
-
-            // Slot logic for realistic 5-card booster pack
-            // Slots 1,2,3: Common / Uncommon
-            // Slot 4: Rare or higher guaranteed
-            // Slot 5: Reverse Holo / High Rare Chance
-            let pool = [];
-
-            if (slotType === 'COMMON') {
-                pool = currentSet.cards.filter(c => c.rarity === 'C' || c.rarity === 'U');
-            } else if (slotType === 'RARE_GUARANTEED') {
-                pool = currentSet.cards.filter(c => ['R', 'RR', 'AR', 'SAR', 'UR'].includes(c.rarity));
-            } else {
-                pool = currentSet.cards;
+                // 增加玩家庫存
+                user.cards[card.id] = (user.cards[card.id] || 0) + 1;
+                lastPullCards.push(card);
             }
 
-            if (!pool.length) pool = currentSet.cards;
+            saveDatabase();
+            updateUI();
+            renderPullResults(lastPullCards);
 
-            // Weighted probability within pool
-            const roll = Math.random() * 100;
-            let targetRarity = 'C';
-
-            if (slotType === 'RARE_GUARANTEED') {
-                if (roll < 45) targetRarity = 'R';
-                else if (roll < 75) targetRarity = 'RR';
-                else if (roll < 88) targetRarity = 'AR';
-                else if (roll < 96) targetRarity = 'SAR';
-                else targetRarity = 'UR';
-            }
-
-            const matched = pool.filter(c => c.rarity === targetRarity);
-            if (matched.length > 0) {
-                return matched[Math.floor(Math.random() * matched.length)];
-            }
-            return pool[Math.floor(Math.random() * pool.length)];
-        }
-
-        function generatePack(setId) {
-            const pack = [];
-            pack.push(getRandomCardFromSet(setId, 'COMMON'));
-            pack.push(getRandomCardFromSet(setId, 'COMMON'));
-            pack.push(getRandomCardFromSet(setId, 'COMMON'));
-            pack.push(getRandomCardFromSet(setId, 'COMMON'));
-            pack.push(getRandomCardFromSet(setId, 'RARE_GUARANTEED'));
-            return pack;
-        }
-
-        /* ==========================================================================
-           5. CANVAS CONFETTI / HIGH RARE HIT EFFECTS
-           ========================================================================== */
-        const canvas = document.getElementById('fxCanvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        function spawnConfetti() {
-            particles = [];
-            const colors = ['#FFCB05', '#2A75BB', '#EC4899', '#38BDF8', '#F59E0B', '#A855F7'];
-            for (let i = 0; i < 120; i++) {
-                particles.push({
-                    x: canvas.width / 2,
-                    y: canvas.height / 2,
-                    vx: (Math.random() - 0.5) * 18,
-                    vy: (Math.random() - 0.7) * 18,
-                    size: Math.random() * 8 + 4,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    alpha: 1,
-                    decay: Math.random() * 0.015 + 0.005
-                });
-            }
-            animateParticles();
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let alive = false;
-            particles.forEach(p => {
-                if (p.alpha > 0) {
-                    alive = true;
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.vy += 0.25; // gravity
-                    p.alpha -= p.decay;
-                    ctx.fillStyle = p.color;
-                    ctx.globalAlpha = Math.max(0, p.alpha);
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            });
-            if (alive) {
-                requestAnimationFrame(animateParticles);
+            // 如果抽到 SR 以上發放彩帶效果
+            if (lastPullCards.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
             }
         }
 
-        /* ==========================================================================
-           6. INTERACTIVE PACK OPENING CONTROLLER
-           ========================================================================== */
-        function initSetDropdowns() {
-            const setSelect = document.getElementById('setSelect');
-            const binderSetSelect = document.getElementById('binderSetSelect');
-            setSelect.innerHTML = '';
-            binderSetSelect.innerHTML = '';
-
-            CARD_SETS.forEach(set => {
-                const opt1 = document.createElement('option');
-                opt1.value = set.id;
-                opt1.textContent = set.name;
-                setSelect.appendChild(opt1);
-
-                const opt2 = document.createElement('option');
-                opt2.value = set.id;
-                opt2.textContent = set.name;
-                binderSetSelect.appendChild(opt2);
-            });
-
-            changeSet(state.activeSetId);
-        }
-
-        function changeSet(setId) {
-            state.activeSetId = setId;
-            const currentSet = CARD_SETS.find(s => s.id === setId);
-            document.getElementById('current-set-title').textContent = currentSet.name;
-            document.getElementById('pack-set-name').textContent = currentSet.name;
-            document.getElementById('pack-set-badge').textContent = currentSet.badge;
-
-            // Reset pack view
-            prepareSinglePack();
-        }
-
-        function prepareSinglePack() {
-            document.getElementById('booster-stage').classList.remove('hidden');
-            document.getElementById('cards-stage').classList.add('hidden');
-            document.getElementById('packTopFoil').classList.remove('torn');
-            document.getElementById('btn-reveal-all').disabled = true;
-            document.getElementById('packSummaryBar').classList.add('hidden');
-            state.flippedCardIndices.clear();
-        }
-
-        function triggerPackTear() {
-            playTearSound();
-            const topFoil = document.getElementById('packTopFoil');
-            topFoil.classList.add('torn');
-
-            setTimeout(() => {
-                startPackOpeningStage();
-            }, 450);
-        }
-
-        function startPackOpeningStage() {
-            document.getElementById('booster-stage').classList.add('hidden');
-            document.getElementById('cards-stage').classList.remove('hidden');
-            document.getElementById('btn-reveal-all').disabled = false;
-
-            // Generate 5 cards
-            state.currentPackCards = generatePack(state.activeSetId);
-            state.flippedCardIndices.clear();
-
-            // Record Stats
-            state.totalPacksOpened += 1;
-            state.totalCardsPulled += 5;
-
-            state.currentPackCards.forEach(card => {
-                state.userCollection[card.id] = (state.userCollection[card.id] || 0) + 1;
-                state.rarityCounts[card.rarity] = (state.rarityCounts[card.rarity] || 0) + 1;
-                state.totalValueGained += card.value;
-            });
-
-            saveData();
-            renderPackCardsUI();
-        }
-
-        function renderPackCardsUI() {
+        // 渲染抽卡結果
+        function renderPullResults(cards) {
+            const area = document.getElementById('pullResultsArea');
             const grid = document.getElementById('cardsGrid');
+            area.classList.remove('hidden');
             grid.innerHTML = '';
 
-            state.currentPackCards.forEach((card, idx) => {
-                const isFlipped = state.flippedCardIndices.has(idx);
+            cards.forEach(card => {
+                const rInfo = RARITY[card.rarity];
+                const isHighRarity = ['AR', 'SR', 'SAR', 'UR'].includes(card.rarity);
 
-                const container = document.createElement('div');
-                container.className = 'card-container h-64 sm:h-72 lg:h-80 w-full';
-                container.onclick = () => flipCard(idx);
-
-                container.innerHTML = `
-                    <div id="card-inner-${idx}" class="card-inner ${isFlipped ? 'flipped' : ''}">
-                        <!-- Card Back -->
-                        <div class="card-face card-back flex flex-col items-center justify-center p-2 text-center border-2 border-slate-700 bg-slate-900">
-                            <div class="w-16 h-16 rounded-full border-2 border-yellow-400/40 bg-slate-950 flex items-center justify-center shadow-inner mb-2">
-                                <div class="w-10 h-10 rounded-full border border-yellow-400/60 bg-yellow-400/10 flex items-center justify-center text-yellow-400 font-bold text-xs">
-                                    <i class="fa-solid fa-circle-dot"></i>
-                                </div>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pokémon TCG</span>
-                        </div>
-
-                        <!-- Card Front -->
-                        <div class="card-face card-front rarity-${card.rarity} ${['AR','SAR','UR'].includes(card.rarity) ? 'rainbow-foil' : ''}">
-                            <img src="${card.img}" alt="${card.name}" onerror="this.src='${generateSVGCardArt(card)}'" class="w-full h-full object-cover">
-                            <div class="holo-overlay"></div>
-                            
-                            <!-- Rarity Badge overlay -->
-                            <div class="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur px-2 py-0.5 rounded text-[10px] font-black text-yellow-400 border border-slate-800">
-                                ${card.rarity}
-                            </div>
-                        </div>
+                const cardEl = document.createElement('div');
+                cardEl.className = `bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center space-y-2 relative group ${isHighRarity ? 'holo-foil ring-2 ring-amber-400' : ''}`;
+                cardEl.innerHTML = `
+                    <span class="absolute top-2 right-2 text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow" style="background-color: ${rInfo.color}">
+                        ${card.rarity}
+                    </span>
+                    <img src="${card.image}" class="w-full h-auto rounded-lg object-contain shadow-md">
+                    <div class="text-center w-full">
+                        <div class="text-xs font-bold text-slate-200 truncate">${card.name}</div>
+                        <div class="text-[10px] text-cyan-400 font-bold">回收價: +${rInfo.price}分</div>
                     </div>
                 `;
-
-                // Add 3D Tilt Interaction
-                setupTiltEffect(container);
-
-                grid.appendChild(container);
+                grid.appendChild(cardEl);
             });
         }
 
-        function flipCard(idx) {
-            if (state.flippedCardIndices.has(idx)) return;
-
-            state.flippedCardIndices.add(idx);
-            playFlipSound();
-
-            const cardInner = document.getElementById(`card-inner-${idx}`);
-            if (cardInner) {
-                cardInner.classList.add('flipped');
-            }
-
-            const card = state.currentPackCards[idx];
-
-            // Trigger rare effects & fanfare
-            if (['RR', 'AR', 'SAR', 'UR'].includes(card.rarity)) {
-                playRareFanfare(card.rarity);
-            }
-            if (['SAR', 'UR'].includes(card.rarity)) {
-                spawnConfetti();
-            }
-
-            // If all cards flipped, show summary bar
-            if (state.flippedCardIndices.size === 5) {
-                showPackSummaryBar();
-            }
-        }
-
-        function revealAllCards() {
-            for (let i = 0; i < 5; i++) {
-                setTimeout(() => {
-                    flipCard(i);
-                }, i * 150);
-            }
-        }
-
-        function showPackSummaryBar() {
-            const summaryBar = document.getElementById('packSummaryBar');
-            summaryBar.classList.remove('hidden');
-
-            // Find best pull in this pack
-            const sortedByRarity = [...state.currentPackCards].sort((a, b) => b.value - a.value);
-            const bestCard = sortedByRarity[0];
-            const packVal = state.currentPackCards.reduce((acc, c) => acc + c.value, 0);
-
-            document.getElementById('pack-pull-highlight').innerHTML = `
-                本包亮點: <span class="text-yellow-400 font-extrabold">${bestCard.name}</span> (${bestCard.rarity})
-            `;
-            document.getElementById('pack-pull-value').textContent = `卡包總估值: +${packVal} PokéGold`;
-        }
-
-        /* ==========================================================================
-           7. 3D CARD TILT & HOLO SHINE FOIL EFFECT
-           ========================================================================== */
-        function setupTiltEffect(element) {
-            element.addEventListener('mousemove', (e) => {
-                const rect = element.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-
-                const rotateX = ((y - centerY) / centerY) * -16;
-                const rotateY = ((x - centerX) / centerX) * 16;
-
-                const cardInner = element.querySelector('.card-inner');
-                const holo = element.querySelector('.holo-overlay');
-
-                if (cardInner) {
-                    cardInner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY + (cardInner.classList.contains('flipped') ? 180 : 0)}deg) scale3d(1.04, 1.04, 1.04)`;
-                }
-
-                if (holo) {
-                    const angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
-                    holo.style.opacity = '0.7';
-                    holo.style.background = `linear-gradient(${angle}deg, rgba(255,255,255,0.4) 0%, rgba(255,215,0,0.3) 30%, rgba(255,0,128,0.3) 70%, transparent 100%)`;
-                }
-            });
-
-            element.addEventListener('mouseleave', () => {
-                const cardInner = element.querySelector('.card-inner');
-                const holo = element.querySelector('.holo-overlay');
-
-                if (cardInner) {
-                    cardInner.style.transform = cardInner.classList.contains('flipped') ? 'rotateY(180deg)' : 'rotateY(0deg)';
-                }
-                if (holo) {
-                    holo.style.opacity = '0';
-                }
-            });
-        }
-
-        /* ==========================================================================
-           8. BOOSTER BOX SIMULATION (30 PACKS)
-           ========================================================================== */
-        function openBoosterBox() {
-            const currentSet = CARD_SETS.find(s => s.id === state.activeSetId);
-            let boxCards = [];
-            let boxValue = 0;
-            let exCount = 0;
-            let secretCount = 0;
-
-            // Generate 30 packs
-            for (let i = 0; i < 30; i++) {
-                const pack = generatePack(state.activeSetId);
-                boxCards.push(...pack);
-            }
-
-            // Update user collection & statistics
-            state.totalPacksOpened += 30;
-            state.totalCardsPulled += 150;
-
-            boxCards.forEach(card => {
-                state.userCollection[card.id] = (state.userCollection[card.id] || 0) + 1;
-                state.rarityCounts[card.rarity] = (state.rarityCounts[card.rarity] || 0) + 1;
-                state.totalValueGained += card.value;
-                boxValue += card.value;
-
-                if (['RR', 'AR'].includes(card.rarity)) exCount++;
-                if (['SAR', 'UR'].includes(card.rarity)) secretCount++;
-            });
-
-            saveData();
-            spawnConfetti();
-            playRareFanfare('UR');
-
-            // Show Box Summary Modal
-            document.getElementById('box-total-value').textContent = `+${boxValue} P`;
-            document.getElementById('box-ex-count').textContent = `${exCount} 張`;
-            document.getElementById('box-secret-count').textContent = `${secretCount} 張`;
-
-            // Display rare hits (RR, AR, SAR, UR)
-            const hitsGrid = document.getElementById('boxHitsGrid');
-            hitsGrid.innerHTML = '';
-
-            const topHits = boxCards.filter(c => ['RR', 'AR', 'SAR', 'UR'].includes(c.rarity));
-            topHits.sort((a,b) => b.value - a.value);
-
-            if (topHits.length === 0) {
-                hitsGrid.innerHTML = `<p class="col-span-full text-center text-xs text-slate-500 py-6">本盒未獲得極稀有卡牌</p>`;
-            } else {
-                topHits.forEach(card => {
-                    const div = document.createElement('div');
-                    div.className = `p-2 rounded-xl bg-slate-900 border rarity-${card.rarity} flex flex-col items-center text-center cursor-pointer hover:scale-105 transition`;
-                    div.onclick = () => openInspectModal(card);
-                    div.innerHTML = `
-                        <div class="w-full h-36 rounded-lg overflow-hidden mb-1.5">
-                            <img src="${card.img}" onerror="this.src='${generateSVGCardArt(card)}'" class="w-full h-full object-cover">
-                        </div>
-                        <span class="text-xs font-bold text-white truncate w-full">${card.name}</span>
-                        <span class="text-[10px] text-amber-400 font-extrabold">${card.rarity} • +${card.value}P</span>
-                    `;
-                    hitsGrid.appendChild(div);
-                });
-            }
-
-            document.getElementById('boxModal').classList.remove('hidden');
-        }
-
-        function closeBoxModal() {
-            document.getElementById('boxModal').classList.add('hidden');
-        }
-
-        /* ==========================================================================
-           9. COLLECTION BINDER VIEW
-           ========================================================================== */
+        // ==================== 5. 集卡冊圖鑑 (Binder) 邏輯 ====================
         function renderBinder() {
-            const setId = document.getElementById('binderSetSelect').value || state.activeSetId;
-            const currentSet = CARD_SETS.find(s => s.id === setId);
-            const rarityFilter = document.getElementById('filterRarity').value;
-            const typeFilter = document.getElementById('filterType').value;
-            const searchQuery = document.getElementById('binderSearch').value.toLowerCase().trim();
+            const user = getCurrentUser();
+            const setId = document.getElementById('binderSetFilter').value;
+            const setCards = CARD_SETS[setId] || [];
+            const binderGrid = document.getElementById('binderGrid');
+            binderGrid.innerHTML = '';
 
-            const grid = document.getElementById('binderGrid');
-            grid.innerHTML = '';
+            let unlockedCount = 0;
 
-            if (!currentSet) return;
+            setCards.forEach(card => {
+                const count = user.cards[card.id] || 0;
+                if (count > 0) unlockedCount++;
 
-            let totalInSet = currentSet.cards.length;
-            let collectedInSet = 0;
-
-            currentSet.cards.forEach(card => {
-                const count = state.userCollection[card.id] || 0;
-                if (count > 0) collectedInSet++;
-
-                // Apply Filters
-                if (rarityFilter !== 'ALL' && card.rarity !== rarityFilter) return;
-                if (typeFilter !== 'ALL' && card.type !== typeFilter) return;
-                if (searchQuery && !card.name.toLowerCase().includes(searchQuery)) return;
-
-                const cardCard = document.createElement('div');
-                cardCard.className = `glass-card rounded-xl p-2.5 flex flex-col items-center border transition transform hover:-translate-y-1 ${count > 0 ? `rarity-${card.rarity} cursor-pointer` : 'border-slate-800 opacity-40 grayscale'}`;
+                const rInfo = RARITY[card.rarity];
+                const cardEl = document.createElement('div');
+                cardEl.className = `bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center space-y-2 relative`;
 
                 if (count > 0) {
-                    cardCard.onclick = () => openInspectModal(card);
-                }
-
-                cardCard.innerHTML = `
-                    <div class="relative w-full h-44 rounded-lg overflow-hidden mb-2 bg-slate-950">
-                        <img src="${card.img}" onerror="this.src='${generateSVGCardArt(card)}'" class="w-full h-full object-cover">
-                        ${count > 0 ? `<div class="absolute top-1 right-1 bg-yellow-400 text-slate-950 font-black text-[10px] px-1.5 py-0.5 rounded-full shadow">x${count}</div>` : ''}
-                    </div>
-                    <div class="w-full text-left">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-extrabold text-amber-400">${card.rarity}</span>
-                            <span class="text-[10px] text-slate-400">${card.type}屬性</span>
-                        </div>
-                        <h4 class="text-xs font-black text-white truncate">${count > 0 ? card.name : '??????'}</h4>
-                    </div>
-                `;
-
-                grid.appendChild(cardCard);
-            });
-
-            // Update Progress Bar
-            const percent = totalInSet > 0 ? Math.round((collectedInSet / totalInSet) * 100) : 0;
-            document.getElementById('binder-progress-text').textContent = `${collectedInSet} / ${totalInSet} 種 (${percent}%)`;
-            document.getElementById('binder-progress-bar').style.width = `${percent}%`;
-        }
-
-        /* ==========================================================================
-           10. 3D INSPECT MODAL & FALLBACK CANVAS ARTWORK
-           ========================================================================== */
-        function openInspectModal(card) {
-            document.getElementById('inspectCardImg').src = card.img;
-            document.getElementById('inspectCardName').textContent = card.name;
-            document.getElementById('inspectRarityBadge').textContent = `${card.rarity} • ${card.type}屬性 HP ${card.hp}`;
-            document.getElementById('inspectCardSub').textContent = `卡牌價值: ${card.value} PokéGold | 已持有 ${state.userCollection[card.id] || 0} 張`;
-
-            const container = document.getElementById('inspectCardContainer');
-            setupTiltEffect(container);
-
-            document.getElementById('inspectModal').classList.remove('hidden');
-        }
-
-        function closeInspectModal() {
-            document.getElementById('inspectModal').classList.add('hidden');
-        }
-
-        // Fallback SVG Generator if image CDN fails
-        function generateSVGCardArt(card) {
-            const svg = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420">
-                    <rect width="300" height="420" fill="#1e293b" rx="16"/>
-                    <rect x="15" y="15" width="270" height="390" fill="#0f172a" stroke="#f59e0b" stroke-width="3" rx="12"/>
-                    <circle cx="150" cy="180" r="70" fill="#1e1b4b" stroke="#38bdf8" stroke-width="2"/>
-                    <text x="150" y="185" text-anchor="middle" fill="#facc15" font-size="42" font-family="sans-serif" font-weight="bold">⚡</text>
-                    <text x="150" y="290" text-anchor="middle" fill="#ffffff" font-size="20" font-family="sans-serif" font-weight="extrabold">${card.name}</text>
-                    <text x="150" y="320" text-anchor="middle" fill="#94a3b8" font-size="14" font-family="sans-serif">${card.type}屬性 | HP ${card.hp}</text>
-                    <text x="150" y="370" text-anchor="middle" fill="#f59e0b" font-size="16" font-family="sans-serif" font-weight="bold">${card.rarity}</text>
-                </svg>
-            `;
-            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-        }
-
-        /* ==========================================================================
-           11. STATS & HEADER UPDATES
-           ========================================================================== */
-        function updateHeaderAndStatsUI() {
-            document.getElementById('header-total-value').textContent = state.totalValueGained.toLocaleString();
-
-            document.getElementById('stat-total-packs').textContent = state.totalPacksOpened;
-            document.getElementById('stat-total-cards').textContent = state.totalCardsPulled;
-
-            // Hit rate calculation for EX or higher
-            const rareHits = (state.rarityCounts.RR || 0) + (state.rarityCounts.AR || 0) + (state.rarityCounts.SAR || 0) + (state.rarityCounts.UR || 0);
-            const hitRate = state.totalCardsPulled > 0 ? ((rareHits / state.totalCardsPulled) * 100).toFixed(1) : '0.0';
-            document.getElementById('stat-hit-rate').textContent = `${hitRate}%`;
-
-            // Highest pull check
-            let best = '無 (None)';
-            if (state.rarityCounts.UR > 0) best = 'UR (黃金超稀有)';
-            else if (state.rarityCounts.SAR > 0) best = 'SAR (特別插畫)';
-            else if (state.rarityCounts.AR > 0) best = 'AR (插畫稀有)';
-            else if (state.rarityCounts.RR > 0) best = 'RR (ex 雙稀有)';
-            else if (state.rarityCounts.R > 0) best = 'R (稀有閃卡)';
-
-            document.getElementById('stat-best-pull').textContent = best;
-
-            // Rarity Breakdown Bars
-            const barsContainer = document.getElementById('rarityStatsBars');
-            if (barsContainer) {
-                barsContainer.innerHTML = '';
-                const rarities = ['C', 'U', 'R', 'RR', 'AR', 'SAR', 'UR'];
-                rarities.forEach(r => {
-                    const count = state.rarityCounts[r] || 0;
-                    const pct = state.totalCardsPulled > 0 ? Math.round((count / state.totalCardsPulled) * 100) : 0;
-
-                    const row = document.createElement('div');
-                    row.className = 'space-y-1';
-                    row.innerHTML = `
-                        <div class="flex justify-between text-xs font-semibold">
-                            <span class="text-slate-300">${r} 稀有度</span>
-                            <span class="text-amber-400">${count} 張 (${pct}%)</span>
-                        </div>
-                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                            <div class="h-full bg-yellow-400 rounded-full" style="width: ${pct}%"></div>
-                        </div>
+                    cardEl.innerHTML = `
+                        <span class="absolute top-2 left-2 bg-slate-900/80 text-amber-300 text-[10px] font-black px-1.5 py-0.5 rounded-full border border-amber-400/50">
+                            ×${count}
+                        </span>
+                        <span class="absolute top-2 right-2 text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow" style="background-color: ${rInfo.color}">
+                            ${card.rarity}
+                        </span>
+                        <img src="${card.image}" class="w-full h-auto rounded-lg object-contain">
+                        <div class="text-xs font-bold text-slate-200 truncate w-full text-center">${card.name}</div>
                     `;
-                    barsContainer.appendChild(row);
-                });
-            }
-        }
-
-        function resetUserData() {
-            if (confirm('確定要清空所有抽卡紀錄與收藏冊嗎？')) {
-                localStorage.removeItem('poke_sim_save');
-                state.userCollection = {};
-                state.totalPacksOpened = 0;
-                state.totalCardsPulled = 0;
-                state.totalValueGained = 0;
-                state.rarityCounts = { C: 0, U: 0, R: 0, RR: 0, AR: 0, SAR: 0, UR: 0 };
-                saveData();
-                renderBinder();
-            }
-        }
-
-        /* ==========================================================================
-           12. NAVIGATION / TAB SWITCHING
-           ========================================================================== */
-        function switchTab(tab) {
-            ['simulator', 'binder', 'stats'].forEach(t => {
-                const btn = document.getElementById(`tab-${t}`);
-                const view = document.getElementById(`view-${t}`);
-                if (t === tab) {
-                    btn.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-yellow-400 bg-slate-800/90 shadow-sm flex items-center gap-2';
-                    view.classList.remove('hidden');
                 } else {
-                    btn.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center gap-2';
-                    view.classList.add('hidden');
+                    cardEl.innerHTML = `
+                        <div class="w-full aspect-[2/3] bg-slate-900 rounded-lg flex flex-col items-center justify-center card-locked border border-slate-800">
+                            <i class="fa-solid fa-lock text-2xl text-slate-600 mb-1"></i>
+                            <span class="text-[10px] text-slate-500 font-bold">${card.id}</span>
+                        </div>
+                        <div class="text-xs font-bold text-slate-500 truncate w-full text-center">未知卡牌</div>
+                    `;
                 }
+                binderGrid.appendChild(cardEl);
             });
 
-            if (tab === 'binder') renderBinder();
-            if (tab === 'stats') updateHeaderAndStatsUI();
+            // 更新進度條
+            const total = setCards.length;
+            const pct = Math.round((unlockedCount / total) * 100) || 0;
+            document.getElementById('binderProgressText').innerText = `${unlockedCount} / ${total} (${pct}%)`;
+            document.getElementById('binderProgressBar').style.width = `${pct}%`;
         }
 
-        /* ==========================================================================
-           13. INITIALIZATION ON WINDOW LOAD
-           ========================================================================== */
-        window.onload = function() {
-            initSetDropdowns();
-            loadSavedData();
-        };
+        // ==================== 6. 出售卡牌與變現邏輯 ====================
+        function renderSellInventory() {
+            const user = getCurrentUser();
+            const grid = document.getElementById('sellInventoryGrid');
+            grid.innerHTML = '';
+
+            let hasCards = false;
+
+            // 遍歷所有彈數的卡牌
+            Object.keys(CARD_SETS).forEach(setId => {
+                CARD_SETS[setId].forEach(card => {
+                    const count = user.cards[card.id] || 0;
+                    if (count > 0) {
+                        hasCards = true;
+                        const rInfo = RARITY[card.rarity];
+                        const cardEl = document.createElement('div');
+                        cardEl.className = 'bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center space-y-2';
+                        cardEl.innerHTML = `
+                            <img src="${card.image}" class="w-full h-auto rounded-lg">
+                            <div class="text-center w-full">
+                                <div class="text-xs font-bold text-white truncate">${card.name}</div>
+                                <div class="text-[10px] text-slate-400">擁有: <b class="text-amber-400">${count}</b> 張</div>
+                            </div>
+                            <button onclick="sellSingleCard('${card.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 py-1.5 rounded-lg text-xs font-bold text-white shadow">
+                                出售 (+${rInfo.price}分)
+                            </button>
+                        `;
+                        grid.appendChild(cardEl);
+                    }
+                });
+            });
+
+            if (!hasCards) {
+                grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12">卡庫空空如也，快去抽卡吧！</div>`;
+            }
+        }
+
+        // 單張出售
+        function sellSingleCard(cardId) {
+            const user = getCurrentUser();
+            if ((user.cards[cardId] || 0) <= 0) return;
+
+            // 尋找卡牌資料
+            let foundCard = null;
+            Object.values(CARD_SETS).forEach(set => {
+                const c = set.find(item => item.id === cardId);
+                if (c) foundCard = c;
+            });
+
+            if (!foundCard) return;
+
+            const price = RARITY[foundCard.rarity].price;
+            user.cards[cardId]--;
+            user.points += price;
+
+            saveDatabase();
+            updateUI();
+            renderSellInventory();
+        }
+
+        // 一鍵賣出所有重複卡 (保留各 1 張)
+        function sellAllDuplicates() {
+            const user = getCurrentUser();
+            let totalEarned = 0;
+            let soldCount = 0;
+
+            Object.keys(CARD_SETS).forEach(setId => {
+                CARD_SETS[setId].forEach(card => {
+                    const count = user.cards[card.id] || 0;
+                    if (count > 1) {
+                        const duplicates = count - 1;
+                        const price = RARITY[card.rarity].price;
+                        totalEarned += duplicates * price;
+                        soldCount += duplicates;
+                        user.cards[card.id] = 1; // 只保留 1 張
+                    }
+                });
+            });
+
+            if (soldCount === 0) {
+                alert("目前沒有重複的卡牌可以出售！");
+                return;
+            }
+
+            user.points += totalEarned;
+            saveDatabase();
+            updateUI();
+            renderSellInventory();
+            alert(`🧹 清理完成！成功售出 ${soldCount} 張重複卡牌，獲得 +${totalEarned} 抽卡積分！`);
+        }
+
+        // 快速賣出最後一次抽到的重複卡
+        function quickSellLastPull() {
+            if (lastPullCards.length === 0) return;
+            sellAllDuplicates();
+        }
     </script>
 </body>
 </html>
