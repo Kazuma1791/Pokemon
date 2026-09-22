@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - 雲端排行榜版</title>
+    <title>寶可夢卡牌模擬器 - M6a 30週年紀念版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -116,8 +116,28 @@
 
         <!-- TAB 1: 抽卡機 -->
         <section id="tab-pack" class="tab-content space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
+                <!-- M6a 30th CELEBRATION (最新登場) -->
+                <div class="bg-gradient-to-br from-slate-800 via-amber-950 to-purple-950 p-5 rounded-2xl border border-amber-400/50 shadow-2xl flex flex-col justify-between space-y-4 ring-2 ring-amber-500/20">
+                    <div class="flex gap-4 items-center">
+                        <div class="w-24 h-36 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow-lg border border-white/40 shrink-0">
+                            <span class="text-xs font-black bg-slate-950/80 px-2 py-0.5 rounded-full text-amber-300 mb-1 border border-amber-400">M6a</span>
+                            <i class="fa-solid fa-crown text-3xl text-slate-900 my-1 animate-bounce"></i>
+                            <span class="text-[10px] font-black text-slate-950 uppercase tracking-tighter">30th Celebration</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">限定卡包</span>
+                            <h3 class="text-base font-bold text-amber-300 mt-1">超級進化 M6a「30th CELEBRATION」</h3>
+                            <p class="text-xs text-slate-300 mt-1">全新 FUR 夢幻 ex、超級噴火龍X ex 與 30 週年皮卡丘！</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openPack('m6a', 1)" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-950 font-black py-2 rounded-xl text-xs shadow-lg">單抽 (100分)</button>
+                        <button onclick="openPack('m6a', 10)" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-2 rounded-xl text-xs shadow-lg">10連抽 (1000分)</button>
+                    </div>
+                </div>
+
                 <!-- SV2a 寶可夢 151 -->
                 <div class="bg-gradient-to-br from-slate-800 to-indigo-950 p-5 rounded-2xl border border-indigo-500/30 shadow-xl flex flex-col justify-between space-y-4">
                     <div class="flex gap-4 items-center">
@@ -177,7 +197,7 @@
 
             </div>
 
-            <!-- 機率與借貸規則告示牌 -->
+            <!-- 告示牌 -->
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
                     <span class="font-bold text-amber-400"><i class="fa-solid fa-building-columns mr-1"></i>賒帳機制：</span>
@@ -202,6 +222,7 @@
         <section id="tab-binder" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
                 <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-bold text-white">
+                    <option value="m6a">M6a 30th CELEBRATION (全 10 張限定包)</option>
                     <option value="sv2a">SV2a 寶可夢 151 (全 16 張)</option>
                     <option value="sv5a">SV5a 狂野意志 (全 12 張)</option>
                     <option value="sv6">SV6 變幻面具 (全 10 張)</option>
@@ -223,7 +244,7 @@
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
         </section>
 
-        <!-- TAB 4: 🏆 全服排行榜面板 -->
+        <!-- TAB 4: 🏆 全服排行榜 -->
         <section id="tab-leaderboard" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/30 shadow-xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-3">
@@ -237,8 +258,6 @@
                         <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
                     </button>
                 </div>
-
-                <!-- 排行榜清單 -->
                 <div id="leaderboardList" class="space-y-3">
                     <div class="text-center py-8 text-slate-500">載入排行榜中...</div>
                 </div>
@@ -302,7 +321,7 @@
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
-        const MAX_DEBT_LIMIT = -10000; // 最低允許欠債額度
+        const MAX_DEBT_LIMIT = -10000;
 
         const firebaseConfig = {
             apiKey: "AIzaSyALGt-dWSJLf4Qa03AWoFo22u87LMFErIE",
@@ -421,7 +440,6 @@
             updateUI();
         }
 
-        // 稀有度與回收價格
         const RARITY = {
             'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' },
             'U':   { price: 10,   rate: 0.2200, color: '#60a5fa' },
@@ -433,7 +451,20 @@
             'UR':  { price: 3000, rate: 0.0001, color: '#eab308' }
         };
 
+        // 包含新增的 M6a 30th CELEBRATION 專屬卡庫
         const CARD_SETS = {
+            'm6a': [
+                { id: 'm6a-001', name: '皮卡丘 30th 周年紀念', rarity: 'C', image: 'https://images.pokemontcg.io/cel25/5_hires.png' },
+                { id: 'm6a-002', name: '妙蛙種子 30th', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
+                { id: 'm6a-003', name: '小火龍 30th', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
+                { id: 'm6a-004', name: '傑尼龜 30th', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
+                { id: 'm6a-010', name: '超夢 ex', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'm6a-015', name: '超級噴火龍X ex', rarity: 'RR', image: 'https://images.pokemontcg.io/xy1/12_hires.png' },
+                { id: 'm6a-020', name: '超級耿鬼 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/xy4/35_hires.png' },
+                { id: 'm6a-025', name: '超級沙奈朵 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/xy11/79_hires.png' },
+                { id: 'm6a-030', name: '夢幻 ex FUR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
+                { id: 'm6a-031', name: '超夢 ex FUR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/207_hires.png' }
+            ],
             'sv2a': [
                 { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
                 { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
@@ -480,7 +511,6 @@
             ]
         };
 
-        // UI 狀態更新（包含負分紅字與骷髏警告）
         function updateUI() {
             if (!currentUserDoc) return;
             const points = currentUserDoc.points || 0;
@@ -503,15 +533,13 @@
             }
         }
 
-        // 抽卡核心邏輯 (支援負分賒帳與上限防禦)
         window.openPack = async (setId, count) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             const cost = count * 100;
             const currentPoints = currentUserDoc.points || 0;
 
-            // 檢查賒帳上限
             if (currentPoints - cost < MAX_DEBT_LIMIT) {
-                return alert(`⚠️ 賒帳金額已達極限 (${MAX_DEBT_LIMIT} 分)！\n無法繼續透支，請先在「出售卡牌」賣卡換分，或等待明日的補給！`);
+                return alert(`⚠️ 賒帳金額已達極限 (${MAX_DEBT_LIMIT} 分)！\n無法繼續透支，請先在「出售卡牌」賣卡換分！`);
             }
 
             try {
@@ -670,7 +698,6 @@
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
-        // 🏆 排行榜載入與渲染邏輯
         window.renderLeaderboard = async () => {
             const listEl = document.getElementById('leaderboardList');
             listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服數據中...</div>`;
@@ -678,7 +705,6 @@
             try {
                 const snap = await getDocs(collection(db, "users"));
                 let usersList = [];
-
                 const totalCardsInGame = Object.values(CARD_SETS).flat().length;
 
                 snap.forEach(docSnap => {
@@ -695,7 +721,6 @@
                     });
                 });
 
-                // 按分數由高到低排序
                 usersList.sort((a, b) => b.points - a.points);
 
                 if (usersList.length === 0) {
@@ -747,7 +772,7 @@
 
             } catch (err) {
                 console.error("載入排行榜失敗:", err);
-                listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入排行榜失敗: ${err.message}<br><span class="text-xs text-slate-500 font-normal">請確認 Firestore 安全規則是否已更新權限！</span></div>`;
+                listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入排行榜失敗: ${err.message}</div>`;
             }
         };
 
