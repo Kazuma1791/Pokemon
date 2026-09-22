@@ -524,6 +524,7 @@
         const db = getFirestore(app);
 
         let currentUserDoc = null;
+        let unsubscribeUserDoc = null; // 🔄 用於即時監聽個人資料變更
         let isRegisterMode = false;
         let currentPulledCards = [];
         let pendingPackConfig = null;
@@ -781,28 +782,37 @@
                 }
 
                 const userRef = doc(db, "users", user.uid);
-                try {
-                    const snap = await getDoc(userRef);
+                
+                // 🔄 建立即時監聽 (onSnapshot)，當管理員幫忙開通 VIP 或修改分數時，玩家頁面秒級自動同步！
+                if (unsubscribeUserDoc) unsubscribeUserDoc();
+                unsubscribeUserDoc = onSnapshot(userRef, async (snap) => {
                     if (snap.exists()) {
-                        currentUserDoc = snap.data();
+                        const freshData = snap.data();
                         const today = new Date().toISOString().split('T')[0];
-                        if (currentUserDoc.lastDailyDate !== today) {
-                            currentUserDoc.lastDailyDate = today;
-                            currentUserDoc.points = (currentUserDoc.points || 0) + 500;
-                            await setDoc(userRef, { points: currentUserDoc.points, lastDailyDate: today }, { merge: true });
+
+                        if (!currentUserDoc && freshData.lastDailyDate !== today) {
+                            freshData.lastDailyDate = today;
+                            freshData.points = (freshData.points || 0) + 500;
+                            await setDoc(userRef, { points: freshData.points, lastDailyDate: today }, { merge: true });
                             alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
                         }
+
+                        currentUserDoc = freshData;
+                        updateUI();
+                        renderPackList();
                     } else {
                         currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, isVip: false, lastDailyDate: new Date().toISOString().split('T')[0], cards: {}, totalSpent: 0, totalPulledValue: 0 };
                         await setDoc(userRef, currentUserDoc);
                     }
-                } catch (e) {
-                    console.error("載入失敗:", e);
-                }
-                updateUI();
-                renderPackList();
+                });
+
                 fetchGlobalStatsAndLeaderboard();
             } else {
+                if (unsubscribeUserDoc) {
+                    unsubscribeUserDoc();
+                    unsubscribeUserDoc = null;
+                }
+                currentUserDoc = null;
                 document.getElementById('authModal').classList.remove('hidden');
                 document.getElementById('userHeaderInfo').classList.add('hidden');
                 document.getElementById('adminBadge').classList.add('hidden');
@@ -847,6 +857,10 @@
         }
 
         function handleSignOut() {
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+                unsubscribeUserDoc = null;
+            }
             signOut(auth);
         }
 
@@ -942,11 +956,6 @@
                 alert(`👑 已成功將玩家 ${u.name} 的 VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
-                if (auth.currentUser && auth.currentUser.uid === targetUid) {
-                    currentUserDoc.isVip = newVipStatus;
-                    updateUI();
-                    renderPackList();
-                }
             } catch (e) {
                 alert("修改 VIP 失敗: " + e.message);
             }
@@ -966,10 +975,6 @@
                 alert(`👑 成功將玩家 ${u.name} 的分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
-                if (auth.currentUser && auth.currentUser.uid === targetUid) {
-                    currentUserDoc.points = newPoints;
-                    updateUI();
-                }
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
@@ -987,10 +992,6 @@
                 alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
-                if (auth.currentUser && auth.currentUser.uid === targetUid) {
-                    currentUserDoc.points = newPoints;
-                    updateUI();
-                }
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
