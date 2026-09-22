@@ -74,6 +74,7 @@
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-user text-cyan-400"></i>
                     <span id="displayUsername" class="text-sm font-bold text-white">訓練家</span>
+                    <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded">👑 管理員</span>
                 </div>
                 
                 <div class="h-4 w-[1px] bg-slate-700"></div>
@@ -99,6 +100,10 @@
                 </button>
                 <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">
                     <i class="fa-solid fa-coins mr-1"></i> 出售卡牌
+                </button>
+                <!-- 管理員專屬分頁按鈕 -->
+                <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-4 py-1.5 rounded-lg font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50">
+                    <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理控制台
                 </button>
             </nav>
         </div>
@@ -173,6 +178,39 @@
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
         </section>
 
+        <!-- TAB 4: 最高管理員控制台 (僅限你的 UID 可見) -->
+        <section id="tab-admin" class="tab-content hidden space-y-6">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-6">
+                <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-crown"></i> 最高管理員控制面板
+                    </h3>
+                    <span class="text-xs text-slate-400">UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</span>
+                </div>
+
+                <!-- 快速給自己加分 -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                    <h4 class="font-bold text-sm text-slate-200">一鍵給自己發放分數：</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="adminAddOwnPoints(1000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+1,000 分</button>
+                        <button onclick="adminAddOwnPoints(5000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+5,000 分</button>
+                        <button onclick="adminAddOwnPoints(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+50,000 分 (無限抽卡)</button>
+                    </div>
+                </div>
+
+                <!-- 幫特定玩家改分數 -->
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                    <h4 class="font-bold text-sm text-slate-200">修改指定玩家的分數：</h4>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="targetUserUid" placeholder="貼上玩家的 Firebase UID..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
+                        <input type="number" id="targetUserPoints" placeholder="設定目標分數 (例如: 10000)" class="w-full sm:w-48 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
+                        <button onclick="adminSetPlayerPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-6 py-2 rounded-xl text-sm font-bold text-white shadow">更換分數</button>
+                    </div>
+                    <p class="text-[11px] text-slate-500">※ 玩家的 UID 可在 Firebase Console ➔ Authentication 頁面複製取得。</p>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- 登入 / 註冊彈出面板 -->
@@ -205,6 +243,8 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62"; // 你的最高管理員 UID
+
         const firebaseConfig = {
             apiKey: "AIzaSyALGt-dWSJLf4Qa03AWoFo22u87LMFErIE",
             authDomain: "pokemon-342c8.firebaseapp.com",
@@ -227,6 +267,12 @@
                 document.getElementById('authModal').classList.add('hidden');
                 document.getElementById('userHeaderInfo').classList.remove('hidden');
                 
+                // 檢查是否為管理員
+                if (user.uid === ADMIN_UID) {
+                    document.getElementById('adminBadge').classList.remove('hidden');
+                    document.getElementById('adminTabBtn').classList.remove('hidden');
+                }
+
                 // 載入資料庫
                 const userRef = doc(db, "users", user.uid);
                 const snap = await getDoc(userRef);
@@ -247,6 +293,8 @@
             } else {
                 document.getElementById('authModal').classList.remove('hidden');
                 document.getElementById('userHeaderInfo').classList.add('hidden');
+                document.getElementById('adminBadge').classList.add('hidden');
+                document.getElementById('adminTabBtn').classList.add('hidden');
             }
         });
 
@@ -269,7 +317,6 @@
             try {
                 if (isRegisterMode) {
                     const res = await createUserWithEmailAndPassword(auth, email, password);
-                    // 初始積分改為 1000 分
                     await setDoc(doc(db, "users", res.user.uid), {
                         name: username,
                         points: 1000,
@@ -285,6 +332,30 @@
         };
 
         window.handleSignOut = () => signOut(auth);
+
+        // 管理員功能：給自己加分
+        window.adminAddOwnPoints = async (amount) => {
+            if (!currentUserDoc) return;
+            currentUserDoc.points += amount;
+            await syncToCloud();
+            alert(`👑 管理員指令：成功為自己增加 +${amount.toLocaleString()} 積分！`);
+        };
+
+        // 管理員功能：改玩家分數
+        window.adminSetPlayerPoints = async () => {
+            const targetUid = document.getElementById('targetUserUid').value.trim();
+            const newPoints = parseInt(document.getElementById('targetUserPoints').value);
+
+            if (!targetUid || isNaN(newPoints)) return alert("請輸入正確的 UID 與分數數字！");
+
+            try {
+                const targetRef = doc(db, "users", targetUid);
+                await updateDoc(targetRef, { points: newPoints });
+                alert(`👑 成功將 UID [${targetUid}] 的分數修改為: ${newPoints} 分！`);
+            } catch (err) {
+                alert("修改失敗 (請確認 UID 是否存在): " + err.message);
+            }
+        };
 
         // 儲存進度至雲端
         async function syncToCloud() {
