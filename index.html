@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - 3包選擇與卡牌展示升級版</title>
+    <title>寶可夢卡牌模擬器</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -149,7 +149,7 @@
 
             <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-xs text-slate-400 font-bold block">🏪 卡店累積營運損益 (勝率 55%)</span>
+                    <span class="text-xs text-slate-400 font-bold block">🏪 卡店累積營運損益</span>
                     <span id="statShopLoss" class="text-2xl font-black text-red-400">--</span>
                     <span class="text-xs text-slate-500 ml-1">分</span>
                 </div>
@@ -162,7 +162,7 @@
         <!-- TAB 1: 抽卡機 -->
         <section id="tab-pack" class="tab-content space-y-6">
 
-            <!-- 🌟 收下卡牌展示區域 (位置提升至最頂部，並加上金色光暈) -->
+            <!-- 🌟 收下卡牌展示區域 -->
             <div id="pullResultsArea" class="hidden space-y-4 bg-gradient-to-br from-slate-800 via-slate-800 to-amber-950/40 p-5 rounded-2xl border-2 border-amber-400/60 shadow-2xl transition-all duration-500">
                 <div class="flex justify-between items-center border-b border-amber-500/30 pb-3">
                     <h3 class="text-lg font-bold text-amber-300 flex items-center gap-2">
@@ -354,8 +354,8 @@
             <!-- 告示牌 -->
             <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
-                    <span class="font-bold text-amber-400"><i class="fa-solid fa-scale-balanced mr-1"></i>期望值平衡：</span>
-                    系統精準維護 **店鋪 55% : 玩家 45%** 的收益勝率（每抽平均卡價 9 分 / 成本 20 分）。
+                    <span class="font-bold text-amber-400"><i class="fa-solid fa-scale-balanced mr-1"></i>全服動態平衡機制：</span>
+                    系統根據全服玩家總體戰況即時微調卡池熱度，維護永續營運環境。
                 </div>
                 <div class="text-slate-500">透支上限 -10,000 分 | 每日登入 +500 分</div>
             </div>
@@ -616,7 +616,7 @@
                             alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
                         }
                     } else {
-                        currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, lastDailyDate: new Date().toISOString().split('T')[0], cards: {} };
+                        currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, lastDailyDate: new Date().toISOString().split('T')[0], cards: {}, totalSpent: 0, totalPulledValue: 0 };
                         await setDoc(userRef, currentUserDoc);
                     }
                 } catch (e) {
@@ -653,7 +653,9 @@
                         name: username,
                         points: INITIAL_GIFT_POINTS,
                         lastDailyDate: new Date().toISOString().split('T')[0],
-                        cards: {}
+                        cards: {},
+                        totalSpent: 0,
+                        totalPulledValue: 0
                     });
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
@@ -763,22 +765,24 @@
             const userRef = doc(db, "users", auth.currentUser.uid);
             await setDoc(userRef, {
                 points: currentUserDoc.points,
-                cards: currentUserDoc.cards || {}
+                cards: currentUserDoc.cards || {},
+                totalSpent: currentUserDoc.totalSpent || 0,
+                totalPulledValue: currentUserDoc.totalPulledValue || 0
             }, { merge: true });
             updateUI();
             fetchGlobalStatsAndLeaderboard();
         }
 
-        // 店鋪 55 : 45 期望值配比
+        // 卡牌基準回收價格設定
         const RARITY = {
-            'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' },
+            'C':   { price: 4,    rate: 0.6800, color: '#9ca3af' },
             'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' },
             'R':   { price: 20,   rate: 0.0700, color: '#fbbf24' },
             'RR':  { price: 70,   rate: 0.0230, color: '#f43f5e' },
             'AR':  { price: 180,  rate: 0.0050, color: '#a855f7' },
             'SR':  { price: 400,  rate: 0.0015, color: '#ec4899' },
-            'SAR': { price: 1200, rate: 0.0004, color: '#10b981' },
-            'UR':  { price: 2100, rate: 0.0001, color: '#eab308' }
+            'SAR': { price: 1500, rate: 0.0004, color: '#10b981' },
+            'UR':  { price: 4100, rate: 0.0001, color: '#eab308' }
         };
 
         // 9 大熱門擴充包全卡牌資料庫
@@ -949,21 +953,67 @@
             modal.classList.remove('hidden');
         };
 
-        // 🎴 階段 2: 點選 3 包之一後進行抽卡與撕包動畫
+        // 🎴 階段 2: 全服動態 50:50 零和機率算力核心
         window.choosePackAndTear = async (packNumber) => {
             if (!pendingPackConfig || !currentUserDoc) return;
             const { setId, cardCount, cost } = pendingPackConfig;
 
+            // 1. 抓取全服數據，計算當前全服返還率 (全服總卡價 / 全服總投入)
+            let globalSpent = 0;
+            let globalPulledValue = 0;
+
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                snap.forEach(d => {
+                    const data = d.data();
+                    globalSpent += (data.totalSpent || 0);
+                    globalPulledValue += (data.totalPulledValue || 0);
+                });
+            } catch (err) {
+                console.error("抓取全服狀態失敗，採用基準機率", err);
+            }
+
+            // 加入本次預計投入分數
+            globalSpent += cost;
+
+            // 計算當前全服 RTP（若無數據則預設 0.50）
+            let currentGlobalRTP = globalSpent > 0 ? (globalPulledValue / globalSpent) : 0.50;
+            
+            // 2. 核心公式：目標 RTP 為 0.50 (50:50 店鋪對玩家總期望值平衡)
+            // 若當前全服 RTP 越高（有人贏大錢）-> 修正係數 < 1 -> 稀有卡機率下調
+            // 若當前全服 RTP 越低（全服沉船）  -> 修正係數 > 1 -> 稀有卡機率大幅飆升
+            let rtpModifier = 0.50 / Math.max(currentGlobalRTP, 0.1);
+            rtpModifier = Math.max(0.15, Math.min(rtpModifier, 3.0)); // 限制修正範圍在 0.15x ~ 3.0x
+
+            // 3. 動態建構本次抽卡的機率池
+            let dynamicRarity = JSON.parse(JSON.stringify(RARITY));
+            let rareKeys = ['R', 'RR', 'AR', 'SR', 'SAR', 'UR'];
+            let totalRareRate = 0;
+
+            rareKeys.forEach(k => {
+                dynamicRarity[k].rate = dynamicRarity[k].rate * rtpModifier;
+                totalRareRate += dynamicRarity[k].rate;
+            });
+
+            // U 與 C 卡動態承接剩餘機率
+            dynamicRarity['U'].rate = Math.min(0.22, Math.max(0.05, 1.0 - totalRareRate - 0.1));
+            dynamicRarity['C'].rate = Math.max(0.1, 1.0 - totalRareRate - dynamicRarity['U'].rate);
+
+            // 4. 開始執行抽卡邏輯
             currentUserDoc.points = (currentUserDoc.points || 0) - cost;
+            currentUserDoc.totalSpent = (currentUserDoc.totalSpent || 0) + cost;
+
             const set = CARD_SETS[setId];
             if (!set || set.length === 0) return alert("無效的卡包！");
 
             currentPulledCards = [];
+            let batchPulledValue = 0;
+
             for (let i = 0; i < cardCount; i++) {
                 const rand = Math.random();
                 let cum = 0, rarity = 'C';
-                for (let r in RARITY) {
-                    cum += RARITY[r].rate;
+                for (let r in dynamicRarity) {
+                    cum += dynamicRarity[r].rate;
                     if (rand <= cum) { rarity = r; break; }
                 }
                 
@@ -975,12 +1025,15 @@
                     if (!currentUserDoc.cards) currentUserDoc.cards = {};
                     currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
                     currentPulledCards.push(card);
+                    batchPulledValue += RARITY[card.rarity].price;
                 }
             }
 
+            currentUserDoc.totalPulledValue = (currentUserDoc.totalPulledValue || 0) + batchPulledValue;
+
             await syncToCloud();
 
-            // 切換至撕卡包 shake 動畫
+            // 5. 觸發撕卡包動態畫面
             document.getElementById('animStepChoice').classList.add('hidden');
             document.getElementById('animStepTear').classList.remove('hidden');
             document.getElementById('packVisualTitle').innerText = `${setId.toUpperCase()} (#${packNumber})`;
@@ -1046,7 +1099,6 @@
             document.getElementById('packModal').classList.add('hidden');
             renderResults(currentPulledCards);
 
-            // 自動滾動對焦到卡牌紀錄區塊
             setTimeout(() => {
                 const area = document.getElementById('pullResultsArea');
                 if (area) {
