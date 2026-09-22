@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - 雲端帳號版</title>
+    <title>寶可夢卡牌模擬器 - 雲端排行榜版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -69,7 +69,7 @@
                 </h1>
             </div>
 
-            <!-- 玩家雲端資訊 -->
+            <!-- 玩家雲端資訊 (含負分警告標籤) -->
             <div id="userHeaderInfo" class="hidden flex items-center gap-4 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-user text-cyan-400"></i>
@@ -80,9 +80,10 @@
                 <div class="h-4 w-[1px] bg-slate-700"></div>
 
                 <div class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-gem text-cyan-400 animate-pulse"></i>
+                    <i id="pointIcon" class="fa-solid fa-gem text-cyan-400 animate-pulse"></i>
                     <span id="userPoints" class="text-lg font-black text-cyan-300">0</span>
                     <span class="text-xs text-slate-400">分</span>
+                    <span id="debtBadge" class="hidden text-[10px] bg-red-600/90 text-white font-bold px-1.5 py-0.5 rounded animate-bounce">負債中</span>
                 </div>
 
                 <button onclick="handleSignOut()" class="text-xs bg-red-900/60 hover:bg-red-800 text-red-200 px-2 py-1 rounded">
@@ -91,18 +92,21 @@
             </div>
 
             <!-- 分頁選單 -->
-            <nav class="flex gap-2 w-full md:w-auto justify-center">
-                <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow">
+            <nav class="flex gap-2 w-full md:w-auto justify-center flex-wrap">
+                <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow text-sm">
                     <i class="fa-solid fa-box-open mr-1"></i> 抽卡機
                 </button>
-                <button onclick="switchTab('binder')" id="nav-binder" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">
+                <button onclick="switchTab('binder')" id="nav-binder" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm">
                     <i class="fa-solid fa-book-bookmark mr-1"></i> 集卡冊圖鑑
                 </button>
-                <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-4 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600">
+                <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm">
                     <i class="fa-solid fa-coins mr-1"></i> 出售卡牌
                 </button>
-                <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-4 py-1.5 rounded-lg font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50">
-                    <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理控制台
+                <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm">
+                    <i class="fa-solid fa-trophy text-amber-400 mr-1"></i> 排行榜
+                </button>
+                <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-3 py-1.5 rounded-lg font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-sm">
+                    <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員
                 </button>
             </nav>
         </div>
@@ -173,13 +177,13 @@
 
             </div>
 
-            <!-- 機率說明告示牌 -->
-            <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex justify-between items-center text-xs text-slate-400">
+            <!-- 機率與借貸規則告示牌 -->
+            <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
                 <div>
-                    <span class="font-bold text-amber-400">⚖️ 機率平衡提示：</span>
-                    C:68% | U:22% | R:7% | RR:2.3% | AR:0.5% | SR:0.15% | SAR:0.04% | UR:0.01%
+                    <span class="font-bold text-amber-400"><i class="fa-solid fa-building-columns mr-1"></i>賒帳機制：</span>
+                    允許透支分數抽卡（上限 <span class="text-red-400 font-bold">-10,000 分</span>）。負分時可用賣卡或每日 +500 分還債！
                 </div>
-                <div class="text-slate-500 hidden sm:block">每日登入自動發放 +500 分</div>
+                <div class="text-slate-500">每日跨天自動領取補給</div>
             </div>
 
             <!-- 抽卡結果 -->
@@ -212,14 +216,36 @@
             <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
                 <div>
                     <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-coins text-amber-400 mr-2"></i>卡牌交易所</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">點擊單張出售或一鍵出清多餘卡牌換取分數。</p>
+                    <p class="text-xs text-slate-400 mt-0.5">點擊單張出售或一鍵出清多餘卡牌換取分數還債。</p>
                 </div>
                 <button onclick="sellAllDuplicates()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow">一鍵賣出所有重複卡</button>
             </div>
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
         </section>
 
-        <!-- TAB 4: 最高管理員控制台 -->
+        <!-- TAB 4: 🏆 全服排行榜面板 -->
+        <section id="tab-leaderboard" class="tab-content hidden space-y-6">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/30 shadow-xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                    <div>
+                        <h3 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-trophy"></i> 雲端訓練家排行榜
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">即時比較全伺服器訓練家的財富分數與集卡成就！</p>
+                    </div>
+                    <button onclick="renderLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold text-slate-200">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
+                    </button>
+                </div>
+
+                <!-- 排行榜清單 -->
+                <div id="leaderboardList" class="space-y-3">
+                    <div class="text-center py-8 text-slate-500">載入排行榜中...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: 最高管理員控制台 -->
         <section id="tab-admin" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-6">
                 <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
@@ -234,7 +260,7 @@
                     <div class="flex flex-wrap gap-3">
                         <button onclick="adminAddOwnPoints(1000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+1,000 分</button>
                         <button onclick="adminAddOwnPoints(5000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+5,000 分</button>
-                        <button onclick="adminAddOwnPoints(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+50,000 分 (測試用)</button>
+                        <button onclick="adminAddOwnPoints(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+50,000 分</button>
                     </div>
                 </div>
 
@@ -273,9 +299,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
+        const MAX_DEBT_LIMIT = -10000; // 最低允許欠債額度
 
         const firebaseConfig = {
             apiKey: "AIzaSyALGt-dWSJLf4Qa03AWoFo22u87LMFErIE",
@@ -394,7 +421,7 @@
             updateUI();
         }
 
-        // 重寫平衡後的機率與回收價格模型 (期望值約為一包 52 分)
+        // 稀有度與回收價格
         const RARITY = {
             'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' },
             'U':   { price: 10,   rate: 0.2200, color: '#60a5fa' },
@@ -453,19 +480,42 @@
             ]
         };
 
+        // UI 狀態更新（包含負分紅字與骷髏警告）
         function updateUI() {
             if (!currentUserDoc) return;
+            const points = currentUserDoc.points || 0;
             document.getElementById('displayUsername').innerText = currentUserDoc.name || '訓練家';
-            document.getElementById('userPoints').innerText = (currentUserDoc.points || 0).toLocaleString();
+            
+            const pointsEl = document.getElementById('userPoints');
+            const iconEl = document.getElementById('pointIcon');
+            const debtBadge = document.getElementById('debtBadge');
+
+            pointsEl.innerText = points.toLocaleString();
+
+            if (points < 0) {
+                pointsEl.className = "text-lg font-black text-red-400";
+                iconEl.className = "fa-solid fa-skull text-red-400 animate-bounce";
+                debtBadge.classList.remove('hidden');
+            } else {
+                pointsEl.className = "text-lg font-black text-cyan-300";
+                iconEl.className = "fa-solid fa-gem text-cyan-400 animate-pulse";
+                debtBadge.classList.add('hidden');
+            }
         }
 
+        // 抽卡核心邏輯 (支援負分賒帳與上限防禦)
         window.openPack = async (setId, count) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             const cost = count * 100;
-            if ((currentUserDoc.points || 0) < cost) return alert(`分數不足！你需要 ${cost} 分，目前僅有 ${currentUserDoc.points || 0} 分。`);
+            const currentPoints = currentUserDoc.points || 0;
+
+            // 檢查賒帳上限
+            if (currentPoints - cost < MAX_DEBT_LIMIT) {
+                return alert(`⚠️ 賒帳金額已達極限 (${MAX_DEBT_LIMIT} 分)！\n無法繼續透支，請先在「出售卡牌」賣卡換分，或等待明日的補給！`);
+            }
 
             try {
-                currentUserDoc.points -= cost;
+                currentUserDoc.points = currentPoints - cost;
                 const pulled = [];
                 const set = CARD_SETS[setId];
 
@@ -620,11 +670,93 @@
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
+        // 🏆 排行榜載入與渲染邏輯
+        window.renderLeaderboard = async () => {
+            const listEl = document.getElementById('leaderboardList');
+            listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服數據中...</div>`;
+
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                let usersList = [];
+
+                const totalCardsInGame = Object.values(CARD_SETS).flat().length;
+
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const cardsObj = data.cards || {};
+                    const unlockedCount = Object.keys(cardsObj).filter(id => cardsObj[id] > 0).length;
+
+                    usersList.push({
+                        uid: docSnap.id,
+                        name: data.name || "訓練家",
+                        points: data.points || 0,
+                        unlockedCount: unlockedCount,
+                        progressPct: Math.round((unlockedCount / totalCardsInGame) * 100)
+                    });
+                });
+
+                // 按分數由高到低排序
+                usersList.sort((a, b) => b.points - a.points);
+
+                if (usersList.length === 0) {
+                    listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
+                    return;
+                }
+
+                listEl.innerHTML = usersList.map((u, idx) => {
+                    let rankBadge = `<span class="w-8 text-center text-sm font-bold text-slate-400">#${idx + 1}</span>`;
+                    let bgStyle = "bg-slate-900 border-slate-700";
+
+                    if (idx === 0) {
+                        rankBadge = `<span class="w-8 text-center text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
+                        bgStyle = "bg-gradient-to-r from-amber-950/60 to-slate-900 border-amber-500/50 ring-1 ring-amber-500/30";
+                    } else if (idx === 1) {
+                        rankBadge = `<span class="w-8 text-center text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
+                        bgStyle = "bg-gradient-to-r from-slate-800 to-slate-900 border-slate-500/50";
+                    } else if (idx === 2) {
+                        rankBadge = `<span class="w-8 text-center text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
+                        bgStyle = "bg-gradient-to-r from-amber-900/30 to-slate-900 border-amber-700/50";
+                    }
+
+                    const isDebt = u.points < 0;
+                    const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
+
+                    return `
+                        <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
+                            <div class="flex items-center gap-3">
+                                ${rankBadge}
+                                <div>
+                                    <div class="font-bold text-sm text-white flex items-center gap-1.5">
+                                        ${u.name}
+                                        ${isSelf ? '<span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded">你</span>' : ''}
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">
+                                        圖鑑收集度: <b class="text-cyan-300">${u.unlockedCount}/${totalCardsInGame}</b> (${u.progressPct}%)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-black ${isDebt ? 'text-red-400' : 'text-cyan-300'}">
+                                    <i class="${isDebt ? 'fa-solid fa-skull text-red-400 mr-1' : 'fa-solid fa-gem text-cyan-400 mr-1'}"></i>${u.points.toLocaleString()} 分
+                                </div>
+                                ${isDebt ? '<span class="text-[9px] bg-red-900/80 text-red-200 px-1 rounded">負債破產中</span>' : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("載入排行榜失敗:", err);
+                listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入排行榜失敗: ${err.message}<br><span class="text-xs text-slate-500 font-normal">請確認 Firestore 安全規則是否已更新權限！</span></div>`;
+            }
+        };
+
         window.switchTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
             if (tab === 'binder') renderBinder();
             if (tab === 'sell') renderSellInventory();
+            if (tab === 'leaderboard') renderLeaderboard();
         };
     </script>
 </body>
