@@ -206,7 +206,6 @@
                         <input type="number" id="targetUserPoints" placeholder="設定目標分數 (例如: 10000)" class="w-full sm:w-48 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
                         <button onclick="adminSetPlayerPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-6 py-2 rounded-xl text-sm font-bold text-white shadow">更換分數</button>
                     </div>
-                    <p class="text-[11px] text-slate-500">※ 玩家的 UID 可在 Firebase Console ➔ Authentication 頁面複製取得。</p>
                 </div>
             </div>
         </section>
@@ -237,11 +236,11 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (已嵌入專屬金鑰 pokemon-342c8) -->
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62"; // 你的最高管理員 UID
 
@@ -275,19 +274,26 @@
 
                 // 載入資料庫
                 const userRef = doc(db, "users", user.uid);
-                const snap = await getDoc(userRef);
-                
-                if (snap.exists()) {
-                    currentUserDoc = snap.data();
-                    
-                    // 每日 500 分補給邏輯
-                    const today = new Date().toISOString().split('T')[0];
-                    if (currentUserDoc.lastDailyDate !== today) {
-                        currentUserDoc.lastDailyDate = today;
-                        currentUserDoc.points = (currentUserDoc.points || 0) + 500;
-                        await updateDoc(userRef, { points: currentUserDoc.points, lastDailyDate: today });
-                        alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
+                try {
+                    const snap = await getDoc(userRef);
+                    if (snap.exists()) {
+                        currentUserDoc = snap.data();
+                        
+                        // 每日 500 分補給
+                        const today = new Date().toISOString().split('T')[0];
+                        if (currentUserDoc.lastDailyDate !== today) {
+                            currentUserDoc.lastDailyDate = today;
+                            currentUserDoc.points = (currentUserDoc.points || 0) + 500;
+                            await setDoc(userRef, { points: currentUserDoc.points, lastDailyDate: today }, { merge: true });
+                            alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
+                        }
+                    } else {
+                        // 補全新玩家初次載入
+                        currentUserDoc = { name: "訓練家", points: 1000, lastDailyDate: new Date().toISOString().split('T')[0], cards: {} };
+                        await setDoc(userRef, currentUserDoc);
                     }
+                } catch (e) {
+                    console.error("載入使用者失敗:", e);
                 }
                 updateUI();
             } else {
@@ -298,7 +304,6 @@
             }
         });
 
-        // 登入/註冊切換
         window.toggleAuthMode = () => {
             isRegisterMode = !isRegisterMode;
             document.getElementById('authTitle').innerText = isRegisterMode ? "註冊新訓練家帳號" : "雲端訓練家登入";
@@ -306,7 +311,6 @@
             document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此登入" : "還沒有帳號？點此切換至「註冊帳號」";
         };
 
-        // 提交驗證
         window.handleAuthSubmit = async () => {
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPassword').value;
@@ -333,15 +337,19 @@
 
         window.handleSignOut = () => signOut(auth);
 
-        // 管理員功能：給自己加分
+        // 管理員功能：加分（帶有 try-catch 防錯）
         window.adminAddOwnPoints = async (amount) => {
-            if (!currentUserDoc) return;
-            currentUserDoc.points += amount;
-            await syncToCloud();
-            alert(`👑 管理員指令：成功為自己增加 +${amount.toLocaleString()} 積分！`);
+            if (!currentUserDoc) return alert("資料尚未載入完成，請稍候...");
+            try {
+                currentUserDoc.points = (currentUserDoc.points || 0) + amount;
+                await syncToCloud();
+                alert(`👑 管理員指令發送成功：成功增加了 +${amount.toLocaleString()} 分數！`);
+            } catch (err) {
+                alert("加分失敗，錯誤原告: " + err.message);
+            }
         };
 
-        // 管理員功能：改玩家分數
+        // 管理員功能：改特定玩家分數
         window.adminSetPlayerPoints = async () => {
             const targetUid = document.getElementById('targetUserUid').value.trim();
             const newPoints = parseInt(document.getElementById('targetUserPoints').value);
@@ -350,25 +358,24 @@
 
             try {
                 const targetRef = doc(db, "users", targetUid);
-                await updateDoc(targetRef, { points: newPoints });
+                await setDoc(targetRef, { points: newPoints }, { merge: true });
                 alert(`👑 成功將 UID [${targetUid}] 的分數修改為: ${newPoints} 分！`);
             } catch (err) {
-                alert("修改失敗 (請確認 UID 是否存在): " + err.message);
+                alert("修改失敗 (請確認安全規則與 UID 是否正確): " + err.message);
             }
         };
 
-        // 儲存進度至雲端
+        // 雲端同步 (使用 setDoc merge 防止找不到 document 報錯)
         async function syncToCloud() {
-            if (!auth.currentUser) return;
+            if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
-            await updateDoc(userRef, {
+            await setDoc(userRef, {
                 points: currentUserDoc.points,
-                cards: currentUserDoc.cards
-            });
+                cards: currentUserDoc.cards || {}
+            }, { merge: true });
             updateUI();
         }
 
-        // 全域遊戲變數與卡牌庫設定
         const RARITY = {
             'C': { price: 10, rate: 0.52, color: '#9ca3af' },
             'U': { price: 25, rate: 0.28, color: '#60a5fa' },
@@ -397,8 +404,8 @@
 
         function updateUI() {
             if (!currentUserDoc) return;
-            document.getElementById('displayUsername').innerText = currentUserDoc.name;
-            document.getElementById('userPoints').innerText = currentUserDoc.points.toLocaleString();
+            document.getElementById('displayUsername').innerText = currentUserDoc.name || '訓練家';
+            document.getElementById('userPoints').innerText = (currentUserDoc.points || 0).toLocaleString();
         }
 
         window.openPack = async (setId, count) => {
@@ -418,6 +425,7 @@
                 const set = CARD_SETS[setId];
                 const pool = set.filter(c => c.rarity === rarity) || set;
                 const card = pool[Math.floor(Math.random() * pool.length)];
+                if (!currentUserDoc.cards) currentUserDoc.cards = {};
                 currentUserDoc.cards[card.id] = (currentUserDoc.cards[card.id] || 0) + 1;
                 pulled.push(card);
             }
@@ -445,7 +453,7 @@
             let unlocked = 0;
 
             grid.innerHTML = cards.map(c => {
-                const count = currentUserDoc?.cards[c.id] || 0;
+                const count = currentUserDoc?.cards?.[c.id] || 0;
                 if (count > 0) unlocked++;
                 return count > 0 ? `
                     <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center">
@@ -465,7 +473,7 @@
         window.sellAllDuplicates = async () => {
             let total = 0;
             Object.values(CARD_SETS).flat().forEach(c => {
-                const count = currentUserDoc.cards[c.id] || 0;
+                const count = currentUserDoc.cards?.[c.id] || 0;
                 if (count > 1) {
                     total += (count - 1) * RARITY[c.rarity].price;
                     currentUserDoc.cards[c.id] = 1;
