@@ -20,7 +20,7 @@
             color: #f8fafc;
             user-select: none;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 70px; /* 手機端預留底部導覽列空間 */
+            padding-bottom: 70px;
         }
 
         @media (min-width: 768px) {
@@ -75,7 +75,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between relative">
 
-    <!-- 👑 頂部全服歐皇即時廣播橫幅 (維持 5 秒) -->
+    <!-- 👑 頂部全服歐皇即時廣播橫幅 -->
     <div id="broadcastBanner" class="hidden fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-3 text-sm md:text-base animate-bounce transition-all">
         <i class="fa-solid fa-crown text-xl text-red-600 animate-pulse"></i>
         <span id="broadcastText"></span>
@@ -116,7 +116,7 @@
                 </button>
             </div>
 
-            <!-- 💻 桌面端分頁導覽選單 (md 以上顯示) -->
+            <!-- 💻 桌面端分頁導覽選單 -->
             <nav class="hidden md:flex gap-2 justify-center flex-wrap">
                 <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow text-sm">
                     <i class="fa-solid fa-box-open mr-1"></i> 抽卡機
@@ -137,7 +137,7 @@
         </div>
     </header>
 
-    <!-- 📱 手機專用固定底部導覽列 (md 以下顯示) -->
+    <!-- 📱 手機專用固定底部導覽列 -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 flex justify-around py-2 px-1 text-center shadow-2xl">
         <button onclick="switchTab('pack')" id="mob-nav-pack" class="mob-tab-btn flex flex-col items-center gap-1 text-red-500 font-bold text-[11px]">
             <i class="fa-solid fa-box-open text-base"></i>
@@ -188,7 +188,7 @@
             </div>
         </section>
 
-        <!-- 📢 全服歐皇抽卡公告欄 (含日期時間) -->
+        <!-- 📢 全服歐皇抽卡公告欄 -->
         <section class="bg-slate-800/90 p-4 rounded-2xl border border-amber-500/30 shadow-lg space-y-3">
             <div class="flex items-center justify-between border-b border-slate-700 pb-2">
                 <h3 class="text-sm md:text-base font-bold text-amber-300 flex items-center gap-2">
@@ -217,7 +217,7 @@
                 <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
             </div>
 
-            <!-- ⚡ 動態渲染卡包網格容器 (省去數百行重複 HTML) -->
+            <!-- ⚡ 動態渲染卡包網格容器 -->
             <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
             <!-- 告示牌 -->
@@ -226,7 +226,7 @@
                     <span class="font-bold text-amber-400"><i class="fa-solid fa-scale-balanced mr-1"></i>全服動態平衡機制：</span>
                     系統根據全服玩家總體戰況即時微調卡池熱度，維護永續營運環境。
                 </div>
-                <div class="text-slate-500">透支上限 -10,000 分 | 每日登入 +500 分</div>
+                <div class="text-slate-500">透支上限：無上限（無限負債） | 每日登入 +500 分</div>
             </div>
         </section>
 
@@ -261,20 +261,31 @@
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
         </section>
 
-        <!-- TAB 4: 🏆 全服排行榜 -->
+        <!-- TAB 4: 🏆 全服排行榜 (含幸運歐皇榜與非洲黑人榜切換) -->
         <section id="tab-leaderboard" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/30 shadow-xl space-y-4">
-                <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-3 gap-3">
                     <div>
                         <h3 class="text-xl font-bold text-amber-400 flex items-center gap-2">
                             <i class="fa-solid fa-trophy"></i> 雲端訓練家排行榜
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1">即時比較全伺服器訓練家的財富分數與集卡成就！</p>
+                        <p class="text-xs text-slate-400 mt-1">即時比較全伺服器訓練家的財富分數與負債黑化程度！</p>
                     </div>
-                    <button onclick="fetchGlobalStatsAndLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold text-slate-200">
+                    <button onclick="fetchGlobalStatsAndLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold text-slate-200 shrink-0">
                         <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理數據
                     </button>
                 </div>
+
+                <!-- 🌟 榜單類別切換按鈕 (幸運歐皇榜 vs 非洲黑人榜) -->
+                <div class="flex gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700/80">
+                    <button id="lbBtnLucky" onclick="switchLbSubTab('lucky')" class="flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow">
+                        <i class="fa-solid fa-crown text-amber-950"></i> 👑 幸運歐皇榜 (最高分數)
+                    </button>
+                    <button id="lbBtnUnlucky" onclick="switchLbSubTab('unlucky')" class="flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-skull"></i> 🏿 非洲黑人榜 (最深負債)
+                    </button>
+                </div>
+
                 <div id="leaderboardList" class="space-y-3">
                     <div class="text-center py-8 text-slate-500">載入排行榜中...</div>
                 </div>
@@ -291,7 +302,6 @@
                     <span class="text-xs text-slate-400">UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</span>
                 </div>
 
-                <!-- 選擇全服玩家進行分數調整 -->
                 <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-4">
                     <h4 class="font-bold text-base text-amber-300 flex items-center gap-2">
                         <i class="fa-solid fa-users-gear"></i> 全服訓練家分數管理
@@ -335,7 +345,6 @@
                     </div>
                 </div>
 
-                <!-- 手動貼上 UID 備用面板 -->
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
                     <h4 class="font-bold text-sm text-slate-300">備用：輸入指定 UID 修改分數</h4>
                     <div class="flex flex-col sm:flex-row gap-3">
@@ -349,7 +358,7 @@
 
     </main>
 
-    <!-- 🎴 3D 拆卡包動畫 Modal (含 3 包選擇) -->
+    <!-- 🎴 3D 拆卡包動畫 Modal -->
     <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-4">
         
         <!-- 動畫階段 0：三選一選擇卡包 -->
@@ -435,7 +444,6 @@
         import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
-        const MAX_DEBT_LIMIT = -10000;
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
         const INITIAL_GIFT_POINTS = 1000;
 
@@ -459,8 +467,9 @@
         let allUsersCache = [];
         let broadcastTimer = null;
         let lastBroadcastTimestamp = Date.now();
+        let currentLbSubTab = 'lucky'; // 'lucky' | 'unlucky'
 
-        // 📦 卡包定義檔 (動態渲染用)
+        // 📦 卡包定義檔
         const PACK_DEFINITIONS = [
             { id: 'm6a', title: '「30th CELEBRATION」M6a', tag: '30th', desc: 'FUR 夢幻 ex、超夢 ex 與皮卡丘 ex 晝夜 SAR！', bg: 'from-slate-800 via-amber-950 to-purple-950', border: 'border-amber-400/50', icon: 'fa-crown', badge: '限定紀念包' },
             { id: 'sv2a', title: '強化擴充包「寶可夢 151」', tag: '151', desc: '收錄經典 151 陣容！噴火龍 ex SAR 與超夢！', bg: 'from-slate-800 to-indigo-950', border: 'border-indigo-500/30', icon: 'fa-dragon', badge: '熱門擴充包' },
@@ -845,7 +854,6 @@
             ]
         };
 
-        // ⚡ 動態渲染卡包列表 (大幅優化程式碼長度)
         function renderPackList() {
             const container = document.getElementById('packListGrid');
             if (!container) return;
@@ -894,16 +902,11 @@
             }
         }
 
+        // 🎴 抽卡入口 (允許負無限分)
         window.startPackChoice = (setId, cardCount) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             
             const cost = cardCount * 20;
-            const currentPoints = currentUserDoc.points || 0;
-
-            if (currentPoints - cost < MAX_DEBT_LIMIT) {
-                return alert(`⚠️ 賒帳金額已達極限 (${MAX_DEBT_LIMIT} 分)！\n無法繼續透支，請先在「出售卡牌」賣卡換分！`);
-            }
-
             pendingPackConfig = { setId, cardCount, cost };
 
             document.querySelectorAll('.pack-choice-title').forEach(el => {
@@ -1011,7 +1014,6 @@
             }, 1200);
         };
 
-        // ⚡ 圖片延遲載入與解碼優化
         function getImgSrcWithFallback(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
             return `src="${card.image}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}';"`;
@@ -1189,10 +1191,29 @@
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
+        // 🏆 切換幸運歐皇榜 / 非洲黑人榜
+        window.switchLbSubTab = (subTab) => {
+            currentLbSubTab = subTab;
+            
+            const luckyBtn = document.getElementById('lbBtnLucky');
+            const unluckyBtn = document.getElementById('lbBtnUnlucky');
+
+            if (subTab === 'lucky') {
+                luckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow";
+                unluckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+            } else {
+                luckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+                unluckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-red-600 text-white shadow";
+            }
+
+            fetchGlobalStatsAndLeaderboard();
+        };
+
+        // 📊 即時計算全服數據與分榜渲染
         window.fetchGlobalStatsAndLeaderboard = async () => {
             const listEl = document.getElementById('leaderboardList');
             if (listEl) {
-                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服營運數據中...</div>`;
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服排行榜數據中...</div>`;
             }
 
             try {
@@ -1242,40 +1263,68 @@
                     lossIconEl.innerHTML = `<i class="fa-solid fa-building-circle-check"></i>`;
                 }
 
-                usersList.sort((a, b) => b.points - a.points);
-
                 if (listEl) {
                     if (usersList.length === 0) {
                         listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
                         return;
                     }
 
+                    // 排序邏輯：幸運榜 (高到低)，非洲榜 (低到高)
+                    if (currentLbSubTab === 'lucky') {
+                        usersList.sort((a, b) => b.points - a.points);
+                    } else {
+                        usersList.sort((a, b) => a.points - b.points);
+                    }
+
                     listEl.innerHTML = usersList.map((u, idx) => {
                         let rankBadge = `<span class="w-8 text-center text-sm font-bold text-slate-400">#${idx + 1}</span>`;
                         let bgStyle = "bg-slate-900 border-slate-700";
 
-                        if (idx === 0) {
-                            rankBadge = `<span class="w-8 text-center text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
-                            bgStyle = "bg-gradient-to-r from-amber-950/60 to-slate-900 border-amber-500/50 ring-1 ring-amber-500/30";
-                        } else if (idx === 1) {
-                            rankBadge = `<span class="w-8 text-center text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
-                            bgStyle = "bg-gradient-to-r from-slate-800 to-slate-900 border-slate-500/50";
-                        } else if (idx === 2) {
-                            rankBadge = `<span class="w-8 text-center text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
-                            bgStyle = "bg-gradient-to-r from-amber-900/30 to-slate-900 border-amber-700/50";
+                        if (currentLbSubTab === 'lucky') {
+                            if (idx === 0) {
+                                rankBadge = `<span class="w-8 text-center text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
+                                bgStyle = "bg-gradient-to-r from-amber-950/60 to-slate-900 border-amber-500/50 ring-1 ring-amber-500/30";
+                            } else if (idx === 1) {
+                                rankBadge = `<span class="w-8 text-center text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
+                                bgStyle = "bg-gradient-to-r from-slate-800 to-slate-900 border-slate-500/50";
+                            } else if (idx === 2) {
+                                rankBadge = `<span class="w-8 text-center text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
+                                bgStyle = "bg-gradient-to-r from-amber-900/30 to-slate-900 border-amber-700/50";
+                            }
+                        } else {
+                            // 非洲黑人榜專用徽章標籤
+                            if (idx === 0) {
+                                rankBadge = `<span class="w-8 text-center text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
+                                bgStyle = "bg-gradient-to-r from-red-950/80 via-slate-900 to-slate-900 border-red-600/60 ring-1 ring-red-500/40";
+                            } else if (idx === 1) {
+                                rankBadge = `<span class="w-8 text-center text-lg text-red-400"><i class="fa-solid fa-poop"></i></span>`;
+                                bgStyle = "bg-gradient-to-r from-red-950/40 to-slate-900 border-red-800/50";
+                            } else if (idx === 2) {
+                                rankBadge = `<span class="w-8 text-center text-lg text-red-300"><i class="fa-solid fa-heart-crack"></i></span>`;
+                                bgStyle = "bg-gradient-to-r from-red-900/20 to-slate-900 border-slate-700";
+                            }
                         }
 
                         const isDebt = u.points < 0;
                         const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
+
+                        let statusBadgeHtml = '';
+                        if (currentLbSubTab === 'unlucky') {
+                            if (idx === 0) statusBadgeHtml = '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1.5 py-0.5 rounded border border-red-500 ml-1">🏿 首席黑手酋長</span>';
+                            else if (isDebt) statusBadgeHtml = '<span class="text-[9px] bg-red-950 text-red-300 font-bold px-1.5 py-0.5 rounded border border-red-800/60 ml-1">💸 散財大負翁</span>';
+                        } else {
+                            if (idx === 0) statusBadgeHtml = '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded ml-1">👑 幸運歐皇帝尊</span>';
+                        }
 
                         return `
                             <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
                                 <div class="flex items-center gap-3">
                                     ${rankBadge}
                                     <div>
-                                        <div class="font-bold text-sm text-white flex items-center gap-1.5">
-                                            ${u.name}
-                                            ${isSelf ? '<span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded">你</span>' : ''}
+                                        <div class="font-bold text-sm text-white flex items-center gap-1.5 flex-wrap">
+                                            <span>${u.name}</span>
+                                            ${statusBadgeHtml}
+                                            ${isSelf ? '<span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded">你自己</span>' : ''}
                                         </div>
                                         <div class="text-[11px] text-slate-400 mt-0.5">
                                             圖鑑收集度: <b class="text-cyan-300">${u.unlockedCount}/${totalCardsInGame}</b> (${u.progressPct}%)
@@ -1305,7 +1354,6 @@
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
-            // 桌面端選單樣式切換
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.className = "tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm";
             });
@@ -1316,7 +1364,6 @@
                     : "tab-btn px-3 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow text-sm";
             }
 
-            // 手機端底部選單樣式切換
             document.querySelectorAll('.mob-tab-btn').forEach(btn => {
                 btn.className = "mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]";
             });
@@ -1331,7 +1378,6 @@
             if (tab === 'admin') fetchAdminUserList();
         };
 
-        // 頁面初次載入動態生成卡包列表
         document.addEventListener('DOMContentLoaded', renderPackList);
     </script>
 </body>
