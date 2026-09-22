@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寶可夢卡牌模擬器 - 店鋪55:45勝率版</title>
+    <title>寶可夢卡牌模擬器 - 3包選擇與管理員調分版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -178,8 +178,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('m6a', 1)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-2 rounded-xl text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('m6a', 10)" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black py-2 rounded-xl text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('m6a', 1)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-2 rounded-xl text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('m6a', 10)" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black py-2 rounded-xl text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -197,8 +197,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('sv2a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('sv2a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('sv2a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('sv2a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -216,8 +216,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('sv3', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('sv3', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('sv3', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('sv3', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -235,8 +235,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('sv4a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('sv4a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('sv4a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('sv4a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -254,8 +254,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('sv5a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('sv5a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('sv5a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('sv5a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -273,8 +273,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('sv6', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('sv6', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('sv6', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('sv6', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -292,8 +292,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('sv7', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('sv7', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('sv7', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('sv7', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -311,8 +311,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('sv8', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('sv8', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('sv8', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('sv8', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -330,8 +330,8 @@
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="triggerPackAnimation('s12a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
-                        <button onclick="triggerPackAnimation('s12a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
+                        <button onclick="startPackChoice('s12a', 1)" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded-xl font-bold text-xs shadow">單抽 (20分 / 1張)</button>
+                        <button onclick="startPackChoice('s12a', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-xl font-bold text-xs shadow">10連抽 (200分 / 10張)</button>
                     </div>
                 </div>
 
@@ -419,21 +419,57 @@
                     <span class="text-xs text-slate-400">UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</span>
                 </div>
 
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                    <h4 class="font-bold text-sm text-slate-200">一鍵給自己發放分數：</h4>
-                    <div class="flex flex-wrap gap-3">
-                        <button onclick="adminAddOwnPoints(1000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+1,000 分</button>
-                        <button onclick="adminAddOwnPoints(5000)" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+5,000 分</button>
-                        <button onclick="adminAddOwnPoints(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold text-white shadow">+50,000 分</button>
+                <!-- 選擇全服玩家進行分數調整 -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-4">
+                    <h4 class="font-bold text-base text-amber-300 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear"></i> 全服訓練家分數管理
+                    </h4>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <select id="adminUserSelect" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm font-bold">
+                            <option value="">載入全服玩家清單中...</option>
+                        </select>
+                        <button onclick="fetchAdminUserList()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-xs font-bold text-slate-200">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理清單
+                        </button>
+                    </div>
+
+                    <div id="selectedUserCard" class="hidden bg-slate-800/90 p-4 rounded-xl border border-cyan-500/40 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span id="selectedUserName" class="font-black text-lg text-white">--</span>
+                                <span id="selectedUserUidText" class="text-xs text-slate-400 font-mono block">UID: --</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 block">當前分數</span>
+                                <span id="selectedUserCurrentPoints" class="text-xl font-black text-cyan-300">--</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-700 pt-3">
+                            <span class="text-xs font-bold text-slate-300 block mb-2">快速增減分數：</span>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="adminAdjustSelectedUser(1000)" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">+1,000 分</button>
+                                <button onclick="adminAdjustSelectedUser(5000)" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">+5,000 分</button>
+                                <button onclick="adminAdjustSelectedUser(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">+50,000 分</button>
+                                <button onclick="adminAdjustSelectedUser(-1000)" class="bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">-1,000 分</button>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-2">
+                            <input type="number" id="adminCustomPointsInput" placeholder="直接設定為指定分數..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
+                            <button onclick="adminSetCustomPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-5 py-2 rounded-xl text-xs font-bold text-white shadow">設定目標分數</button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- 手動貼上 UID 備用面板 -->
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                    <h4 class="font-bold text-sm text-slate-200">修改指定玩家的分數：</h4>
+                    <h4 class="font-bold text-sm text-slate-300">備用：輸入指定 UID 修改分數</h4>
                     <div class="flex flex-col sm:flex-row gap-3">
                         <input type="text" id="targetUserUid" placeholder="貼上玩家的 Firebase UID..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
                         <input type="number" id="targetUserPoints" placeholder="設定目標分數" class="w-full sm:w-48 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
-                        <button onclick="adminSetPlayerPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-6 py-2 rounded-xl text-sm font-bold text-white shadow">更換分數</button>
+                        <button onclick="adminSetPlayerPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-6 py-2 rounded-xl text-sm font-bold text-white shadow">替換分數</button>
                     </div>
                 </div>
             </div>
@@ -441,18 +477,48 @@
 
     </main>
 
-    <!-- 🎴 3D 拆卡包動畫 Modal -->
+    <!-- 🎴 3D 拆卡包動畫 Modal (含 3 包選擇) -->
     <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-4">
         
+        <!-- 動畫階段 0：三選一選擇卡包 -->
+        <div id="animStepChoice" class="flex flex-col items-center space-y-6 text-center max-w-2xl w-full">
+            <div>
+                <h2 class="text-2xl font-black text-amber-400 animate-pulse">請選擇其中一包卡包進行拆封！</h2>
+                <p class="text-xs text-slate-400 mt-1">三包卡包皆內含隨機卡牌，憑直覺選出一包幸運卡包吧！</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 md:gap-8 w-full py-4">
+                <!-- 卡包 1 -->
+                <div onclick="choosePackAndTear(1)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
+                    <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
+                    <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #1</span>
+                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
+                </div>
+
+                <!-- 卡包 2 -->
+                <div onclick="choosePackAndTear(2)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
+                    <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
+                    <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #2</span>
+                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
+                </div>
+
+                <!-- 卡包 3 -->
+                <div onclick="choosePackAndTear(3)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
+                    <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
+                    <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #3</span>
+                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
+                </div>
+            </div>
+        </div>
+
         <!-- 動畫階段 1：撕卡包 -->
-        <div id="animStepTear" class="flex flex-col items-center space-y-6 text-center">
-            <h2 class="text-2xl font-black text-amber-400 animate-pulse">正在準備擴充卡包...</h2>
-            <div id="packVisualBox" class="w-48 h-72 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center p-4 cursor-pointer hover:scale-105 transition animate-pack-shake">
+        <div id="animStepTear" class="hidden flex flex-col items-center space-y-6 text-center">
+            <h2 class="text-2xl font-black text-amber-400 animate-pulse">正在拆封你選擇的卡包...</h2>
+            <div id="packVisualBox" class="w-48 h-72 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center p-4 animate-pack-shake">
                 <i class="fa-solid fa-box-open text-6xl text-slate-950 mb-3"></i>
                 <span id="packVisualTitle" class="text-slate-950 font-black text-lg">POKÉMON</span>
-                <span class="text-[10px] text-slate-900 font-bold tracking-widest mt-1">CLICK TO UNBOX</span>
+                <span class="text-[10px] text-slate-900 font-bold tracking-widest mt-1">OPENING...</span>
             </div>
-            <p class="text-xs text-slate-400">點擊卡包或等待自動拆封</p>
         </div>
 
         <!-- 動畫階段 2：翻卡片與展示 -->
@@ -520,6 +586,8 @@
         let currentUserDoc = null;
         let isRegisterMode = false;
         let currentPulledCards = [];
+        let pendingPackConfig = null;
+        let allUsersCache = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -529,6 +597,7 @@
                 if (user.uid === ADMIN_UID) {
                     document.getElementById('adminBadge').classList.remove('hidden');
                     document.getElementById('adminTabBtn').classList.remove('hidden');
+                    fetchAdminUserList();
                 }
 
                 const userRef = doc(db, "users", user.uid);
@@ -593,13 +662,6 @@
 
         window.handleSignOut = () => signOut(auth);
 
-        window.adminAddOwnPoints = async (amount) => {
-            if (!currentUserDoc) return alert("資料載入中...");
-            currentUserDoc.points = (currentUserDoc.points || 0) + amount;
-            await syncToCloud();
-            alert(`👑 成功增加了 +${amount.toLocaleString()} 積分！`);
-        };
-
         window.adminSetPlayerPoints = async () => {
             const targetUid = document.getElementById('targetUserUid').value.trim();
             const newPoints = parseInt(document.getElementById('targetUserPoints').value);
@@ -609,8 +671,87 @@
                 await setDoc(targetRef, { points: newPoints }, { merge: true });
                 alert(`👑 已將玩家 UID [${targetUid}] 的分數修改為 ${newPoints} 分！`);
                 fetchGlobalStatsAndLeaderboard();
+                fetchAdminUserList();
             } catch (err) {
                 alert("修改失敗: " + err.message);
+            }
+        };
+
+        // 👑 管理員拉取全服玩家清單
+        window.fetchAdminUserList = async () => {
+            const selectEl = document.getElementById('adminUserSelect');
+            if (!selectEl) return;
+            selectEl.innerHTML = `<option value="">載入全服玩家中...</option>`;
+
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                allUsersCache = [];
+                snap.forEach(d => {
+                    allUsersCache.push({ uid: d.id, ...d.data() });
+                });
+
+                selectEl.innerHTML = `<option value="">-- 請選擇要調整分數的訓練家 --</option>` +
+                    allUsersCache.map(u => `<option value="${u.uid}">${u.name || '訓練家'} (UID: ${u.uid.substring(0,6)}...) - [${(u.points||0).toLocaleString()} 分]</option>`).join('');
+
+                selectEl.onchange = (e) => {
+                    const uid = e.target.value;
+                    const u = allUsersCache.find(x => x.uid === uid);
+                    const card = document.getElementById('selectedUserCard');
+                    if (u && card) {
+                        card.classList.remove('hidden');
+                        document.getElementById('selectedUserName').innerText = u.name || '訓練家';
+                        document.getElementById('selectedUserUidText').innerText = `UID: ${u.uid}`;
+                        document.getElementById('selectedUserCurrentPoints').innerText = `${(u.points || 0).toLocaleString()} 分`;
+                    } else if (card) {
+                        card.classList.add('hidden');
+                    }
+                };
+            } catch (err) {
+                selectEl.innerHTML = `<option value="">載入失敗: ${err.message}</option>`;
+            }
+        };
+
+        window.adminAdjustSelectedUser = async (delta) => {
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+
+            const newPoints = (u.points || 0) + delta;
+            try {
+                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
+                alert(`👑 成功將玩家 ${u.name} 的分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
+                fetchAdminUserList();
+                fetchGlobalStatsAndLeaderboard();
+                if (auth.currentUser && auth.currentUser.uid === targetUid) {
+                    currentUserDoc.points = newPoints;
+                    updateUI();
+                }
+            } catch (e) {
+                alert("修改失敗: " + e.message);
+            }
+        };
+
+        window.adminSetCustomPoints = async () => {
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            const newPoints = parseInt(document.getElementById('adminCustomPointsInput').value);
+
+            if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入正確的目標分數！");
+
+            try {
+                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
+                alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
+                fetchAdminUserList();
+                fetchGlobalStatsAndLeaderboard();
+                if (auth.currentUser && auth.currentUser.uid === targetUid) {
+                    currentUserDoc.points = newPoints;
+                    updateUI();
+                }
+            } catch (e) {
+                alert("修改失敗: " + e.message);
             }
         };
 
@@ -625,19 +766,19 @@
             fetchGlobalStatsAndLeaderboard();
         }
 
-        // 精準調整：每張卡牌回收價值調至期望值 = 9.00 分 (單抽成本 20 分 => 勝率 55:45)
+        // 店鋪 55 : 45 期望值配比
         const RARITY = {
-            'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' }, // EV = 2.04
-            'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' }, // EV = 1.76
-            'R':   { price: 20,   rate: 0.0700, color: '#fbbf24' }, // EV = 1.40
-            'RR':  { price: 70,   rate: 0.0230, color: '#f43f5e' }, // EV = 1.61
-            'AR':  { price: 180,  rate: 0.0050, color: '#a855f7' }, // EV = 0.90
-            'SR':  { price: 400,  rate: 0.0015, color: '#ec4899' }, // EV = 0.60
-            'SAR': { price: 1200, rate: 0.0004, color: '#10b981' }, // EV = 0.48
-            'UR':  { price: 2100, rate: 0.0001, color: '#eab308' }  // EV = 0.21 -> 總和 = 9.00 分
+            'C':   { price: 3,    rate: 0.6800, color: '#9ca3af' },
+            'U':   { price: 8,    rate: 0.2200, color: '#60a5fa' },
+            'R':   { price: 20,   rate: 0.0700, color: '#fbbf24' },
+            'RR':  { price: 70,   rate: 0.0230, color: '#f43f5e' },
+            'AR':  { price: 180,  rate: 0.0050, color: '#a855f7' },
+            'SR':  { price: 400,  rate: 0.0015, color: '#ec4899' },
+            'SAR': { price: 1200, rate: 0.0004, color: '#10b981' },
+            'UR':  { price: 2100, rate: 0.0001, color: '#eab308' }
         };
 
-        // 包含 9 大熱門卡包的完整資料庫
+        // 9 大熱門擴充包全卡牌資料庫
         const CARD_SETS = {
             'm6a': [
                 { id: 'm6a-017', name: '皮卡丘 (30th 繪師卡)', rarity: 'C', image: 'https://images.pokemontcg.io/cel25/5_hires.png' },
@@ -780,11 +921,10 @@
             }
         }
 
-        // 🎴 觸發拆卡包動畫 modal
-        window.triggerPackAnimation = async (setId, cardCount) => {
+        // 🎴 階段 1: 開啟 3 包選擇畫面
+        window.startPackChoice = (setId, cardCount) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             
-            // 單抽 (1張) 20分，10連抽 (10張) 200分
             const cost = cardCount * 20;
             const currentPoints = currentUserDoc.points || 0;
 
@@ -792,8 +932,26 @@
                 return alert(`⚠️ 賒帳金額已達極限 (${MAX_DEBT_LIMIT} 分)！\n無法繼續透支，請先在「出售卡牌」賣卡換分！`);
             }
 
-            // 扣除分數並抽取卡牌
-            currentUserDoc.points = currentPoints - cost;
+            pendingPackConfig = { setId, cardCount, cost };
+
+            // 更新 3 包外觀標題
+            document.querySelectorAll('.pack-choice-title').forEach(el => {
+                el.innerText = `${setId.toUpperCase()} 擴充包`;
+            });
+
+            const modal = document.getElementById('packModal');
+            document.getElementById('animStepChoice').classList.remove('hidden');
+            document.getElementById('animStepTear').classList.add('hidden');
+            document.getElementById('animStepReveal').classList.add('hidden');
+            modal.classList.remove('hidden');
+        };
+
+        // 🎴 階段 2: 點選 3 包之一後進行抽卡與撕包動畫
+        window.choosePackAndTear = async (packNumber) => {
+            if (!pendingPackConfig || !currentUserDoc) return;
+            const { setId, cardCount, cost } = pendingPackConfig;
+
+            currentUserDoc.points = (currentUserDoc.points || 0) - cost;
             const set = CARD_SETS[setId];
             if (!set || set.length === 0) return alert("無效的卡包！");
 
@@ -819,21 +977,14 @@
 
             await syncToCloud();
 
-            // 開啟拆包 Modal 動畫
-            const modal = document.getElementById('packModal');
-            const animTear = document.getElementById('animStepTear');
-            const animReveal = document.getElementById('animStepReveal');
+            // 切換至撕卡包 shake 動畫
+            document.getElementById('animStepChoice').classList.add('hidden');
+            document.getElementById('animStepTear').classList.remove('hidden');
+            document.getElementById('packVisualTitle').innerText = `${setId.toUpperCase()} (#${packNumber})`;
 
-            modal.classList.remove('hidden');
-            animTear.classList.remove('hidden');
-            animReveal.classList.add('hidden');
-
-            document.getElementById('packVisualTitle').innerText = setId.toUpperCase();
-
-            // 1.2 秒後自動撕卡包並呈現卡片
             setTimeout(() => {
-                animTear.classList.add('hidden');
-                animReveal.classList.remove('hidden');
+                document.getElementById('animStepTear').classList.add('hidden');
+                document.getElementById('animStepReveal').classList.remove('hidden');
                 renderModalFlipCards(currentPulledCards);
             }, 1200);
         };
@@ -870,7 +1021,6 @@
                 </div>
             `).join('');
 
-            // 若有高稀有度卡牌，發放慶祝彩花
             if (cards.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
                 confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
             }
@@ -1133,6 +1283,7 @@
             if (tab === 'binder') renderBinder();
             if (tab === 'sell') renderSellInventory();
             if (tab === 'leaderboard') fetchGlobalStatsAndLeaderboard();
+            if (tab === 'admin') fetchAdminUserList();
         };
     </script>
 </body>
