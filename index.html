@@ -1,5 +1,3 @@
-
-```html
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -182,7 +180,7 @@
                     <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
                         <i class="fa-solid fa-sparkles"></i> 獲得卡牌清單
                     </h3>
-                    <button onclick="sellAllDuplicates()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg font-bold text-white">售出重複卡</button>
+                    <button onclick="sellAllDuplicates()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg font-bold text-white shadow">一鍵售出重複卡</button>
                 </div>
                 <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
             </div>
@@ -204,8 +202,11 @@
         <!-- TAB 3: 出售卡牌 -->
         <section id="tab-sell" class="tab-content hidden space-y-6">
             <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-white">卡牌交易所</h3>
-                <button onclick="sellAllDuplicates()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl text-xs font-bold text-white">一鍵賣出重複卡</button>
+                <div>
+                    <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-coins text-amber-400 mr-2"></i>卡牌交易所</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">點擊單張出售或一鍵出清多餘卡牌換取分數。</p>
+                </div>
+                <button onclick="sellAllDuplicates()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow">一鍵賣出所有重複卡</button>
             </div>
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
         </section>
@@ -385,7 +386,7 @@
             updateUI();
         }
 
-        // 稀有度回收機制與機率
+        // 稀有度與回收價格
         const RARITY = {
             'C':   { price: 10,   rate: 0.50, color: '#9ca3af' },
             'U':   { price: 25,   rate: 0.28, color: '#60a5fa' },
@@ -397,7 +398,6 @@
             'UR':  { price: 8000, rate: 0.001, color: '#eab308' }
         };
 
-        // 擴充卡牌庫 (全稀有度齊全)
         const CARD_SETS = {
             'sv2a': [
                 { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
@@ -451,7 +451,7 @@
             document.getElementById('userPoints').innerText = (currentUserDoc.points || 0).toLocaleString();
         }
 
-        // 修正後的抽卡演算法 (解決空陣列 Bug)
+        // 抽卡核心邏輯
         window.openPack = async (setId, count) => {
             if (!currentUserDoc) return alert("請先登入帳號！");
             const cost = count * 100;
@@ -464,7 +464,6 @@
 
                 if (!set || set.length === 0) return alert("無效的卡包！");
 
-                // 每包 5 張，10連抽共 50 張
                 for (let i = 0; i < count * 5; i++) {
                     const rand = Math.random();
                     let cum = 0, rarity = 'C';
@@ -473,11 +472,8 @@
                         if (rand <= cum) { rarity = r; break; }
                     }
                     
-                    // 修正：防護空過濾機制
                     let pool = set.filter(c => c.rarity === rarity);
-                    if (!pool || pool.length === 0) {
-                        pool = set; // 如果該稀有度沒卡，回退至整個卡包
-                    }
+                    if (!pool || pool.length === 0) pool = set;
 
                     const card = pool[Math.floor(Math.random() * pool.length)];
                     if (card) {
@@ -490,7 +486,6 @@
                 await syncToCloud();
                 renderResults(pulled);
 
-                // 抽到大卡觸發特效
                 if (pulled.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
                     confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
                 }
@@ -500,19 +495,26 @@
             }
         };
 
+        // 渲染抽卡結果 (卡牌下方顯示對應回收分數)
         function renderResults(cards) {
             const area = document.getElementById('pullResultsArea');
             const grid = document.getElementById('cardsGrid');
             area.classList.remove('hidden');
             grid.innerHTML = cards.map(c => `
-                <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center hover:scale-105 transition">
+                <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center hover:scale-105 transition shadow-lg">
                     <img src="${c.image}" class="w-full h-auto rounded-lg shadow-md">
-                    <span class="text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
-                    <span class="text-[10px] font-black px-1.5 py-0.5 rounded text-white mt-1" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
+                    <span class="text-xs font-bold mt-1.5 text-slate-200 text-center truncate w-full">${c.name}</span>
+                    <div class="flex items-center gap-1 mt-1">
+                        <span class="text-[10px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
+                        <span class="text-[11px] font-black text-cyan-300 bg-slate-900/90 px-1.5 py-0.5 rounded border border-cyan-500/30">
+                            <i class="fa-solid fa-gem text-cyan-400 mr-0.5 text-[9px]"></i>${RARITY[c.rarity].price} 分
+                        </span>
+                    </div>
                 </div>
             `).join('');
         }
 
+        // 渲染集卡冊圖鑑 (顯示解鎖數量與卡牌回收分數)
         window.renderBinder = () => {
             const setId = document.getElementById('binderSetFilter').value;
             const grid = document.getElementById('binderGrid');
@@ -523,15 +525,20 @@
                 const count = currentUserDoc?.cards?.[c.id] || 0;
                 if (count > 0) unlocked++;
                 return count > 0 ? `
-                    <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center relative">
-                        <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.2 rounded-full">×${count}</span>
+                    <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center relative flex flex-col items-center justify-between">
+                        <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.2 rounded-full shadow">×${count}</span>
                         <img src="${c.image}" class="w-full h-auto rounded-lg">
-                        <div class="text-[11px] font-bold text-slate-200 mt-1 truncate">${c.name}</div>
+                        <div class="w-full mt-1">
+                            <div class="text-[11px] font-bold text-slate-200 truncate">${c.name}</div>
+                            <div class="text-[10px] font-black text-cyan-300 bg-slate-900/80 px-1 py-0.5 rounded border border-slate-700 mt-0.5 inline-block">
+                                <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${RARITY[c.rarity].price} 分
+                            </div>
+                        </div>
                     </div>
                 ` : `
                     <div class="bg-slate-900 aspect-[2/3] rounded-xl flex flex-col items-center justify-center card-locked border border-slate-800">
                         <i class="fa-solid fa-lock text-xl text-slate-600 mb-1"></i>
-                        <span class="text-[9px] text-slate-500">${c.id}</span>
+                        <span class="text-[9px] text-slate-500 font-bold">${c.id}</span>
                     </div>
                 `;
             }).join('');
@@ -539,6 +546,60 @@
             document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${Math.round(unlocked/cards.length*100)}%)`;
         };
 
+        // 渲染出售卡牌庫
+        window.renderSellInventory = () => {
+            const grid = document.getElementById('sellInventoryGrid');
+            if (!grid || !currentUserDoc) return;
+            
+            let hasCards = false;
+            grid.innerHTML = '';
+
+            Object.values(CARD_SETS).flat().forEach(c => {
+                const count = currentUserDoc.cards?.[c.id] || 0;
+                if (count > 0) {
+                    hasCards = true;
+                    const price = RARITY[c.rarity].price;
+                    grid.innerHTML += `
+                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
+                            <div class="relative w-full">
+                                <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.5 rounded-full shadow">擁有 ${count} 張</span>
+                                <img src="${c.image}" class="w-full h-auto rounded-lg">
+                            </div>
+                            <div class="text-center w-full">
+                                <div class="text-xs font-bold text-white truncate">${c.name}</div>
+                                <div class="text-[11px] font-black text-cyan-300 mt-0.5">
+                                    <i class="fa-solid fa-gem text-cyan-400 mr-1"></i>${price} 分 / 張
+                                </div>
+                            </div>
+                            <button onclick="sellSingleCard('${c.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 py-1.5 rounded-lg text-xs font-bold text-white shadow transition">
+                                出售 1 張 (+${price}分)
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+
+            if (!hasCards) {
+                grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12 font-bold"><i class="fa-solid fa-box-open text-3xl block mb-2 opacity-50"></i>背包裡沒有可出售的卡牌！</div>`;
+            }
+        };
+
+        // 單張出售邏輯
+        window.sellSingleCard = async (cardId) => {
+            if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
+            
+            let card = Object.values(CARD_SETS).flat().find(c => c.id === cardId);
+            if (!card) return;
+
+            const price = RARITY[card.rarity].price;
+            currentUserDoc.cards[cardId]--;
+            currentUserDoc.points = (currentUserDoc.points || 0) + price;
+
+            await syncToCloud();
+            renderSellInventory();
+        };
+
+        // 一鍵賣出重複卡
         window.sellAllDuplicates = async () => {
             let total = 0;
             Object.values(CARD_SETS).flat().forEach(c => {
@@ -551,6 +612,9 @@
             if (total === 0) return alert("目前沒有重複卡！");
             currentUserDoc.points += total;
             await syncToCloud();
+            if (!document.getElementById('tab-sell').classList.contains('hidden')) {
+                renderSellInventory();
+            }
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
 
@@ -558,9 +622,8 @@
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
             if (tab === 'binder') renderBinder();
+            if (tab === 'sell') renderSellInventory();
         };
     </script>
 </body>
 </html>
-
-```
