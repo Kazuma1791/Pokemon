@@ -131,11 +131,11 @@
                 </h1>
             </div>
 
-            <!-- 玩家雲端資訊 -->
-            <div id="userHeaderInfo" class="hidden flex items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm">
+            <!-- 玩家雲端資訊（修正：允許手機與電腦雙端完美顯示） -->
+            <div id="userHeaderInfo" class="hidden flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm">
                 <div class="flex items-center gap-1.5">
                     <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
-                    <span id="displayUsername" class="font-bold text-white max-w-[80px] sm:max-w-[120px] truncate">訓練家</span>
+                    <span id="displayUsername" class="font-bold text-white max-w-[90px] sm:max-w-[120px] truncate">訓練家</span>
                     
                     <button onclick="promptChangeUsername()" title="改名 (1,000分)" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:scale-95 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30 transition shadow">
                         <i class="fa-solid fa-pen-to-square"></i>
@@ -148,7 +148,7 @@
                     <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded shrink-0">👑 管理員</span>
                 </div>
                 
-                <div class="h-3.5 w-[1px] bg-slate-700"></div>
+                <div class="h-3.5 w-[1px] bg-slate-700 hidden sm:block"></div>
 
                 <div class="flex items-center gap-1 shrink-0">
                     <i id="pointIcon" class="fa-solid fa-gem text-cyan-400 animate-pulse text-xs"></i>
@@ -157,8 +157,8 @@
                     <span id="debtBadge" class="hidden text-[9px] bg-red-600 text-white font-bold px-1 py-0.2 rounded animate-bounce">負債</span>
                 </div>
 
-                <button onclick="handleSignOut()" class="text-[10px] sm:text-xs bg-red-950/80 hover:bg-red-800 active:scale-95 text-red-200 px-2 py-0.5 rounded border border-red-800/40 shrink-0">
-                    登出
+                <button onclick="handleSignOut()" class="text-[10px] sm:text-xs bg-red-950/80 hover:bg-red-800 active:scale-95 text-red-200 px-2.5 py-1 rounded-lg border border-red-800/50 shrink-0 font-bold ml-auto sm:ml-0">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>登出
                 </button>
             </div>
 
@@ -220,16 +220,16 @@
                         系統更新公告
                         <span class="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded-full font-bold">NEW</span>
                     </h3>
-                    <span class="text-[10px] text-slate-400 font-mono">今日更新</span>
+                    <span class="text-[10px] text-slate-400 font-mono">系統升級</span>
                 </div>
                 <ul class="text-[11px] sm:text-xs text-slate-300 space-y-1 pt-1">
                     <li class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-mobile-screen-button text-cyan-400 text-[10px]"></i>
-                        <span>已全面優化<b>手機用戶 UX/UI 介面</b>，操作更順暢！</span>
+                        <i class="fa-solid fa-user-plus text-cyan-400 text-[10px]"></i>
+                        <span>已修復<b>玩家帳號註冊機制</b>與中文提示訊息！</span>
                     </li>
                     <li class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-images text-cyan-400 text-[10px]"></i>
-                        <span>卡牌圖鑑持續完善中，之後將會陸續更新<b>卡牌庫圖片</b>。</span>
+                        <i class="fa-solid fa-mobile-screen-button text-cyan-400 text-[10px]"></i>
+                        <span>優化<b>手機端 UI 介面與登出按鈕顯示</b>。</span>
                     </li>
                 </ul>
             </div>
@@ -549,7 +549,7 @@
         </div>
     </div>
 
-    <!-- 登入 Modal -->
+    <!-- 登入與註冊 Modal -->
     <div id="authModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
             <h2 id="authTitle" class="text-xl sm:text-2xl font-bold text-center text-amber-400">雲端訓練家登入</h2>
@@ -559,7 +559,7 @@
                 <input type="text" id="authUsername" placeholder="訓練家暱稱 (僅註冊時需要)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none text-xs sm:text-sm">
             </div>
             <div class="space-y-2 pt-1">
-                <button onclick="handleAuthSubmit()" id="authPrimaryBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 active:scale-95 py-2.5 rounded-xl font-bold text-white shadow text-xs sm:text-sm">登入帳號</button>
+                <button onclick="handleAuthSubmit()" id="authPrimaryBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 active:scale-95 py-2.5 rounded-xl font-bold text-white shadow text-xs sm:text-sm transition">登入帳號</button>
                 <div class="text-center">
                     <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-xs text-slate-400 hover:text-cyan-400 underline">還沒有帳號？點此切換至「註冊帳號」</button>
                 </div>
@@ -571,7 +571,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
@@ -992,7 +992,6 @@
                 { id: 's12a-260', name: '起源帝牙盧卡VSTAR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG68_hires.png' },
                 { id: 's12a-261', name: '騎拉帝納VSTAR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG69_hires.png' },
                 { id: 's12a-262', name: '阿爾宙斯VSTAR', rarity: 'UR', image: 'https://images.pokemontcg.io/swsh12pt5/GG70_hires.png' }
-
             ]
         };
 
@@ -1101,10 +1100,15 @@
                         updateUI();
                         renderPackList();
                     } else {
-                        currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, isVip: false, lastDailyDate: new Date().toISOString().split('T')[0], cards: {}, totalSpent: 0, totalPulledValue: 0 };
-                        try {
-                            await setDoc(userRef, currentUserDoc, { merge: true });
-                        } catch (e) {}
+                        currentUserDoc = {
+                            name: "訓練家",
+                            points: INITIAL_GIFT_POINTS,
+                            isVip: false,
+                            lastDailyDate: new Date().toISOString().split('T')[0],
+                            cards: {},
+                            totalSpent: 0,
+                            totalPulledValue: 0
+                        };
                     }
                 });
 
@@ -1131,52 +1135,59 @@
             document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「登入帳號」" : "還沒有帳號？點此切換至「註冊帳號」";
         }
 
-        // ✅ 已修復註冊邏輯：拆分 Auth 與 Firestore 寫入，並加入按鈕禁用防止二次點擊
+        // ✅ 全新強健化註冊與登入邏輯
         async function handleAuthSubmit() {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            const username = document.getElementById('authUsername').value || '訓練家';
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            const username = document.getElementById('authUsername').value.trim() || '訓練家';
             const primaryBtn = document.getElementById('authPrimaryBtn');
 
             if (!email || !password) return alert("請輸入完整的 Email 與密碼！");
+            if (isRegisterMode && password.length < 6) return alert("密碼長度至少需要 6 位數！");
 
             if (primaryBtn) primaryBtn.disabled = true;
 
             try {
                 if (isRegisterMode) {
-                    let res = null;
                     // 1. 建立 Auth 帳號
-                    try {
-                        res = await createUserWithEmailAndPassword(auth, email, password);
-                    } catch (authErr) {
-                        alert("註冊失敗：" + authErr.message);
-                        if (primaryBtn) primaryBtn.disabled = false;
-                        return;
-                    }
-
-                    // 2. 初始化 Firestore 玩家資料 (Auth 已成功，失敗不視為註冊失敗)
+                    const res = await createUserWithEmailAndPassword(auth, email, password);
+                    
+                    // 2. 寫入 Firestore 帳號基礎資料
                     if (res && res.user) {
-                        try {
-                            await setDoc(doc(db, "users", res.user.uid), {
-                                name: username,
-                                points: INITIAL_GIFT_POINTS,
-                                isVip: false,
-                                lastDailyDate: new Date().toISOString().split('T')[0],
-                                cards: {},
-                                totalSpent: 0,
-                                totalPulledValue: 0
-                            }, { merge: true });
-                            alert("註冊成功！系統已自動為您登入。");
-                        } catch (dbErr) {
-                            console.error("Firestore 資料寫入失敗:", dbErr);
-                            alert("帳號註冊成功並已登入！（個人資料設定稍後自動完成）");
-                        }
+                        const initialData = {
+                            name: username,
+                            points: INITIAL_GIFT_POINTS,
+                            isVip: false,
+                            lastDailyDate: new Date().toISOString().split('T')[0],
+                            cards: {},
+                            totalSpent: 0,
+                            totalPulledValue: 0
+                        };
+                        await setDoc(doc(db, "users", res.user.uid), initialData, { merge: true });
+                        currentUserDoc = initialData;
                     }
+                    alert("🎉 帳號註冊成功！系統已為您自動登入。");
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                alert("驗證失敗：" + err.message);
+                console.error("Auth 驗證錯誤詳情:", err);
+                let errMsg = err.message;
+                
+                // 常見 Firebase 錯誤碼中文友善對照
+                if (err.code === 'auth/email-already-in-use') {
+                    errMsg = "該 Email 已經被註冊過了！請直接切換至「登入帳號」。";
+                } else if (err.code === 'auth/invalid-email') {
+                    errMsg = "Email 格式不正確！";
+                } else if (err.code === 'auth/weak-password') {
+                    errMsg = "密碼太弱，長度至少需要 6 個字元。";
+                } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                    errMsg = "帳號或密碼錯誤！";
+                } else if (err.code === 'auth/operation-not-allowed') {
+                    errMsg = "⚠️ Firebase 後台尚未開啟「電子郵件/密碼」註冊功能！請至 Firebase Console 開啟。";
+                }
+
+                alert("操作失敗：" + errMsg);
             } finally {
                 if (primaryBtn) primaryBtn.disabled = false;
             }
@@ -1369,6 +1380,7 @@
             `).join('');
         }
 
+        // ✅ 修復：確保手機與電腦端都能正確顯示玩家欄與登出鍵
         function updateUI() {
             if (!currentUserDoc) return;
             const points = currentUserDoc.points || 0;
@@ -1380,9 +1392,9 @@
             nameEl.innerText = currentUserDoc.name || '訓練家';
 
             if (isVip) {
-                headerInfoBox.className = "hidden sm:flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-xl vip-nameplate shadow-lg text-xs sm:text-sm";
+                headerInfoBox.className = "flex flex-wrap items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-xl vip-nameplate shadow-lg text-xs sm:text-sm";
             } else {
-                headerInfoBox.className = "hidden sm:flex items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm";
+                headerInfoBox.className = "flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm";
             }
             
             const pointsEl = document.getElementById('userPoints');
@@ -1478,7 +1490,7 @@
                         });
                     }
                 } catch (broadcastErr) {
-                    console.warn("廣播發布異常 (不影響玩家獲得卡牌):", broadcastErr);
+                    console.warn("廣播發布異常:", broadcastErr);
                 }
 
                 currentUserDoc.points = newPoints;
@@ -1501,7 +1513,7 @@
 
             } catch (err) {
                 console.error("抽卡詳細錯誤:", err);
-                alert("抽卡失敗: " + (err.message.includes("permission-denied") ? "雲端權限檢驗未通過，請重新整理頁面！" : err.message));
+                alert("抽卡失敗: " + err.message);
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
             }
@@ -1720,7 +1732,6 @@
             }
 
             try {
-                // 1. 計算本日 SAR / UR 爆卡總數 (查詢今天 00:00 之後的廣播紀錄)
                 try {
                     const todayStart = new Date();
                     todayStart.setHours(0, 0, 0, 0);
@@ -1737,7 +1748,6 @@
                     console.warn("計算本日爆卡數失敗:", rareErr);
                 }
 
-                // 2. 統計全服玩家與卡店盈虧數據
                 const snap = await getDocs(collection(db, "users"));
                 let usersList = [];
                 let totalCurrentPoints = 0;
@@ -1766,14 +1776,12 @@
                 const netPlayerProfit = totalCurrentPoints - totalInitialCapital;
                 const shopNetLoss = netPlayerProfit;
                 
-                // 更新玩家端「全服總淨收益」
                 const profitEl = document.getElementById('statPlayerProfit');
                 if (profitEl) {
                     profitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
                     profitEl.className = netPlayerProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
                 }
 
-                // 更新管理員專屬面板「全服淨收益與卡店盈虧」
                 const adminProfitEl = document.getElementById('adminStatPlayerProfit');
                 if (adminProfitEl) {
                     adminProfitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
@@ -1786,7 +1794,6 @@
                     adminLossEl.className = shopNetLoss >= 0 ? "text-base sm:text-lg font-black text-red-400" : "text-base sm:text-lg font-black text-emerald-400";
                 }
 
-                // 3. 渲染排行榜
                 if (listEl) {
                     if (usersList.length === 0) {
                         listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
@@ -1885,7 +1892,6 @@
             if (tab === 'admin') fetchAdminUserList();
         }
 
-        // 🌐 將所有函式掛載至 window
         window.toggleAuthMode = toggleAuthMode;
         window.handleAuthSubmit = handleAuthSubmit;
         window.handleSignOut = handleSignOut;
