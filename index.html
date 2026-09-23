@@ -366,7 +366,7 @@
             </div>
         </section>
 
-        <!-- TAB 5: 最高管理員控制台 (改為完全動態渲染，防止原始碼洩漏) -->
+        <!-- TAB 5: 最高管理員控制台 (動態渲染，確保原始碼絕對乾淨) -->
         <section id="tab-admin" class="tab-content hidden space-y-4 sm:space-y-6">
             <!-- 內容將會在管理員成功驗證身分後動態生成 -->
         </section>
@@ -544,20 +544,20 @@
         }
 
         const RARITY = {
-            'C':    { price: 3,    rate: 0.620, color: '#9ca3af' },
-            'U':    { price: 6,    rate: 0.230, color: '#60a5fa' },
-            'R':    { price: 15,   rate: 0.090, color: '#fbbf24' },
-            'RR':   { price: 35,   rate: 0.040, color: '#f43f5e' },
-            'SR':   { price: 200,  rate: 0.005, color: '#ec4899' },
-            'UR':   { price: 3000, rate: 0.001, color: '#eab308' },
+            'C':    { price: 3,    rate: 0.450, color: '#9ca3af' }, // 下調普通卡機率
+            'U':    { price: 6,    rate: 0.280, color: '#60a5fa' },
+            'R':    { price: 15,   rate: 0.120, color: '#fbbf24' },
+            'RR':   { price: 35,   rate: 0.080, color: '#f43f5e' }, // 提升 RR 機率
+            'SR':   { price: 200,  rate: 0.035, color: '#ec4899' }, // 大幅提升 SR 機率
+            'UR':   { price: 2000, rate: 0.015, color: '#eab308' }, // 大幅提升 UR 機率
 
-            'MAIN': { price: 4,    rate: 0.7500, color: '#9ca3af' },
-            'PIKA': { price: 10,   rate: 0.1200, color: '#facc15' },
-            'AR':   { price: 20,   rate: 0.0800, color: '#fb923c' },
-            'SPEC': { price: 40,   rate: 0.0350, color: '#a855f7' },
-            'SAR':  { price: 250,  rate: 0.0120, color: '#10b981' },
-            'FUR':  { price: 500,  rate: 0.0025, color: '#3b82f6' },
-            'RGB':  { price: 2000, rate: 0.0005, color: '#ec4899' }
+            'MAIN': { price: 4,    rate: 0.5000, color: '#9ca3af' },
+            'PIKA': { price: 10,   rate: 0.1800, color: '#facc15' },
+            'AR':   { price: 20,   rate: 0.1500, color: '#fb923c' },
+            'SPEC': { price: 40,   rate: 0.0800, color: '#a855f7' },
+            'SAR':  { price: 250,  rate: 0.0500, color: '#10b981' }, // 大幅提升 SAR 歐皇卡機率
+            'FUR':  { price: 500,  rate: 0.0200, color: '#3b82f6' }, // 大幅提升 FUR 機率
+            'RGB':  { price: 2000, rate: 0.0050, color: '#ec4899' }  // 大幅提升 RGB 三色夢幻機率
         };
 
         const PACK_DEFINITIONS = [
@@ -1222,11 +1222,18 @@
                 document.getElementById('authModal').classList.add('hidden');
                 document.getElementById('userHeaderInfo').classList.remove('hidden');
                 
+                // 🛡️ 嚴格身分判定：只有最高管理員才能顯示管理按鈕
                 if (user.uid === ADMIN_UID) {
                     document.getElementById('adminBadge').classList.remove('hidden');
                     document.getElementById('adminTabBtn').classList.remove('hidden');
                     document.getElementById('mobAdminTabBtn').classList.remove('hidden');
                     fetchAdminUserList();
+                } else {
+                    // 🔒 一般玩家/非管理員：強制隱藏所有管理介面與按鈕
+                    document.getElementById('adminBadge').classList.add('hidden');
+                    document.getElementById('adminTabBtn').classList.add('hidden');
+                    document.getElementById('mobAdminTabBtn').classList.add('hidden');
+                    document.getElementById('tab-admin').classList.add('hidden');
                 }
 
                 const userRef = doc(db, "users", user.uid);
@@ -1282,7 +1289,7 @@
                 document.getElementById('adminBadge').classList.add('hidden');
                 document.getElementById('adminTabBtn').classList.add('hidden');
                 document.getElementById('mobAdminTabBtn').classList.add('hidden');
-                document.getElementById('tab-admin').classList.add('hidden'); // 確保登出時強制隱藏管理員面板
+                document.getElementById('tab-admin').classList.add('hidden');
                 document.getElementById('bannedModal').classList.add('hidden');
                 renderPackList();
             }
