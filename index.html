@@ -313,7 +313,6 @@
                     <option value="m6a">M6a 30th CELEBRATION (168張完整陣容)</option>
                     <option value="s12a">S12a VSTAR 宇宙 (262張完整陣容)</option>
                     <option value="sv2a">SV2a 寶可夢 151 (16張)</option>
-                    <option value="sv3">SV3 黑炎支配者 (9張)</option>
                     <option value="sv4a">SV4a 閃色寶藏 ex (10張)</option>
                     <option value="sv5a">SV5a 狂野意志 (12張)</option>
                     <option value="sv6">SV6 變幻面具 (10張)</option>
@@ -675,7 +674,6 @@
             { id: 'm6a', title: '「30th CELEBRATION」M6a', tag: '30th', desc: '全168張陣容！FUR 科幻夢幻/超夢、RGB 三色夢幻與 SAR 登場！', bg: 'from-slate-800 via-amber-950 to-purple-950', border: 'border-amber-400/50', icon: 'fa-crown', badge: '168張大包' },
             { id: 's12a', title: '高級包「VSTAR 宇宙」S12a', tag: 'VSTAR', desc: '收錄 262 張大圖鑑！神級繪圖阿爾宙斯、騎拉帝納 UR 登場！', bg: 'from-slate-800 to-indigo-950', border: 'border-purple-500/50', icon: 'fa-shuttle-space', badge: '262張全陣容' },
             { id: 'sv2a', title: '強化擴充包「寶可夢 151」', tag: '151', desc: '收錄經典 151 陣容！噴火龍 ex SAR 與超夢！', bg: 'from-slate-800 to-indigo-950', border: 'border-indigo-500/30', icon: 'fa-dragon', badge: '熱門擴充包' },
-            { id: 'sv3', title: '擴充包「黑炎支配者」', tag: '黑炎', desc: '惡屬性太晶噴火龍 ex SAR 霸氣登場！', bg: 'from-slate-800 to-red-950', border: 'border-red-500/30', icon: 'fa-fire', badge: '熱門擴充包' },
             { id: 'sv4a', title: '高級包「閃色寶藏 ex」', tag: '閃色', desc: '色違噴火龍 ex SSR 與奇樹 SAR 登場！', bg: 'from-slate-800 to-amber-950', border: 'border-amber-500/30', icon: 'fa-sparkles', badge: '熱門高級包' },
             { id: 'sv5a', title: '擴充包「狂野意志」', tag: '狂野', desc: '古代悖論寶可夢！猛雷鼓 ex SAR 登場！', bg: 'from-slate-800 to-emerald-950', border: 'border-emerald-500/30', icon: 'fa-leaf', badge: '熱門擴充包' },
             { id: 'sv6', title: '擴充包「變幻面具」', tag: '面具', desc: '傳說寶可夢厄鬼椪與多龍巴魯托 ex！', bg: 'from-slate-800 to-teal-950', border: 'border-teal-500/30', icon: 'fa-mask', badge: '熱門擴充包' },
@@ -683,7 +681,7 @@
             { id: 'sv8', title: '擴充包「超電導突破」', tag: '超電導', desc: '太晶皮卡丘 ex SAR 閃耀登場！', bg: 'from-slate-800 to-yellow-950', border: 'border-yellow-500/30', icon: 'fa-bolt', badge: '最新擴充包' }
         ];
 
-        // 簡化示範卡池資料
+        // 卡池資料
         const CARD_SETS = {
             'm6a': [
                 { id: 'm6a-001', name: '蛋蛋 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-001-103-Exeggcute-standard.webp' },
@@ -1113,17 +1111,6 @@
                 { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
                 { id: 'sv2a-205', name: '夢幻 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' }
             ],
-            'sv3': [
-                { id: 'sv3-001', name: '波波', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/106_hires.png' },
-                { id: 'sv3-002', name: '刺甲貝', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/28_hires.png' },
-                { id: 'sv3-003', name: '戴魯比', rarity: 'U', image: 'https://images.pokemontcg.io/sv3/113_hires.png' },
-                { id: 'sv3-004', name: '班基拉斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/66_hires.png' },
-                { id: 'sv3-005', name: '大比鳥 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/108_hires.png' },
-                { id: 'sv3-006', name: '惡體系噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/125_hires.png' },
-                { id: 'sv3-007', name: '波琵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3/220_hires.png' },
-                { id: 'sv3-008', name: '惡體系噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3/223_hires.png' },
-                { id: 'sv3-009', name: '惡體系噴火龍 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3/228_hires.png' }
-            ],
             'sv4a': [
                 { id: 'sv4a-001', name: '色違榛果球', rarity: 'C', image: 'https://images.pokemontcg.io/sv4pt5/1_hires.png' },
                 { id: 'sv4a-002', name: '色違小火龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv4pt5/109_hires.png' },
@@ -1202,7 +1189,7 @@
             return pool[Math.floor(Math.random() * pool.length)];
         }
 
-        // 雲端系統公告帶有 escapeHTML
+        // 雲端系統公告
         const announceQuery = query(collection(db, "announcements"), orderBy("timestamp", "desc"), limit(10));
         onSnapshot(announceQuery, (snapshot) => {
             const listEl = document.getElementById('systemAnnouncementsList');
@@ -1244,7 +1231,7 @@
             if (adminListEl) adminListEl.innerHTML = adminHtml;
         });
 
-        // 雲端歐皇廣播帶有 escapeHTML
+        // 雲端歐皇廣播
         const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
         onSnapshot(broadcastQuery, (snapshot) => {
             const listEl = document.getElementById('broadcastHistoryList');
@@ -1359,7 +1346,7 @@
                     if (snap.exists()) {
                         const freshData = snap.data();
 
-                        // 🚫 防禦檢查：若帳號被封禁，立即開啟全螢幕鎖定模態框
+                        // 🚫 防禦檢查：若帳號被封禁，開啟全螢幕鎖定模態框
                         if (freshData.isBanned) {
                             document.getElementById('bannedModal').classList.remove('hidden');
                         } else {
@@ -1421,7 +1408,7 @@
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value.trim();
             
-            // 🛡️ 淨化暱稱輸入：移除 HTML 標籤與連結
+            // 🛡️ 淨化暱稱輸入
             let rawUsername = document.getElementById('authUsername').value.trim() || '訓練家';
             let cleanedUsername = rawUsername.replace(/<[^>]*>?/gm, '').replace(/https?:\/\/[^\s]+/g, '').trim();
             
@@ -1488,7 +1475,6 @@
 
             if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
 
-            // 🛡️ 淨化暱稱，防止惡意語法與網址
             let cleanedName = newName.replace(/<[^>]*>?/gm, '').replace(/https?:\/\/[^\s]+/g, '').trim();
 
             if (!cleanedName) return alert("暱稱不能包含無效 HTML 標籤或網址連結！");
@@ -1564,7 +1550,6 @@
             }
         }
 
-        // 🚫 管理員一鍵切換玩家「封禁狀態」
         async function adminToggleBanSelectedUser() {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
@@ -1625,9 +1610,10 @@
         async function adminSetCustomPoints() {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
-            const newPoints = parseInt(document.getElementById('adminCustomPointsInput').value);
+            const inputVal = document.getElementById('adminCustomPointsInput').value;
+            const newPoints = parseInt(inputVal, 10);
 
-            if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入目標分數！");
+            if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入有效的目標分數！");
 
             try {
                 await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
@@ -1946,7 +1932,8 @@
                 `;
             }).join('');
 
-            document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${Math.round(unlocked/cards.length*100)}%)`;
+            const pct = cards.length > 0 ? Math.round((unlocked / cards.length) * 100) : 0;
+            document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${pct}%)`;
         }
 
         function renderSellInventory() {
@@ -2084,14 +2071,13 @@
                         isVip: data.isVip || false,
                         isBanned: data.isBanned || false,
                         unlockedCount: unlockedCount,
-                        progressPct: Math.round((unlockedCount / totalCardsInGame) * 100)
+                        progressPct: totalCardsInGame > 0 ? Math.round((unlockedCount / totalCardsInGame) * 100) : 0
                     });
                 });
 
                 const userCount = usersList.length;
                 const totalInitialCapital = userCount * INITIAL_GIFT_POINTS;
                 const netPlayerProfit = totalCurrentPoints - totalInitialCapital;
-                const shopNetLoss = netPlayerProfit;
                 
                 const profitEl = document.getElementById('statPlayerProfit');
                 if (profitEl) {
