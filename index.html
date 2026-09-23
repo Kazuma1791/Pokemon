@@ -366,7 +366,7 @@
             </div>
         </section>
 
-        <!-- TAB 5: 最高管理員控制台 -->
+        <!-- TAB 5: 最高管理員控制台 (預設隱藏) -->
         <section id="tab-admin" class="tab-content hidden space-y-4 sm:space-y-6">
             <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-4 sm:space-y-6">
                 <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
@@ -1392,6 +1392,7 @@
                 document.getElementById('adminBadge').classList.add('hidden');
                 document.getElementById('adminTabBtn').classList.add('hidden');
                 document.getElementById('mobAdminTabBtn').classList.add('hidden');
+                document.getElementById('tab-admin').classList.add('hidden'); // 確保登出時強制隱藏管理員面板
                 document.getElementById('bannedModal').classList.add('hidden');
                 renderPackList();
             }
@@ -2148,7 +2149,15 @@
             }
         }
 
+        // 🛡️ 安全防護的 switchTab：嚴格檢查 ADMIN_UID
         function switchTab(tab) {
+            if (tab === 'admin') {
+                if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
+                    alert("⚠️ 權限不足！此為最高管理員專屬介面。");
+                    return;
+                }
+            }
+
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
