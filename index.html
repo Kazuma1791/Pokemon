@@ -1131,30 +1131,54 @@
             document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「登入帳號」" : "還沒有帳號？點此切換至「註冊帳號」";
         }
 
+        // ✅ 已修復註冊邏輯：拆分 Auth 與 Firestore 寫入，並加入按鈕禁用防止二次點擊
         async function handleAuthSubmit() {
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPassword').value;
             const username = document.getElementById('authUsername').value || '訓練家';
+            const primaryBtn = document.getElementById('authPrimaryBtn');
 
             if (!email || !password) return alert("請輸入完整的 Email 與密碼！");
 
+            if (primaryBtn) primaryBtn.disabled = true;
+
             try {
                 if (isRegisterMode) {
-                    const res = await createUserWithEmailAndPassword(auth, email, password);
-                    await setDoc(doc(db, "users", res.user.uid), {
-                        name: username,
-                        points: INITIAL_GIFT_POINTS,
-                        isVip: false,
-                        lastDailyDate: new Date().toISOString().split('T')[0],
-                        cards: {},
-                        totalSpent: 0,
-                        totalPulledValue: 0
-                    }, { merge: true });
+                    let res = null;
+                    // 1. 建立 Auth 帳號
+                    try {
+                        res = await createUserWithEmailAndPassword(auth, email, password);
+                    } catch (authErr) {
+                        alert("註冊失敗：" + authErr.message);
+                        if (primaryBtn) primaryBtn.disabled = false;
+                        return;
+                    }
+
+                    // 2. 初始化 Firestore 玩家資料 (Auth 已成功，失敗不視為註冊失敗)
+                    if (res && res.user) {
+                        try {
+                            await setDoc(doc(db, "users", res.user.uid), {
+                                name: username,
+                                points: INITIAL_GIFT_POINTS,
+                                isVip: false,
+                                lastDailyDate: new Date().toISOString().split('T')[0],
+                                cards: {},
+                                totalSpent: 0,
+                                totalPulledValue: 0
+                            }, { merge: true });
+                            alert("註冊成功！系統已自動為您登入。");
+                        } catch (dbErr) {
+                            console.error("Firestore 資料寫入失敗:", dbErr);
+                            alert("帳號註冊成功並已登入！（個人資料設定稍後自動完成）");
+                        }
+                    }
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                alert("驗證失敗: " + err.message);
+                alert("驗證失敗：" + err.message);
+            } finally {
+                if (primaryBtn) primaryBtn.disabled = false;
             }
         }
 
