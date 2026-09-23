@@ -131,7 +131,7 @@
                 </h1>
             </div>
 
-            <!-- 玩家雲端資訊（修正：允許手機與電腦雙端完美顯示） -->
+            <!-- 玩家雲端資訊 -->
             <div id="userHeaderInfo" class="hidden flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm">
                 <div class="flex items-center gap-1.5">
                     <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
@@ -209,7 +209,7 @@
 
     <main class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
 
-        <!-- 📢 最新系統更新公告欄 -->
+        <!-- 📢 雲端動態系統公告欄（可由管理員後台動態發布/刪除） -->
         <section class="bg-gradient-to-r from-cyan-950/80 via-slate-800/90 to-blue-950/80 p-3.5 sm:p-4 rounded-2xl border border-cyan-500/40 shadow-xl flex items-start gap-3 relative">
             <div class="w-9 h-9 sm:w-10 sm:h-10 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-400/30 text-cyan-300 text-base sm:text-lg shrink-0 mt-0.5">
                 <i class="fa-solid fa-bullhorn text-cyan-400 animate-pulse"></i>
@@ -217,20 +217,14 @@
             <div class="flex-1 space-y-1">
                 <div class="flex items-center justify-between border-b border-cyan-500/20 pb-1.5">
                     <h3 class="text-xs sm:text-sm font-black text-cyan-300 flex items-center gap-2">
-                        系統更新公告
-                        <span class="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded-full font-bold">NEW</span>
+                        系統公告
+                        <span class="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded-full font-bold">即時</span>
                     </h3>
-                    <span class="text-[10px] text-slate-400 font-mono">系統升級</span>
+                    <span class="text-[10px] text-slate-400 font-mono">雲端發布</span>
                 </div>
-                <ul class="text-[11px] sm:text-xs text-slate-300 space-y-1 pt-1">
-                    <li class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-user-plus text-cyan-400 text-[10px]"></i>
-                        <span>已修復<b>玩家帳號註冊機制</b>與中文提示訊息！</span>
-                    </li>
-                    <li class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-mobile-screen-button text-cyan-400 text-[10px]"></i>
-                        <span>優化<b>手機端 UI 介面與登出按鈕顯示</b>。</span>
-                    </li>
+                <!-- 動態載入公告清單 -->
+                <ul id="systemAnnouncementsList" class="text-[11px] sm:text-xs text-slate-300 space-y-1 pt-1">
+                    <li class="text-slate-500">載入系統公告中...</li>
                 </ul>
             </div>
         </section>
@@ -373,7 +367,26 @@
                     <span class="text-[10px] text-slate-400 font-mono">UID: eTYTRQFMmZc5...</span>
                 </div>
 
-                <!-- 📊 僅管理員可見：宏觀營運與卡店盈虧 -->
+                <!-- 📢 管理員專屬：發布動態公告欄功能 -->
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-cyan-500/40 space-y-3">
+                    <h4 class="font-bold text-sm sm:text-base text-cyan-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-bullhorn"></i> 發布全服系統公告 (免修改 Code)
+                    </h4>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="adminAnnounceInput" placeholder="請輸入新的公告內容..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm">
+                        <button onclick="adminPublishAnnouncement()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-2 rounded-xl text-xs font-bold text-white shadow shrink-0">
+                            發布公告
+                        </button>
+                    </div>
+                    <div class="border-t border-slate-800 pt-2 space-y-1.5">
+                        <span class="text-[10px] text-slate-400 font-bold block">目前已發布的公告 (點擊可刪除)：</span>
+                        <div id="adminAnnounceList" class="space-y-1.5 max-h-36 overflow-y-auto">
+                            <div class="text-xs text-slate-500">載入公告中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📊 宏觀營運與卡店盈虧 -->
                 <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 space-y-2">
                     <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
                         <i class="fa-solid fa-chart-line"></i> 宏觀營運數據 (僅管理員可見)
@@ -392,6 +405,7 @@
                     </div>
                 </div>
 
+                <!-- 玩家權限與分數管理 -->
                 <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 space-y-3 sm:space-y-4">
                     <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
                         <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與分數管理
@@ -571,7 +585,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, deleteDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
@@ -600,15 +614,16 @@
         let lastBroadcastTimestamp = Date.now();
         let currentLbSubTab = 'lucky';
 
+        // 🎯 已調整後的平衡算牌率與回收價
         const RARITY = {
-            'C':   { price: 4,    rate: 0.5000, color: '#9ca3af' },
-            'U':   { price: 8,    rate: 0.2500, color: '#60a5fa' },
-            'R':   { price: 20,   rate: 0.1200, color: '#fbbf24' },
-            'RR':  { price: 70,   rate: 0.0700, color: '#f43f5e' },
-            'AR':  { price: 180,  rate: 0.0350, color: '#a855f7' },
-            'SR':  { price: 400,  rate: 0.0150, color: '#ec4899' },
-            'SAR': { price: 1500, rate: 0.0080, color: '#10b981' },
-            'UR':  { price: 4100, rate: 0.0020, color: '#eab308' }
+            'C':   { price: 4,    rate: 0.620, color: '#9ca3af' }, // 62%
+            'U':   { price: 8,    rate: 0.230, color: '#60a5fa' }, // 23%
+            'R':   { price: 20,   rate: 0.090, color: '#fbbf24' }, // 9%
+            'RR':  { price: 50,   rate: 0.040, color: '#f43f5e' }, // 4%
+            'AR':  { price: 120,  rate: 0.012, color: '#a855f7' }, // 1.2%
+            'SR':  { price: 300,  rate: 0.005, color: '#ec4899' }, // 0.5%
+            'SAR': { price: 1000, rate: 0.002, color: '#10b981' }, // 0.2%
+            'UR':  { price: 2500, rate: 0.001, color: '#eab308' }  // 0.1%
         };
 
         const PACK_DEFINITIONS = [
@@ -730,37 +745,37 @@
                 { id: 'sv8-008', name: '太晶皮卡丘 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv8/135_hires.png' }
             ],
             's12a': [
-                { id: 's12a-001', name: '派拉斯', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTC1P0N8D22Mqbe3wfrHySp6ww--YzRDpdtJCCfUbmOOQ&s=10' },
-                { id: 's12a-002', name: '派拉斯特', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAzabHmVAIrHvL2v_H3rCCPJ_pThY-QO5BzkbRMaFeSA&s' },
-                { id: 's12a-003', name: '洗翠 霹靂電球', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlwCsCVvxFSK3Wpe76cYSh2UZuATK01YqliM1ZrQ2udQ&s' },
-                { id: 's12a-004', name: '洗翠 頑皮雷彈', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBPupNT1AImovHDbbQ0n1SPl4WBBjZ7BTELQyn24evVw&s' },
-                { id: 's12a-005', name: '洗翠 頑皮雷彈V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPe6aamkDGRquszYLH1atEI-LUrjMgIMo_6JbU6d3HJg&s' },
-                { id: 's12a-006', name: '草苗龜', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE7VvcGEW58JrgdFM27y029rea8pbPMfYn-PbQLWH3wg&s=10' },
-                { id: 's12a-007', name: '樹林龜', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxd0AVNVAEP4JVlRwE0PQNsTcWpwxuXX1W4gtZWjVgyg&s=10' },
-                { id: 's12a-008', name: '土台龜', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfJe8S5RVP8I5LfeX3MG1V-9-asBQkAIEjJmXna2vV5Q&s=10' },
-                { id: 's12a-009', name: '圓法師', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZb8auC9XzuwEgjcCVAChrPdCMipMydt5z2xqFjAPtNg&s' },
-                { id: 's12a-010', name: '音箱蟀', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmwvPuaHyal5ElDDXhqsF8mdg5GR070PtNf80AlSQmiQ&s' },
-                { id: 's12a-011', name: '葉伊布V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8uiJlN3yjkGPW6MiEYi3svxBXYvNKfsuqbdNBvntxcw&s=10' },
-                { id: 's12a-012', name: '葉伊布VSTAR', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT8s6DFA9v49nRp1aT3VAt0Z_Vijerdtob9CnWyGX95vw&s=10' },
-                { id: 's12a-013', name: '噴火龍V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzfXKq2x9uMVN3Ekpatl3HpjiJv9TuDCYSb2bpIseyyA&s' },
-                { id: 's12a-014', name: '噴火龍VSTAR', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8GTWaDhAkMHswYT-uGKS6QJxqSXAKArKZduiNl5jMHw&s=10' },
-                { id: 's12a-015', name: '光輝噴火龍', rarity: 'R', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTj-YdomJjCmlTNyYU8d2d93La2de_wp4Dj7ju67pzD4Q&s=10' },
-                { id: 's12a-016', name: '鴨嘴火獸', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTy_ss1wyhdr892Rs05e1-I6niz3aWve5Te3txhYqwow&s=10' },
-                { id: 's12a-017', name: '鴨嘴炎獸', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUZ5bcLVIQVxfc80oQerekB3y_2zRceccy1s3WCqZq7g&s' },
-                { id: 's12a-018', name: '火焰鳥', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOhMhJUO14Z0XHHIj20F-bE7vhsZG6gvbWpx-T_I0ung&s=10' },
-                { id: 's12a-019', name: '炎帝V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAe9A4zbYx5Lc2OqddyxLM5AHzQzU-VMeeSiz_FjZtQA&s=10' },
-                { id: 's12a-020', name: '爆香猿V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN6brfHj7NW08LSnfMbeE-i7gAQsrvpba-oWl_JFjEng&s=10' },
-                { id: 's12a-021', name: '爆香猿VSTAR', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbzU7FZJUiHmeqfeUKxkQ_bITswdLwbP5DAl1GbCn-Cg&s=10' },
-                { id: 's12a-022', name: '花舞鳥', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDneW_J2d_4DanVvIjCt1TrnU1b4fVZK09o7Kmkb-9A&s=10' },
-                { id: 's12a-023', name: '拉普拉斯', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-zuhDmveofX6E2lJ0kpv5uBnEGnV8B6MZbZMa3KablA&s' },
-                { id: 's12a-024', name: '水君V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFN34802PJR81yyxsWPmfAoT1PQmv_eaxMzqDFXV1nIA&s=10' },
-                { id: 's12a-025', name: '雷吉艾斯', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFOMWtGOAFAaXXGtT1NBmwmVdsU4jfpSQMnP-5NAuK0w&s' },
-                { id: 's12a-026', name: '霓虹魚V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRX7MgKNU-dVnNrio-DlQQNylhdsEs-AsG1RU1xroql6A&s=10' },
-                { id: 's12a-027', name: '起源帕路奇亞V', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGm258OE5QgWJf5QUG8Jn9Sl8EOuRei76OZE0wNspx7w&s=10' },
-                { id: 's12a-028', name: '起源帕路奇亞VSTAR', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZ3W6oRNqq6sCWHcsPcd4_pYAqJ-TjUU_u77qKveTofw&s=10' },
-                { id: 's12a-029', name: '瑪納霏', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_ZzUPHPkRh660Pam0LGQWVxxPsvGrWSFs_aK7UTG28w&s=10' },
-                { id: 's12a-030', name: '洗翠 野蠻鱸魚', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHDXRnFYhc-u7UHzre16RBPym1MLKo8vL5VOi9ye1eWw&s' },
-                { id: 's12a-031', name: '洗翠 幽尾玄魚', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSt6-hP2aLvk-MUJCnPrcsqv6PdASiaFv3WcDWHFjgDRg&s' },
+                { id: 's12a-001', name: '派拉斯', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/1_hires.png' },
+                { id: 's12a-002', name: '派拉斯特', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/2_hires.png' },
+                { id: 's12a-003', name: '洗翠 霹靂電球', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/3_hires.png' },
+                { id: 's12a-004', name: '洗翠 頑皮雷彈', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/4_hires.png' },
+                { id: 's12a-005', name: '洗翠 頑皮雷彈V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/5_hires.png' },
+                { id: 's12a-006', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/6_hires.png' },
+                { id: 's12a-007', name: '樹林龜', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/7_hires.png' },
+                { id: 's12a-008', name: '土台龜', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/8_hires.png' },
+                { id: 's12a-009', name: '圓法師', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/9_hires.png' },
+                { id: 's12a-010', name: '音箱蟀', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/10_hires.png' },
+                { id: 's12a-011', name: '葉伊布V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/11_hires.png' },
+                { id: 's12a-012', name: '葉伊布VSTAR', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/12_hires.png' },
+                { id: 's12a-013', name: '噴火龍V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/13_hires.png' },
+                { id: 's12a-014', name: '噴火龍VSTAR', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/14_hires.png' },
+                { id: 's12a-015', name: '光輝噴火龍', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/15_hires.png' },
+                { id: 's12a-016', name: '鴨嘴火獸', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/16_hires.png' },
+                { id: 's12a-017', name: '鴨嘴炎獸', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/17_hires.png' },
+                { id: 's12a-018', name: '火焰鳥', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/18_hires.png' },
+                { id: 's12a-019', name: '炎帝V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/19_hires.png' },
+                { id: 's12a-020', name: '爆香猿V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/20_hires.png' },
+                { id: 's12a-021', name: '爆香猿VSTAR', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/21_hires.png' },
+                { id: 's12a-022', name: '花舞鳥', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/22_hires.png' },
+                { id: 's12a-023', name: '拉普拉斯', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/23_hires.png' },
+                { id: 's12a-024', name: '水君V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/24_hires.png' },
+                { id: 's12a-025', name: '雷吉艾斯', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/25_hires.png' },
+                { id: 's12a-026', name: '霓虹魚V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/26_hires.png' },
+                { id: 's12a-027', name: '起源帕路奇亞V', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/27_hires.png' },
+                { id: 's12a-028', name: '起源帕路奇亞VSTAR', rarity: 'RR', image: 'https://images.pokemontcg.io/swsh12pt5/28_hires.png' },
+                { id: 's12a-029', name: '瑪納霏', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/29_hires.png' },
+                { id: 's12a-030', name: '洗翠 野蠻鱸魚', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/30_hires.png' },
+                { id: 's12a-031', name: '洗翠 幽尾玄魚', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/31_hires.png' },
                 { id: 's12a-032', name: '凱路迪歐', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/32_hires.png' },
                 { id: 's12a-033', name: '光輝甲賀忍蛙', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/33_hires.png' },
                 { id: 's12a-034', name: '電擊獸', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/34_hires.png' },
@@ -1007,6 +1022,48 @@
             return pool[Math.floor(Math.random() * pool.length)];
         }
 
+        // 📢 1. 即時監聽動態系統公告
+        const announceQuery = query(collection(db, "announcements"), orderBy("timestamp", "desc"), limit(10));
+        onSnapshot(announceQuery, (snapshot) => {
+            const listEl = document.getElementById('systemAnnouncementsList');
+            const adminListEl = document.getElementById('adminAnnounceList');
+            if (!listEl) return;
+
+            if (snapshot.empty) {
+                listEl.innerHTML = `<li class="text-slate-500">尚無系統公告。</li>`;
+                if (adminListEl) adminListEl.innerHTML = `<div class="text-xs text-slate-500">尚無發布的公告</div>`;
+                return;
+            }
+
+            let html = '';
+            let adminHtml = '';
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const docId = docSnap.id;
+                
+                html += `
+                    <li class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-chevron-right text-cyan-400 text-[10px]"></i>
+                        <span>${data.text}</span>
+                    </li>
+                `;
+
+                adminHtml += `
+                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded-lg text-xs border border-slate-700">
+                        <span class="text-slate-200 truncate flex-1 mr-2">${data.text}</span>
+                        <button onclick="adminDeleteAnnouncement('${docId}')" class="text-red-400 hover:text-red-300 text-[11px] font-bold px-2 py-0.5 bg-red-950/80 rounded border border-red-800/60 shrink-0 active:scale-95 transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i>刪除
+                        </button>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
+            if (adminListEl) adminListEl.innerHTML = adminHtml;
+        });
+
+        // 📢 2. 即時監聽歐皇廣播戰報
         const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
         onSnapshot(broadcastQuery, (snapshot) => {
             const listEl = document.getElementById('broadcastHistoryList');
@@ -1065,6 +1122,35 @@
             broadcastTimer = setTimeout(() => {
                 banner.classList.add('hidden');
             }, 5000);
+        }
+
+        // 👑 管理員發布新系統公告
+        async function adminPublishAnnouncement() {
+            const input = document.getElementById('adminAnnounceInput');
+            const text = input ? input.value.trim() : '';
+            if (!text) return alert("請輸入公告內容！");
+
+            try {
+                await addDoc(collection(db, "announcements"), {
+                    text: text,
+                    timestamp: Date.now()
+                });
+                input.value = '';
+                alert("📢 成功發布系統公告！全服玩家將即時看到。");
+            } catch (e) {
+                alert("發布公告失敗: " + e.message);
+            }
+        }
+
+        // 👑 管理員刪除系統公告
+        async function adminDeleteAnnouncement(docId) {
+            if (!confirm("確定要刪除這條公告嗎？")) return;
+            try {
+                await deleteDoc(doc(db, "announcements", docId));
+                alert("🗑️ 公告已成功刪除！");
+            } catch (e) {
+                alert("刪除失敗: " + e.message);
+            }
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -1135,7 +1221,6 @@
             document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「登入帳號」" : "還沒有帳號？點此切換至「註冊帳號」";
         }
 
-        // ✅ 全新強健化註冊與登入邏輯
         async function handleAuthSubmit() {
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value.trim();
@@ -1149,10 +1234,7 @@
 
             try {
                 if (isRegisterMode) {
-                    // 1. 建立 Auth 帳號
                     const res = await createUserWithEmailAndPassword(auth, email, password);
-                    
-                    // 2. 寫入 Firestore 帳號基礎資料
                     if (res && res.user) {
                         const initialData = {
                             name: username,
@@ -1174,7 +1256,6 @@
                 console.error("Auth 驗證錯誤詳情:", err);
                 let errMsg = err.message;
                 
-                // 常見 Firebase 錯誤碼中文友善對照
                 if (err.code === 'auth/email-already-in-use') {
                     errMsg = "該 Email 已經被註冊過了！請直接切換至「登入帳號」。";
                 } else if (err.code === 'auth/invalid-email') {
@@ -1380,7 +1461,6 @@
             `).join('');
         }
 
-        // ✅ 修復：確保手機與電腦端都能正確顯示玩家欄與登出鍵
         function updateUI() {
             if (!currentUserDoc) return;
             const points = currentUserDoc.points || 0;
@@ -1902,6 +1982,8 @@
         window.adminToggleVipForSelectedUser = adminToggleVipForSelectedUser;
         window.adminAdjustSelectedUser = adminAdjustSelectedUser;
         window.adminSetCustomPoints = adminSetCustomPoints;
+        window.adminPublishAnnouncement = adminPublishAnnouncement;
+        window.adminDeleteAnnouncement = adminDeleteAnnouncement;
         window.startPackChoice = startPackChoice;
         window.choosePackAndTear = choosePackAndTear;
         window.flipCard = flipCard;
