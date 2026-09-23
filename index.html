@@ -613,22 +613,26 @@
         let lastBroadcastTimestamp = Date.now();
         let currentLbSubTab = 'lucky';
 
+        // 🎯 調整後的稀有度與價值設定（期望回報率：50%）
+        // 每抽成本：20 分 | 期望回收值：10 分
         // 🎯 稀有度與價值設定
         const RARITY = {
-            'C':    { price: 4,    rate: 0.620, color: '#9ca3af' },
-            'U':    { price: 8,    rate: 0.230, color: '#60a5fa' },
-            'R':    { price: 20,   rate: 0.090, color: '#fbbf24' },
-            'RR':   { price: 50,   rate: 0.040, color: '#f43f5e' },
-            'SR':   { price: 300,  rate: 0.005, color: '#ec4899' },
-            'UR':   { price: 2500, rate: 0.001, color: '#eab308' },
+            // 🎴 一般擴充包 (期望值：10 分)
+            'C':    { price: 3,    rate: 0.620, color: '#9ca3af' }, // 1.86 分
+            'U':    { price: 6,    rate: 0.230, color: '#60a5fa' }, // 1.38 分
+            'R':    { price: 15,   rate: 0.090, color: '#fbbf24' }, // 1.35 分
+            'RR':   { price: 35,   rate: 0.040, color: '#f43f5e' }, // 1.40 分
+            'SR':   { price: 200,  rate: 0.005, color: '#ec4899' }, // 1.00 分
+            'UR':   { price: 3000, rate: 0.001, color: '#eab308' }, // 3.00 分
 
-            'MAIN': { price: 10,   rate: 0.7500, color: '#9ca3af' },
-            'PIKA': { price: 30,   rate: 0.1200, color: '#facc15' },
-            'AR':   { price: 60,   rate: 0.0800, color: '#fb923c' },
-            'SPEC': { price: 120,  rate: 0.0350, color: '#a855f7' },
-            'SAR':  { price: 1000, rate: 0.0120, color: '#10b981' },
-            'RGB':  { price: 1800, rate: 0.0025, color: '#3b82f6' },
-            'FUR':  { price: 3000, rate: 0.0005, color: '#ec4899' }
+            // 👑 M6a 專屬卡池 (期望值：10 分)
+            'MAIN': { price: 4,    rate: 0.7500, color: '#9ca3af' }, // 3.00 分
+            'PIKA': { price: 10,   rate: 0.1200, color: '#facc15' }, // 1.20 分
+            'AR':   { price: 20,   rate: 0.0800, color: '#fb923c' }, // 1.60 分
+            'SPEC': { price: 40,   rate: 0.0350, color: '#a855f7' }, // 1.40 分
+            'SAR':  { price: 150,  rate: 0.0120, color: '#10b981' }, // 1.80 分
+            'RGB':  { price: 300,  rate: 0.0025, color: '#3b82f6' }, // 0.75 分
+            'FUR':  { price: 500,  rate: 0.0005, color: '#ec4899' }  // 0.25 分
         };
 
         const PACK_DEFINITIONS = [
