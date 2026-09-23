@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>寶可夢卡牌模擬器</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,30 +14,36 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
         body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #0f172a;
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0b1120;
             color: #f8fafc;
             user-select: none;
+            -webkit-user-select: none;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 70px;
+            padding-bottom: calc(75px + env(safe-area-inset-bottom));
         }
 
         @media (min-width: 768px) {
             body {
-                padding-bottom: 0px;
+                padding-bottom: 20px;
             }
         }
 
         .card-locked {
-            filter: grayscale(100%) brightness(0.3);
+            filter: grayscale(100%) brightness(0.25);
         }
 
         /* 👑 VIP 專屬流光霓虹特效邊框 */
         @keyframes vipBorderGlow {
-            0% { border-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5), inset 0 0 5px rgba(245, 158, 11, 0.3); }
-            50% { border-color: #ec4899; box-shadow: 0 0 20px rgba(236, 72, 153, 0.8), inset 0 0 10px rgba(236, 72, 153, 0.5); }
-            100% { border-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5), inset 0 0 5px rgba(245, 158, 11, 0.3); }
+            0% { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4), inset 0 0 6px rgba(245, 158, 11, 0.2); }
+            50% { border-color: #ec4899; box-shadow: 0 0 22px rgba(236, 72, 153, 0.7), inset 0 0 10px rgba(236, 72, 153, 0.4); }
+            100% { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4), inset 0 0 6px rgba(245, 158, 11, 0.2); }
         }
         .vip-nameplate {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
@@ -48,12 +54,13 @@
         /* 3D 翻牌動畫與 GPU 硬體加速 */
         .perspective-1000 {
             perspective: 1000px;
+            contain: layout paint;
         }
         .card-inner {
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
             transform-style: preserve-3d;
             will-change: transform;
             transform: translateZ(0);
@@ -66,6 +73,7 @@
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
             border-radius: 0.75rem;
             overflow: hidden;
         }
@@ -75,86 +83,100 @@
 
         @keyframes packShake {
             0%, 100% { transform: rotate(0deg) scale(1); }
-            20% { transform: rotate(-5deg) scale(1.05); }
-            40% { transform: rotate(5deg) scale(1.05); }
-            60% { transform: rotate(-3deg) scale(1.08); }
-            80% { transform: rotate(3deg) scale(1.08); }
+            20% { transform: rotate(-6deg) scale(1.04); }
+            40% { transform: rotate(6deg) scale(1.04); }
+            60% { transform: rotate(-4deg) scale(1.06); }
+            80% { transform: rotate(4deg) scale(1.06); }
         }
         .animate-pack-shake {
-            animation: packShake 0.6s ease-in-out infinite;
+            animation: packShake 0.55s ease-in-out infinite;
+            will-change: transform;
+        }
+
+        /* 平滑滾動條 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 1);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between relative">
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-cyan-500 selection:text-white">
 
     <!-- 👑 頂部全服歐皇即時廣播橫幅 -->
-    <div id="broadcastBanner" class="hidden fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl border-2 border-white flex items-center gap-3 text-sm md:text-base animate-bounce transition-all">
-        <i class="fa-solid fa-crown text-xl text-red-600 animate-pulse"></i>
-        <span id="broadcastText"></span>
+    <div id="broadcastBanner" class="hidden fixed top-14 md:top-16 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black px-4 sm:px-6 py-2.5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 sm:gap-3 text-xs sm:text-base animate-bounce transition-all w-[92%] max-w-lg justify-center">
+        <i class="fa-solid fa-crown text-lg sm:text-xl text-red-600 animate-pulse shrink-0"></i>
+        <span id="broadcastText" class="truncate"></span>
     </div>
 
     <!-- 頂部導覽與帳號狀態欄 -->
-    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 shadow-xl">
+        <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
             
             <div class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-md">
-                    <div class="w-4 h-4 bg-white rounded-full border-2 border-slate-900"></div>
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-md shrink-0">
+                    <div class="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full border-2 border-slate-900"></div>
                 </div>
-                <h1 class="text-xl font-bold bg-gradient-to-r from-red-500 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
-                    寶可夢卡牌抽卡模擬器
+                <h1 class="text-base sm:text-xl font-black bg-gradient-to-r from-red-500 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
+                    寶可夢卡牌模擬器
                 </h1>
             </div>
 
-            <!-- 玩家雲端資訊 (含改名與 VIP 升級按鈕) -->
-            <div id="userHeaderInfo" class="hidden flex items-center gap-3 sm:gap-4 bg-slate-900 px-3 sm:px-4 py-2 rounded-xl border border-slate-700">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-user text-cyan-400"></i>
-                    <span id="displayUsername" class="text-sm font-bold text-white">訓練家</span>
+            <!-- 玩家雲端資訊 -->
+            <div id="userHeaderInfo" class="hidden flex items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm">
+                <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
+                    <span id="displayUsername" class="font-bold text-white max-w-[80px] sm:max-w-[120px] truncate">訓練家</span>
                     
-                    <!-- ✏️ 前端安全改名按鈕 -->
-                    <button onclick="promptChangeUsername()" title="改名字 (花費 1,000 分)" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 transition flex items-center gap-1 shadow">
-                        <i class="fa-solid fa-pen-to-square text-[10px]"></i>
-                        <span class="hidden sm:inline">改名</span>
+                    <button onclick="promptChangeUsername()" title="改名 (1,000分)" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:scale-95 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30 transition shadow">
+                        <i class="fa-solid fa-pen-to-square"></i>
                     </button>
 
-                    <!-- 💎 VIP 升級按鈕 -->
-                    <button onclick="openVipModal()" class="text-[11px] bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-950 font-black px-2.5 py-0.5 rounded shadow flex items-center gap-1">
-                        <i class="fa-solid fa-crown text-[10px]"></i> <span>VIP 專區</span>
+                    <button onclick="openVipModal()" class="text-[10px] bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 active:scale-95 text-slate-950 font-black px-2 py-0.5 rounded shadow flex items-center gap-1 shrink-0">
+                        <i class="fa-solid fa-crown text-[9px]"></i> <span>VIP</span>
                     </button>
 
-                    <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded">👑 管理員</span>
+                    <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded shrink-0">👑 管理員</span>
                 </div>
                 
-                <div class="h-4 w-[1px] bg-slate-700"></div>
+                <div class="h-3.5 w-[1px] bg-slate-700"></div>
 
-                <div class="flex items-center gap-1.5">
-                    <i id="pointIcon" class="fa-solid fa-gem text-cyan-400 animate-pulse"></i>
-                    <span id="userPoints" class="text-lg font-black text-cyan-300">0</span>
-                    <span class="text-xs text-slate-400">分</span>
-                    <span id="debtBadge" class="hidden text-[10px] bg-red-600/90 text-white font-bold px-1.5 py-0.5 rounded animate-bounce">負債中</span>
+                <div class="flex items-center gap-1 shrink-0">
+                    <i id="pointIcon" class="fa-solid fa-gem text-cyan-400 animate-pulse text-xs"></i>
+                    <span id="userPoints" class="text-sm sm:text-base font-black text-cyan-300">0</span>
+                    <span class="text-[10px] text-slate-400">分</span>
+                    <span id="debtBadge" class="hidden text-[9px] bg-red-600 text-white font-bold px-1 py-0.2 rounded animate-bounce">負債</span>
                 </div>
 
-                <button onclick="handleSignOut()" class="text-xs bg-red-900/60 hover:bg-red-800 text-red-200 px-2 py-1 rounded">
+                <button onclick="handleSignOut()" class="text-[10px] sm:text-xs bg-red-950/80 hover:bg-red-800 active:scale-95 text-red-200 px-2 py-0.5 rounded border border-red-800/40 shrink-0">
                     登出
                 </button>
             </div>
 
-            <!-- 💻 桌面端分頁導覽選單 -->
-            <nav class="hidden md:flex gap-2 justify-center flex-wrap">
-                <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow text-sm">
+            <!-- 💻 桌面端導覽選單 -->
+            <nav class="hidden md:flex gap-2 justify-center">
+                <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition">
                     <i class="fa-solid fa-box-open mr-1"></i> 抽卡機
                 </button>
-                <button onclick="switchTab('binder')" id="nav-binder" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm">
-                    <i class="fa-solid fa-book-bookmark mr-1"></i> 集卡冊圖鑑
+                <button onclick="switchTab('binder')" id="nav-binder" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
+                    <i class="fa-solid fa-book-bookmark mr-1"></i> 集卡冊
                 </button>
-                <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm">
-                    <i class="fa-solid fa-coins mr-1"></i> 出售卡牌
+                <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
+                    <i class="fa-solid fa-coins mr-1"></i> 出售
                 </button>
-                <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm">
+                <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
                     <i class="fa-solid fa-trophy text-amber-400 mr-1"></i> 排行榜
                 </button>
-                <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-3 py-1.5 rounded-lg font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-sm">
+                <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-sm active:scale-95 transition">
                     <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員
                 </button>
             </nav>
@@ -162,218 +184,218 @@
     </header>
 
     <!-- 📱 手機專用固定底部導覽列 -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-40 flex justify-around py-2 px-1 text-center shadow-2xl">
-        <button onclick="switchTab('pack')" id="mob-nav-pack" class="mob-tab-btn flex flex-col items-center gap-1 text-red-500 font-bold text-[11px]">
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 z-40 flex justify-around py-2 px-1 text-center shadow-2xl pb-[calc(8px+env(safe-area-inset-bottom))]">
+        <button onclick="switchTab('pack')" id="mob-nav-pack" class="mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-box-open text-base"></i>
             <span>抽卡機</span>
         </button>
-        <button onclick="switchTab('binder')" id="mob-nav-binder" class="mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]">
+        <button onclick="switchTab('binder')" id="mob-nav-binder" class="mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-book-bookmark text-base"></i>
             <span>集卡冊</span>
         </button>
-        <button onclick="switchTab('sell')" id="mob-nav-sell" class="mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]">
+        <button onclick="switchTab('sell')" id="mob-nav-sell" class="mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-coins text-base"></i>
             <span>出售</span>
         </button>
-        <button onclick="switchTab('leaderboard')" id="mob-nav-leaderboard" class="mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]">
+        <button onclick="switchTab('leaderboard')" id="mob-nav-leaderboard" class="mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-trophy text-base"></i>
             <span>排行榜</span>
         </button>
-        <button id="mobAdminTabBtn" onclick="switchTab('admin')" class="hidden mob-tab-btn flex flex-col items-center gap-1 text-amber-400 font-bold text-[11px]">
+        <button id="mobAdminTabBtn" onclick="switchTab('admin')" class="hidden mob-tab-btn flex flex-col items-center gap-0.5 text-amber-400 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-crown text-base"></i>
             <span>管理</span>
         </button>
     </div>
 
-    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+    <main class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
 
         <!-- 📊 全服營運與玩家收益看板 -->
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
+        <section class="grid grid-cols-2 gap-3 sm:gap-4">
+            <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-3 sm:p-4 rounded-2xl border border-slate-700/80 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-xs text-slate-400 font-bold block">🎉 全服玩家總淨收益</span>
-                    <span id="statPlayerProfit" class="text-2xl font-black text-emerald-400">--</span>
-                    <span class="text-xs text-slate-500 ml-1">分</span>
+                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🎉 全服總淨收益</span>
+                    <span id="statPlayerProfit" class="text-lg sm:text-2xl font-black text-emerald-400">--</span>
+                    <span class="text-[10px] text-slate-500">分</span>
                 </div>
-                <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-xl">
+                <div class="w-9 h-9 sm:w-12 sm:h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-base sm:text-xl shrink-0">
                     <i class="fa-solid fa-sack-dollar"></i>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
+            <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-3 sm:p-4 rounded-2xl border border-slate-700/80 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-xs text-slate-400 font-bold block">🏪 卡店累積營運損益</span>
-                    <span id="statShopLoss" class="text-2xl font-black text-red-400">--</span>
-                    <span class="text-xs text-slate-500 ml-1">分</span>
+                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🏪 卡店累積損益</span>
+                    <span id="statShopLoss" class="text-lg sm:text-2xl font-black text-red-400">--</span>
+                    <span class="text-[10px] text-slate-500">分</span>
                 </div>
-                <div id="statShopLossIcon" class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-xl">
+                <div id="statShopLossIcon" class="w-9 h-9 sm:w-12 sm:h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-base sm:text-xl shrink-0">
                     <i class="fa-solid fa-store-slash"></i>
                 </div>
             </div>
         </section>
 
         <!-- 📢 全服歐皇抽卡公告欄 -->
-        <section class="bg-slate-800/90 p-4 rounded-2xl border border-amber-500/30 shadow-lg space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-                <h3 class="text-sm md:text-base font-bold text-amber-300 flex items-center gap-2">
-                    <i class="fa-solid fa-bullhorn text-amber-400 animate-pulse"></i> 歐皇榮譽公告欄 (SAR / UR 稀有卡戰報)
+        <section class="bg-slate-800/80 p-3 sm:p-4 rounded-2xl border border-amber-500/30 shadow-lg space-y-2 sm:space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-700/80 pb-2">
+                <h3 class="text-xs sm:text-base font-bold text-amber-300 flex items-center gap-1.5 sm:gap-2">
+                    <i class="fa-solid fa-bullhorn text-amber-400 animate-pulse"></i> 歐皇榮譽公告欄 (SAR / UR 戰報)
                 </h3>
-                <span class="text-xs text-slate-400 font-mono">即時雲端更新</span>
+                <span class="text-[10px] text-slate-400 font-mono">即時雲端更新</span>
             </div>
-            <div id="broadcastHistoryList" class="max-h-40 overflow-y-auto space-y-2 pr-1 text-xs text-slate-300 font-mono">
-                <div class="text-center py-4 text-slate-500">載入全服歐皇戰報中...</div>
+            <div id="broadcastHistoryList" class="max-h-32 sm:max-h-40 overflow-y-auto space-y-1.5 pr-1 text-[11px] sm:text-xs text-slate-300 font-mono">
+                <div class="text-center py-3 text-slate-500">載入全服歐皇戰報中...</div>
             </div>
         </section>
 
         <!-- TAB 1: 抽卡機 -->
-        <section id="tab-pack" class="tab-content space-y-6">
+        <section id="tab-pack" class="tab-content space-y-4 sm:space-y-6">
 
             <!-- 🌟 收下卡牌展示區域 -->
-            <div id="pullResultsArea" class="hidden space-y-4 bg-gradient-to-br from-slate-800 via-slate-800 to-amber-950/40 p-5 rounded-2xl border-2 border-amber-400/60 shadow-2xl transition-all duration-500">
-                <div class="flex justify-between items-center border-b border-amber-500/30 pb-3">
-                    <h3 class="text-lg font-bold text-amber-300 flex items-center gap-2">
+            <div id="pullResultsArea" class="hidden space-y-3 sm:space-y-4 bg-gradient-to-br from-slate-800 via-slate-800 to-amber-950/40 p-4 sm:p-5 rounded-2xl border-2 border-amber-400/60 shadow-2xl transition-all duration-500">
+                <div class="flex justify-between items-center border-b border-amber-500/30 pb-2.5">
+                    <h3 class="text-sm sm:text-lg font-bold text-amber-300 flex items-center gap-1.5">
                         <i class="fa-solid fa-wand-magic-sparkles text-yellow-400"></i> 本次剛收下的卡牌戰利品
                     </h3>
-                    <button onclick="sellAllDuplicates()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-xl font-bold text-white shadow">
+                    <button onclick="sellAllDuplicates()" class="text-[11px] sm:text-xs bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl font-bold text-white shadow">
                         <i class="fa-solid fa-coins mr-1"></i> 一鍵售出重複卡
                     </button>
                 </div>
-                <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
+                <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4"></div>
             </div>
 
             <!-- ⚡ 動態渲染卡包網格容器 -->
-            <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
 
             <!-- 告示牌 -->
-            <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-wrap justify-between items-center text-xs text-slate-400 gap-2">
+            <div class="bg-slate-800/60 p-3 sm:p-4 rounded-xl border border-slate-700/70 flex flex-wrap justify-between items-center text-[11px] sm:text-xs text-slate-400 gap-2">
                 <div>
-                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Firestore 雲端安全鎖定：</span>
-                    已啟用伺服器端安全驗證，全面防止 F12 改分與非法修改 VIP 權限。
+                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Firestore 雲端安全防護：</span>
+                    已鎖定伺服器級安全規則，禁止 F12 竄改分數與解鎖 VIP。
                 </div>
-                <div class="text-slate-500">透支上限：無上限（無限負債） | 每日登入 +500 分</div>
+                <div class="text-slate-500">透支上限：無限負債 | 每日登入 +500 分</div>
             </div>
         </section>
 
         <!-- TAB 2: 集卡冊圖鑑 -->
-        <section id="tab-binder" class="tab-content hidden space-y-6">
-            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center flex-wrap gap-3">
-                <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-bold text-white">
-                    <option value="m6a">M6a 30th CELEBRATION (全 16 張)</option>
-                    <option value="sv2a">SV2a 寶可夢 151 (全 16 張)</option>
-                    <option value="sv3">SV3 黑炎支配者 (全 9 張)</option>
-                    <option value="sv4a">SV4a 閃色寶藏 ex (全 10 張)</option>
-                    <option value="sv5a">SV5a 狂野意志 (全 12 張)</option>
-                    <option value="sv6">SV6 變幻面具 (全 10 張)</option>
-                    <option value="sv7">SV7 璀璨星空 (全 8 張)</option>
-                    <option value="sv8">SV8 超電導突破 (全 8 張)</option>
-                    <option value="s12a">S12a VSTAR 宇宙 (全 30 張)</option>
+        <section id="tab-binder" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-800/90 p-3 sm:p-4 rounded-2xl border border-slate-700 flex justify-between items-center flex-wrap gap-2">
+                <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-white focus:outline-none">
+                    <option value="m6a">M6a 30th CELEBRATION (16張)</option>
+                    <option value="sv2a">SV2a 寶可夢 151 (16張)</option>
+                    <option value="sv3">SV3 黑炎支配者 (9張)</option>
+                    <option value="sv4a">SV4a 閃色寶藏 ex (10張)</option>
+                    <option value="sv5a">SV5a 狂野意志 (12張)</option>
+                    <option value="sv6">SV6 變幻面具 (10張)</option>
+                    <option value="sv7">SV7 璀璨星空 (8張)</option>
+                    <option value="sv8">SV8 超電導突破 (8張)</option>
+                    <option value="s12a">S12a VSTAR 宇宙 (30張)</option>
                 </select>
-                <span id="binderProgressText" class="text-cyan-400 font-bold text-sm">0 / 0 (0%)</span>
+                <span id="binderProgressText" class="text-cyan-400 font-bold text-xs sm:text-sm">0 / 0 (0%)</span>
             </div>
-            <div id="binderGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4"></div>
+            <div id="binderGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-4"></div>
         </section>
 
         <!-- TAB 3: 出售卡牌 -->
-        <section id="tab-sell" class="tab-content hidden space-y-6">
-            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
+        <section id="tab-sell" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-800/90 p-3 sm:p-4 rounded-2xl border border-slate-700 flex justify-between items-center gap-2">
                 <div>
-                    <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-coins text-amber-400 mr-2"></i>卡牌交易所</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">點擊單張出售或一鍵出清多餘卡牌換取分數還債。</p>
+                    <h3 class="text-sm sm:text-lg font-bold text-white"><i class="fa-solid fa-coins text-amber-400 mr-1"></i>卡牌交易所</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400">點擊單張出售或一鍵出清多餘重複卡。</p>
                 </div>
-                <button onclick="sellAllDuplicates()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow">一鍵賣出所有重複卡</button>
+                <button onclick="sellAllDuplicates()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold text-white shadow shrink-0">一鍵賣出重複卡</button>
             </div>
-            <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
+            <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4"></div>
         </section>
 
         <!-- TAB 4: 🏆 全服排行榜 -->
-        <section id="tab-leaderboard" class="tab-content hidden space-y-6">
-            <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/30 shadow-xl space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-3 gap-3">
+        <section id="tab-leaderboard" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-amber-500/30 shadow-xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-700 pb-3 gap-2">
                     <div>
-                        <h3 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+                        <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
                             <i class="fa-solid fa-trophy"></i> 雲端訓練家排行榜
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1">即時比較全伺服器訓練家的財富分數與負債黑化程度！</p>
+                        <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">即時比較全伺服器訓練家的財富分數與負債程度！</p>
                     </div>
-                    <button onclick="fetchGlobalStatsAndLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg font-bold text-slate-200 shrink-0">
-                        <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理數據
+                    <button onclick="fetchGlobalStatsAndLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 active:scale-95 px-2.5 py-1.5 rounded-lg font-bold text-slate-200 shrink-0">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
                     </button>
                 </div>
 
-                <div class="flex gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700/80">
-                    <button id="lbBtnLucky" onclick="switchLbSubTab('lucky')" class="flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow">
-                        <i class="fa-solid fa-crown text-amber-950"></i> 👑 幸運歐皇榜 (最高分數)
+                <div class="flex gap-2 bg-slate-900 p-1 rounded-xl border border-slate-700/80">
+                    <button id="lbBtnLucky" onclick="switchLbSubTab('lucky')" class="flex-1 py-1.5 rounded-lg font-black text-xs transition flex items-center justify-center gap-1 bg-amber-500 text-slate-950 shadow">
+                        <i class="fa-solid fa-crown text-amber-950"></i> 👑 幸運歐皇榜
                     </button>
-                    <button id="lbBtnUnlucky" onclick="switchLbSubTab('unlucky')" class="flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-skull"></i> 🏿 非洲黑人榜 (最深負債)
+                    <button id="lbBtnUnlucky" onclick="switchLbSubTab('unlucky')" class="flex-1 py-1.5 rounded-lg font-black text-xs transition flex items-center justify-center gap-1 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-skull"></i> 🏿 非洲黑人榜
                     </button>
                 </div>
 
-                <div id="leaderboardList" class="space-y-3">
+                <div id="leaderboardList" class="space-y-2 sm:space-y-3">
                     <div class="text-center py-8 text-slate-500">載入排行榜中...</div>
                 </div>
             </div>
         </section>
 
         <!-- TAB 5: 最高管理員控制台 -->
-        <section id="tab-admin" class="tab-content hidden space-y-6">
-            <div class="bg-slate-800 p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-6">
+        <section id="tab-admin" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-4 sm:space-y-6">
                 <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
-                    <h3 class="text-xl font-bold text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-crown"></i> 最高管理員控制面板
+                    <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-crown"></i> 最高管理員面板
                     </h3>
-                    <span class="text-xs text-slate-400">UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</span>
+                    <span class="text-[10px] text-slate-400 font-mono">UID: eTYTRQFMmZc5...</span>
                 </div>
 
-                <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-4">
-                    <h4 class="font-bold text-base text-amber-300 flex items-center gap-2">
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 space-y-3 sm:space-y-4">
+                    <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
                         <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與分數管理
                     </h4>
                     
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <select id="adminUserSelect" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm font-bold">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <select id="adminUserSelect" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm font-bold">
                             <option value="">載入全服玩家清單中...</option>
                         </select>
-                        <button onclick="fetchAdminUserList()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-xs font-bold text-slate-200">
-                            <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理清單
+                        <button onclick="fetchAdminUserList()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 shrink-0">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
                         </button>
                     </div>
 
-                    <div id="selectedUserCard" class="hidden bg-slate-800/90 p-4 rounded-xl border border-cyan-500/40 space-y-3">
+                    <div id="selectedUserCard" class="hidden bg-slate-800/90 p-3 sm:p-4 rounded-xl border border-cyan-500/40 space-y-3">
                         <div class="flex justify-between items-center">
                             <div>
-                                <span id="selectedUserName" class="font-black text-lg text-white">--</span>
-                                <span id="selectedUserUidText" class="text-xs text-slate-400 font-mono block">UID: --</span>
+                                <span id="selectedUserName" class="font-black text-base sm:text-lg text-white">--</span>
+                                <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono block">UID: --</span>
                             </div>
                             <div class="text-right">
-                                <span class="text-xs text-slate-400 block">當前分數</span>
-                                <span id="selectedUserCurrentPoints" class="text-xl font-black text-cyan-300">--</span>
+                                <span class="text-[10px] text-slate-400 block">當前分數</span>
+                                <span id="selectedUserCurrentPoints" class="text-base sm:text-xl font-black text-cyan-300">--</span>
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-700 pt-3 flex items-center justify-between">
+                        <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
                             <div>
-                                <span class="text-xs font-bold text-amber-300 block">VIP 會員狀態：</span>
+                                <span class="text-xs font-bold text-amber-300 block">VIP 狀態：</span>
                                 <span id="selectedUserVipStatusText" class="text-xs text-slate-400">檢查中...</span>
                             </div>
-                            <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-xl text-xs font-bold text-slate-950 shadow">
-                                切換 VIP 狀態
+                            <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-950 shadow">
+                                切換 VIP
                             </button>
                         </div>
 
-                        <div class="border-t border-slate-700 pt-3">
-                            <span class="text-xs font-bold text-slate-300 block mb-2">快速增減分數：</span>
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="adminAdjustSelectedUser(1000)" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">+1,000 分</button>
-                                <button onclick="adminAdjustSelectedUser(5000)" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">+5,000 分</button>
-                                <button onclick="adminAdjustSelectedUser(50000)" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">+50,000 分</button>
-                                <button onclick="adminAdjustSelectedUser(-1000)" class="bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow">-1,000 分</button>
+                        <div class="border-t border-slate-700 pt-2.5">
+                            <span class="text-xs font-bold text-slate-300 block mb-1.5">快速增減分數：</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button onclick="adminAdjustSelectedUser(1000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+1,000</button>
+                                <button onclick="adminAdjustSelectedUser(5000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+5,000</button>
+                                <button onclick="adminAdjustSelectedUser(50000)" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+50,000</button>
+                                <button onclick="adminAdjustSelectedUser(-1000)" class="bg-red-600 hover:bg-red-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">-1,000</button>
                             </div>
                         </div>
 
-                        <div class="flex gap-2 pt-2">
-                            <input type="number" id="adminCustomPointsInput" placeholder="直接設定為指定分數..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none text-sm">
-                            <button onclick="adminSetCustomPoints()" class="bg-cyan-600 hover:bg-cyan-500 px-5 py-2 rounded-xl text-xs font-bold text-white shadow">設定目標分數</button>
+                        <div class="flex gap-2 pt-1">
+                            <input type="number" id="adminCustomPointsInput" placeholder="指定目標分數..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white focus:outline-none text-xs">
+                            <button onclick="adminSetCustomPoints()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-1.5 rounded-xl text-xs font-bold text-white shadow shrink-0">設定分數</button>
                         </div>
                     </div>
                 </div>
@@ -382,117 +404,117 @@
 
     </main>
 
-    <!-- 💎 VIP 會員介紹與購買 Modal -->
+    <!-- 💎 VIP 會員 Modal -->
     <div id="vipModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 p-6 sm:p-8 rounded-2xl border-2 border-amber-400 max-w-lg w-full space-y-6 shadow-2xl relative">
+        <div class="bg-slate-900 p-5 sm:p-7 rounded-2xl border-2 border-amber-400 max-w-lg w-full space-y-4 sm:space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeVipModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             
-            <div class="text-center space-y-2">
-                <div class="w-14 h-14 bg-amber-500/20 border-2 border-amber-400 rounded-full flex items-center justify-center mx-auto text-amber-400 text-2xl shadow-lg">
+            <div class="text-center space-y-1.5">
+                <div class="w-12 h-12 bg-amber-500/20 border-2 border-amber-400 rounded-full flex items-center justify-center mx-auto text-amber-400 text-xl shadow-lg">
                     <i class="fa-solid fa-crown"></i>
                 </div>
-                <h2 class="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+                <h2 class="text-xl sm:text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
                     永久 VIP 尊榮會員系統
                 </h2>
-                <p class="text-xs text-slate-300">只需一杯咖啡錢 <b class="text-amber-400">$25 港幣</b>，即可永久解鎖全服尊榮特權！</p>
+                <p class="text-xs text-slate-300">只需咖啡錢 <b class="text-amber-400">$25 港幣</b>，即可永久解鎖全服尊榮特權！</p>
             </div>
 
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
-                <h4 class="font-bold text-sm text-amber-300 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> VIP 專屬特權福利：</h4>
-                <ul class="text-xs text-slate-300 space-y-2">
+            <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700 space-y-2">
+                <h4 class="font-bold text-xs sm:text-sm text-amber-300 flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> VIP 專屬福利：</h4>
+                <ul class="text-xs text-slate-300 space-y-1.5">
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <b>VIP 專屬 30 連抽</b>（僅需 600 分，超高性價比！）</li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 名字享有專屬的<b>流光霓虹特效邊框</b>。</li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 排行榜與介面常駐 <b>👑 VIP 皇冠標籤</b>。</li>
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 永久身分認定，支持本模擬器持續營運！</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 永久身分認定，支持模擬器持續營運！</li>
                 </ul>
             </div>
 
-            <div class="space-y-3">
+            <div class="space-y-2">
                 <div class="text-xs font-bold text-slate-300">步驟一：點擊下方 PayMe 連結付款 $25 港幣</div>
-                <a href="https://payme.hsbc/0661b177b2f04214972535987915b5d6" target="_blank" class="block w-full text-center bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black py-3 rounded-xl shadow-lg transition text-sm">
-                    <i class="fa-solid fa-wallet mr-2"></i> 一鍵按此 PayMe 付款 ($25)
+                <a href="https://payme.hsbc/0661b177b2f04214972535987915b5d6" target="_blank" class="block w-full text-center bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-95 text-white font-black py-2.5 rounded-xl shadow-lg transition text-xs sm:text-sm">
+                    <i class="fa-solid fa-wallet mr-1.5"></i> 按此 PayMe 付款 ($25)
                 </a>
             </div>
 
             <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-center space-y-1">
-                <span class="text-[11px] text-slate-400 block">付款完成後，請將您的 **登入信箱 (Email)** 或 **PayMe 截圖/單號** 告知管理員。</span>
-                <span class="text-[11px] font-bold text-amber-300 block">管理員確認後將為您一鍵開通永久 VIP！</span>
+                <span class="text-[11px] text-slate-400 block">付款後請將 **Email** 或 **PayMe 截圖** 告知管理員。</span>
+                <span class="text-[11px] font-bold text-amber-300 block">確認後將為您開通永久 VIP！</span>
             </div>
 
-            <button onclick="closeVipModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs">
+            <button onclick="closeVipModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs">
                 關閉視窗
             </button>
         </div>
     </div>
 
     <!-- 🎴 3D 拆卡包動畫 Modal -->
-    <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-4">
+    <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-3 sm:p-4">
         
-        <div id="animStepChoice" class="flex flex-col items-center space-y-6 text-center max-w-2xl w-full">
+        <div id="animStepChoice" class="flex flex-col items-center space-y-4 sm:space-y-6 text-center max-w-2xl w-full my-auto">
             <div>
-                <h2 class="text-2xl font-black text-amber-400 animate-pulse">請選擇其中一包卡包進行拆封！</h2>
-                <p class="text-xs text-slate-400 mt-1">三包卡包皆內含隨機卡牌，憑直覺選出一包幸運卡包吧！</p>
+                <h2 class="text-xl sm:text-2xl font-black text-amber-400 animate-pulse">請選擇其中一包卡包進行拆封！</h2>
+                <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">憑直覺選出一包幸運卡包吧！</p>
             </div>
 
-            <div class="grid grid-cols-3 gap-4 md:gap-8 w-full py-4">
-                <div onclick="choosePackAndTear(1)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
-                    <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
-                    <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #1</span>
-                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
+            <div class="grid grid-cols-3 gap-2.5 sm:gap-6 w-full py-2 sm:py-4">
+                <div onclick="choosePackAndTear(1)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-2.5 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-300/60 cursor-pointer hover:scale-105 active:scale-95 transition flex flex-col items-center justify-center h-44 sm:h-64 group">
+                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i>
+                    <span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #1</span>
+                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded-full mt-2">點擊選擇</span>
                 </div>
 
-                <div onclick="choosePackAndTear(2)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
-                    <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
-                    <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #2</span>
-                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
+                <div onclick="choosePackAndTear(2)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-2.5 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-300/60 cursor-pointer hover:scale-105 active:scale-95 transition flex flex-col items-center justify-center h-44 sm:h-64 group">
+                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i>
+                    <span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #2</span>
+                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded-full mt-2">點擊選擇</span>
                 </div>
 
-                <div onclick="choosePackAndTear(3)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-4 shadow-2xl border-4 border-amber-300/60 cursor-pointer hover:scale-105 hover:ring-4 hover:ring-amber-400 transition flex flex-col items-center justify-center h-52 sm:h-64 group">
-                    <i class="fa-solid fa-box-open text-4xl sm:text-5xl text-slate-950 mb-2 group-hover:rotate-12 transition"></i>
-                    <span class="pack-choice-title text-slate-950 font-black text-sm sm:text-base">卡包 #3</span>
-                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-2 py-0.5 rounded-full mt-2">點擊選擇</span>
+                <div onclick="choosePackAndTear(3)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-2.5 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-300/60 cursor-pointer hover:scale-105 active:scale-95 transition flex flex-col items-center justify-center h-44 sm:h-64 group">
+                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i>
+                    <span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #3</span>
+                    <span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded-full mt-2">點擊選擇</span>
                 </div>
             </div>
         </div>
 
-        <div id="animStepTear" class="hidden flex flex-col items-center space-y-6 text-center">
-            <h2 class="text-2xl font-black text-amber-400 animate-pulse">正在拆封你選擇的卡包...</h2>
-            <div id="packVisualBox" class="w-48 h-72 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center p-4 animate-pack-shake">
-                <i class="fa-solid fa-box-open text-6xl text-slate-950 mb-3"></i>
-                <span id="packVisualTitle" class="text-slate-950 font-black text-lg">POKÉMON</span>
+        <div id="animStepTear" class="hidden flex flex-col items-center space-y-6 text-center my-auto">
+            <h2 class="text-xl sm:text-2xl font-black text-amber-400 animate-pulse">正在拆封你選擇的卡包...</h2>
+            <div id="packVisualBox" class="w-40 sm:w-48 h-60 sm:h-72 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center p-4 animate-pack-shake">
+                <i class="fa-solid fa-box-open text-5xl sm:text-6xl text-slate-950 mb-3"></i>
+                <span id="packVisualTitle" class="text-slate-950 font-black text-base sm:text-lg">POKÉMON</span>
                 <span class="text-[10px] text-slate-900 font-bold tracking-widest mt-1">OPENING...</span>
             </div>
         </div>
 
-        <div id="animStepReveal" class="hidden w-full max-w-5xl flex flex-col items-center space-y-6">
-            <div class="flex justify-between items-center w-full px-2">
-                <h3 class="text-xl font-bold text-amber-300 flex items-center gap-2">
-                    <i class="fa-solid fa-sparkles text-yellow-400"></i> 開卡展示 (點擊卡牌翻面)
+        <div id="animStepReveal" class="hidden w-full max-w-5xl flex flex-col items-center space-y-4 my-auto">
+            <div class="flex justify-between items-center w-full px-1">
+                <h3 class="text-sm sm:text-xl font-bold text-amber-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sparkles text-yellow-400"></i> 開卡展示 (點卡片翻面)
                 </h3>
-                <button onclick="flipAllCards()" class="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow-lg">
-                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 一鍵全部翻開
+                <button onclick="flipAllCards()" class="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 active:scale-95 text-slate-950 font-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs shadow-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 全部翻開
                 </button>
             </div>
 
-            <div id="modalCardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full max-h-[70vh] overflow-y-auto p-2"></div>
+            <div id="modalCardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4 w-full max-h-[68vh] overflow-y-auto p-1"></div>
 
-            <button onclick="closePackModal()" id="finishUnboxBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-8 py-3 rounded-2xl text-sm shadow-xl hover:scale-105 transition">
+            <button onclick="closePackModal()" id="finishUnboxBtn" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black px-6 py-2.5 sm:px-8 sm:py-3 rounded-2xl text-xs sm:text-sm shadow-xl transition">
                 <i class="fa-solid fa-check-circle mr-1"></i> 收下卡牌並結束
             </button>
         </div>
     </div>
 
     <!-- 登入 Modal -->
-    <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
-            <h2 id="authTitle" class="text-2xl font-bold text-center text-amber-400">雲端訓練家登入</h2>
-            <div class="space-y-3">
-                <input type="email" id="authEmail" placeholder="電子郵件 Email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
-                <input type="password" id="authPassword" placeholder="密碼 (至少6位數)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
-                <input type="text" id="authUsername" placeholder="訓練家暱稱 (僅註冊時需要)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none">
+    <div id="authModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-700 max-w-md w-full space-y-4 shadow-2xl">
+            <h2 id="authTitle" class="text-xl sm:text-2xl font-bold text-center text-amber-400">雲端訓練家登入</h2>
+            <div class="space-y-2.5">
+                <input type="email" id="authEmail" placeholder="電子郵件 Email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none text-xs sm:text-sm">
+                <input type="password" id="authPassword" placeholder="密碼 (至少6位數)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none text-xs sm:text-sm">
+                <input type="text" id="authUsername" placeholder="訓練家暱稱 (僅註冊時需要)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none text-xs sm:text-sm">
             </div>
-            <div class="space-y-2 pt-2">
-                <button onclick="handleAuthSubmit()" id="authPrimaryBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 py-2.5 rounded-xl font-bold text-white shadow">登入帳號</button>
+            <div class="space-y-2 pt-1">
+                <button onclick="handleAuthSubmit()" id="authPrimaryBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 active:scale-95 py-2.5 rounded-xl font-bold text-white shadow text-xs sm:text-sm">登入帳號</button>
                 <div class="text-center">
                     <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-xs text-slate-400 hover:text-cyan-400 underline">還沒有帳號？點此切換至「註冊帳號」</button>
                 </div>
@@ -715,7 +737,7 @@
             if (!listEl) return;
 
             if (snapshot.empty) {
-                listEl.innerHTML = `<div class="text-center py-4 text-slate-500">尚無歐皇中獎紀錄...</div>`;
+                listEl.innerHTML = `<div class="text-center py-3 text-slate-500">尚無歐皇中獎紀錄...</div>`;
                 return;
             }
 
@@ -725,8 +747,8 @@
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 const dateObj = new Date(data.timestamp || Date.now());
-                const dateStr = dateObj.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + 
-                                dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }) + ' ' + 
+                                dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
                 if (isMostRecent && data.timestamp > lastBroadcastTimestamp) {
                     lastBroadcastTimestamp = data.timestamp;
@@ -735,16 +757,16 @@
                 isMostRecent = false;
 
                 const rarityColor = data.rarity === 'UR' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-emerald-600 text-white font-black';
-                const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
+                const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-0.5">👑 VIP</span>' : '';
 
                 html += `
-                    <div class="flex flex-wrap items-center justify-between bg-slate-900/80 p-2 rounded-lg border border-slate-700/60 gap-2">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-slate-500 text-[11px] font-mono">[${dateStr}]</span>
+                    <div class="flex flex-wrap items-center justify-between bg-slate-900/90 p-1.5 sm:p-2 rounded-lg border border-slate-700/60 gap-1 sm:gap-2">
+                        <div class="flex flex-wrap items-center gap-1 sm:gap-2">
+                            <span class="text-slate-500 text-[10px] font-mono">[${dateStr}]</span>
                             <span class="font-bold text-slate-200">恭喜</span>
                             <span class="font-black text-amber-300 px-1 bg-amber-500/10 rounded flex items-center">${data.playerName}${vipTag}</span>
                             <span class="text-slate-300">抽到</span>
-                            <span class="${rarityColor} text-[10px] px-1.5 py-0.2 rounded border border-white/20">${data.rarity}</span>
+                            <span class="${rarityColor} text-[9px] px-1 py-0.2 rounded border border-white/20">${data.rarity}</span>
                             <span class="font-bold text-amber-200">${data.cardName}</span>
                         </div>
                     </div>
@@ -759,8 +781,8 @@
             const textEl = document.getElementById('broadcastText');
             if (!banner || !textEl) return;
 
-            const vipTag = isVip ? ' <span class="bg-slate-950 text-amber-400 text-xs px-1.5 py-0.5 rounded font-black">👑 VIP尊榮</span>' : '';
-            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1 text-base md:text-lg">${playerName}</span>${vipTag} 抽到 <span class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-md border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
+            const vipTag = isVip ? ' <span class="bg-slate-950 text-amber-400 text-[10px] px-1 py-0.2 rounded font-black">👑 VIP</span>' : '';
+            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1">${playerName}</span>${vipTag} 抽到 <span class="bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
             banner.classList.remove('hidden');
 
             if (broadcastTimer) clearTimeout(broadcastTimer);
@@ -879,7 +901,7 @@
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入帳號！");
             
             const currentName = currentUserDoc.name || '訓練家';
-            const newName = prompt(`✏️ 修改暱稱需花費 1,000 積分\n當前暱稱：${currentName}\n\n請輸入新的暱稱 (20字以內)：`, currentName);
+            const newName = prompt(`✏️ 修改暱稱需花費 1,000 積分\n當前暱稱：${currentName}\n\n請輸入新暱稱 (20字以內)：`, currentName);
 
             if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
 
@@ -887,7 +909,7 @@
             if (trimmedName.length > 20) return alert("暱稱長度不能超過 20 個字！");
 
             if ((currentUserDoc.points || 0) < 1000) {
-                return alert(`⚠️ 分數不足！修改暱稱需要 1,000 分，你目前只有 ${(currentUserDoc.points || 0).toLocaleString()} 分。`);
+                return alert(`⚠️ 分數不足！修改暱稱需要 1,000 分，目前只有 ${(currentUserDoc.points || 0).toLocaleString()} 分。`);
             }
 
             try {
@@ -903,10 +925,10 @@
                 currentUserDoc.points = newPoints;
                 updateUI();
                 
-                alert(`🎉 成功花費 1,000 分將暱稱修改為「${trimmedName}」！`);
+                alert(`🎉 成功花費 1,000 分修改暱稱為「${trimmedName}」！`);
                 fetchGlobalStatsAndLeaderboard();
             } catch (err) {
-                alert("修改暱稱失敗: " + (err.message.includes("permission-denied") ? "分數不足或安全規則拒絕寫入！" : err.message));
+                alert("修改暱稱失敗: " + err.message);
             }
         }
 
@@ -923,7 +945,7 @@
                 });
 
                 selectEl.innerHTML = `<option value="">-- 請選擇要管理的訓練家 --</option>` +
-                    allUsersCache.map(u => `<option value="${u.uid}">${u.isVip ? '👑 [VIP] ' : ''}${u.name || '訓練家'} (UID: ${u.uid.substring(0,6)}...) - [${(u.points||0).toLocaleString()} 分]</option>`).join('');
+                    allUsersCache.map(u => `<option value="${u.uid}">${u.isVip ? '👑 [VIP] ' : ''}${u.name || '訓練家'} (UID: ${u.uid.substring(0,6)}...) - [${(u.points||0).toLocaleString()}分]</option>`).join('');
 
                 selectEl.onchange = (e) => {
                     const uid = e.target.value;
@@ -956,7 +978,7 @@
             const newVipStatus = !u.isVip;
             try {
                 await updateDoc(doc(db, "users", targetUid), { isVip: newVipStatus });
-                alert(`👑 已成功將玩家 ${u.name} 的 VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
+                alert(`👑 已成功將玩家 ${u.name} VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
             } catch (e) {
@@ -975,7 +997,7 @@
             const newPoints = (u.points || 0) + delta;
             try {
                 await updateDoc(doc(db, "users", targetUid), { points: newPoints });
-                alert(`👑 成功將玩家 ${u.name} 的分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
+                alert(`👑 成功將玩家 ${u.name} 分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
             } catch (e) {
@@ -988,7 +1010,7 @@
             const targetUid = selectEl ? selectEl.value : '';
             const newPoints = parseInt(document.getElementById('adminCustomPointsInput').value);
 
-            if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入正確的目標分數！");
+            if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入目標分數！");
 
             try {
                 await updateDoc(doc(db, "users", targetUid), { points: newPoints });
@@ -1013,30 +1035,30 @@
             const isVip = currentUserDoc && currentUserDoc.isVip;
 
             container.innerHTML = PACK_DEFINITIONS.map(pack => `
-                <div class="bg-gradient-to-br ${pack.bg} p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-4">
-                    <div class="flex gap-4 items-center">
-                        <div class="w-20 h-28 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[10px] font-black bg-white/20 px-1.5 py-0.5 rounded text-white">${pack.id.toUpperCase()}</span>
-                            <i class="fa-solid ${pack.icon} text-2xl text-amber-300 my-1"></i>
+                <div class="bg-gradient-to-br ${pack.bg} p-4 sm:p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-3 sm:space-y-4">
+                    <div class="flex gap-3 sm:gap-4 items-center">
+                        <div class="w-16 h-24 sm:w-20 sm:h-28 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
+                            <span class="text-[9px] sm:text-[10px] font-black bg-white/20 px-1.5 py-0.2 rounded text-white">${pack.id.toUpperCase()}</span>
+                            <i class="fa-solid ${pack.icon} text-xl sm:text-2xl text-amber-300 my-1"></i>
                             <span class="text-[9px] font-bold text-slate-300">${pack.tag}</span>
                         </div>
                         <div>
-                            <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded">${pack.badge}</span>
-                            <h3 class="text-base font-bold text-white mt-1">${pack.title}</h3>
-                            <p class="text-xs text-slate-300 mt-1">${pack.desc}</p>
+                            <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded">${pack.badge}</span>
+                            <h3 class="text-sm sm:text-base font-bold text-white mt-1 leading-tight">${pack.title}</h3>
+                            <p class="text-[11px] sm:text-xs text-slate-300 mt-1 leading-snug">${pack.desc}</p>
                         </div>
                     </div>
                     <div class="space-y-2">
                         <div class="flex gap-2">
-                            <button onclick="startPackChoice('${pack.id}', 1)" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl text-xs shadow">單抽 (20分)</button>
-                            <button onclick="startPackChoice('${pack.id}', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs shadow">10連抽 (200分)</button>
+                            <button onclick="startPackChoice('${pack.id}', 1)" class="flex-1 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow transition">單抽 (20分)</button>
+                            <button onclick="startPackChoice('${pack.id}', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow transition">10連抽 (200分)</button>
                         </div>
                         ${isVip ? `
-                            <button onclick="startPackChoice('${pack.id}', 30)" class="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black py-2 rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 animate-pulse">
+                            <button onclick="startPackChoice('${pack.id}', 30)" class="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 active:scale-95 text-slate-950 font-black py-2 rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 animate-pulse transition">
                                 <i class="fa-solid fa-crown"></i> 👑 VIP 專屬 30 連抽 (600分)
                             </button>
                         ` : `
-                            <button onclick="openVipModal()" class="w-full bg-slate-800/80 hover:bg-slate-800 text-amber-300/80 border border-amber-500/30 font-bold py-1.5 rounded-xl text-[11px] flex items-center justify-center gap-1">
+                            <button onclick="openVipModal()" class="w-full bg-slate-900/60 hover:bg-slate-800 active:scale-95 text-amber-300/80 border border-amber-500/30 font-bold py-1.5 rounded-xl text-[11px] flex items-center justify-center gap-1 transition">
                                 <i class="fa-solid fa-lock text-[10px]"></i> 解鎖 VIP 專屬 30 連抽 (600分)
                             </button>
                         `}
@@ -1056,9 +1078,9 @@
             nameEl.innerText = currentUserDoc.name || '訓練家';
 
             if (isVip) {
-                headerInfoBox.className = "hidden sm:flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2 rounded-xl vip-nameplate shadow-lg";
+                headerInfoBox.className = "hidden sm:flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-xl vip-nameplate shadow-lg text-xs sm:text-sm";
             } else {
-                headerInfoBox.className = "hidden sm:flex items-center gap-3 sm:gap-4 bg-slate-900 px-3 sm:px-4 py-2 rounded-xl border border-slate-700";
+                headerInfoBox.className = "hidden sm:flex items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm";
             }
             
             const pointsEl = document.getElementById('userPoints');
@@ -1068,12 +1090,12 @@
             pointsEl.innerText = points.toLocaleString();
 
             if (points < 0) {
-                pointsEl.className = "text-lg font-black text-red-400";
-                iconEl.className = "fa-solid fa-skull text-red-400 animate-bounce";
+                pointsEl.className = "text-sm sm:text-base font-black text-red-400";
+                iconEl.className = "fa-solid fa-skull text-red-400 animate-bounce text-xs";
                 debtBadge.classList.remove('hidden');
             } else {
-                pointsEl.className = "text-lg font-black text-cyan-300";
-                iconEl.className = "fa-solid fa-gem text-cyan-400 animate-pulse";
+                pointsEl.className = "text-sm sm:text-base font-black text-cyan-300";
+                iconEl.className = "fa-solid fa-gem text-cyan-400 animate-pulse text-xs";
                 debtBadge.classList.add('hidden');
             }
         }
@@ -1165,7 +1187,7 @@
                     document.getElementById('animStepTear').classList.add('hidden');
                     document.getElementById('animStepReveal').classList.remove('hidden');
                     renderModalFlipCards(currentPulledCards);
-                }, 1200);
+                }, 1000);
 
             } catch (err) {
                 alert("抽卡失敗: " + (err.message.includes("permission-denied") ? "分數不足或雲端安全規則攔截了違規修改！" : err.message));
@@ -1182,19 +1204,21 @@
         function renderModalFlipCards(cards) {
             const grid = document.getElementById('modalCardsGrid');
             grid.innerHTML = cards.map((c, idx) => `
-                <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer" onclick="flipCard(${idx})">
+                <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${idx})">
                     <div id="cardInner-${idx}" class="card-inner">
                         <div class="card-front bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center p-2 shadow-2xl">
-                            <i class="fa-solid fa-shield-cat text-4xl text-amber-400 mb-2 animate-bounce"></i>
-                            <span class="text-xs font-black text-amber-300">POKÉMON</span>
-                            <span class="text-[9px] text-slate-500 mt-1">點擊翻牌</span>
+                            <i class="fa-solid fa-shield-cat text-3xl sm:text-4xl text-amber-400 mb-1 sm:mb-2 animate-bounce"></i>
+                            <span class="text-[10px] sm:text-xs font-black text-amber-300">POKÉMON</span>
+                            <span class="text-[9px] text-slate-500 mt-0.5">點擊翻牌</span>
                         </div>
                         <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
-                            <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg shadow-md">
-                            <span class="text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
+                            <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-900">
+                                <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
+                            </div>
+                            <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
                             <div class="flex items-center gap-1 mt-0.5">
                                 <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
-                                <span class="text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
+                                <span class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
                                     <i class="fa-solid fa-gem text-cyan-400 text-[8px]"></i>${RARITY[c.rarity].price}分
                                 </span>
                             </div>
@@ -1204,7 +1228,7 @@
             `).join('');
 
             if (cards.some(c => ['SR', 'SAR', 'UR'].includes(c.rarity))) {
-                confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
             }
         }
 
@@ -1238,13 +1262,15 @@
             if (!area || !grid || cards.length === 0) return;
             area.classList.remove('hidden');
             grid.innerHTML = cards.map(c => `
-                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center hover:scale-105 transition shadow-lg">
-                    <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg shadow-md">
-                    <span class="text-xs font-bold mt-1.5 text-slate-200 text-center truncate w-full">${c.name}</span>
-                    <div class="flex items-center gap-1 mt-1">
-                        <span class="text-[10px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
-                        <span class="text-[11px] font-black text-cyan-300 bg-slate-950 px-1.5 py-0.5 rounded border border-cyan-500/30">
-                            <i class="fa-solid fa-gem text-cyan-400 mr-0.5 text-[9px]"></i>${RARITY[c.rarity].price} 分
+                <div class="bg-slate-900/90 p-2 sm:p-2.5 rounded-xl border border-slate-700/80 flex flex-col items-center hover:scale-105 transition shadow-lg">
+                    <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
+                        <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
+                    </div>
+                    <span class="text-[11px] sm:text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
+                    <div class="flex items-center gap-1 mt-0.5 sm:mt-1">
+                        <span class="text-[9px] sm:text-[10px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
+                        <span class="text-[10px] sm:text-[11px] font-black text-cyan-300 bg-slate-950 px-1.5 py-0.2 rounded border border-cyan-500/30">
+                            <i class="fa-solid fa-gem text-cyan-400 mr-0.5 text-[8px]"></i>${RARITY[c.rarity].price} 分
                         </span>
                     </div>
                 </div>
@@ -1261,19 +1287,21 @@
                 const count = currentUserDoc?.cards?.[c.id] || 0;
                 if (count > 0) unlocked++;
                 return count > 0 ? `
-                    <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 text-center relative flex flex-col items-center justify-between">
-                        <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.2 rounded-full shadow">×${count}</span>
-                        <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg">
+                    <div class="bg-slate-800/90 p-2 rounded-xl border border-slate-700 text-center relative flex flex-col items-center justify-between">
+                        <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow">×${count}</span>
+                        <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
+                            <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
+                        </div>
                         <div class="w-full mt-1">
-                            <div class="text-[11px] font-bold text-slate-200 truncate">${c.name}</div>
-                            <div class="text-[10px] font-black text-cyan-300 bg-slate-900/80 px-1 py-0.5 rounded border border-slate-700 mt-0.5 inline-block">
+                            <div class="text-[10px] sm:text-[11px] font-bold text-slate-200 truncate">${c.name}</div>
+                            <div class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/80 px-1 py-0.2 rounded border border-slate-700 mt-0.5 inline-block">
                                 <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${RARITY[c.rarity].price} 分
                             </div>
                         </div>
                     </div>
                 ` : `
-                    <div class="bg-slate-900 aspect-[2/3] rounded-xl flex flex-col items-center justify-center card-locked border border-slate-800">
-                        <i class="fa-solid fa-lock text-xl text-slate-600 mb-1"></i>
+                    <div class="bg-slate-900/90 aspect-[2/3] rounded-xl flex flex-col items-center justify-center card-locked border border-slate-800/80">
+                        <i class="fa-solid fa-lock text-lg text-slate-600 mb-1"></i>
                         <span class="text-[9px] text-slate-500 font-bold">${c.id}</span>
                     </div>
                 `;
@@ -1295,19 +1323,19 @@
                     hasCards = true;
                     const price = RARITY[c.rarity].price;
                     grid.innerHTML += `
-                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
-                            <div class="relative w-full">
-                                <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.5 rounded-full shadow">擁有 ${count} 張</span>
-                                <img ${getImgSrcWithFallback(c)} class="w-full h-auto rounded-lg">
+                        <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
+                            <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
+                                <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow z-10">擁有 ${count}</span>
+                                <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
                             </div>
                             <div class="text-center w-full">
-                                <div class="text-xs font-bold text-white truncate">${c.name}</div>
-                                <div class="text-[11px] font-black text-cyan-300 mt-0.5">
-                                    <i class="fa-solid fa-gem text-cyan-400 mr-1"></i>${price} 分 / 張
+                                <div class="text-[11px] sm:text-xs font-bold text-white truncate">${c.name}</div>
+                                <div class="text-[10px] font-black text-cyan-300 mt-0.5">
+                                    <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${price} 分
                                 </div>
                             </div>
-                            <button onclick="sellSingleCard('${c.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 py-1.5 rounded-lg text-xs font-bold text-white shadow transition">
-                                出售 1 張 (+${price}分)
+                            <button onclick="sellSingleCard('${c.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 py-1 rounded-lg text-[11px] font-bold text-white shadow transition">
+                                出售 1 張
                             </button>
                         </div>
                     `;
@@ -1364,11 +1392,11 @@
             const unluckyBtn = document.getElementById('lbBtnUnlucky');
 
             if (subTab === 'lucky') {
-                luckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow";
-                unluckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+                luckyBtn.className = "flex-1 py-1.5 rounded-lg font-black text-xs transition flex items-center justify-center gap-1 bg-amber-500 text-slate-950 shadow";
+                unluckyBtn.className = "flex-1 py-1.5 rounded-lg font-black text-xs transition flex items-center justify-center gap-1 text-slate-400 hover:text-white";
             } else {
-                luckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
-                unluckyBtn.className = "flex-1 py-2 rounded-lg font-black text-xs transition flex items-center justify-center gap-1.5 bg-red-600 text-white shadow";
+                luckyBtn.className = "flex-1 py-1.5 rounded-lg font-black text-xs transition flex items-center justify-center gap-1 text-slate-400 hover:text-white";
+                unluckyBtn.className = "flex-1 py-1.5 rounded-lg font-black text-xs transition flex items-center justify-center gap-1 bg-red-600 text-white shadow";
             }
 
             fetchGlobalStatsAndLeaderboard();
@@ -1412,19 +1440,19 @@
                 
                 const profitEl = document.getElementById('statPlayerProfit');
                 profitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
-                profitEl.className = netPlayerProfit >= 0 ? "text-2xl font-black text-emerald-400" : "text-2xl font-black text-red-400";
+                profitEl.className = netPlayerProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
 
                 const lossEl = document.getElementById('statShopLoss');
                 const lossIconEl = document.getElementById('statShopLossIcon');
                 if (shopNetLoss >= 0) {
                     lossEl.innerText = "虧損 " + shopNetLoss.toLocaleString();
-                    lossEl.className = "text-2xl font-black text-red-400";
-                    lossIconEl.className = "w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-xl";
+                    lossEl.className = "text-lg sm:text-2xl font-black text-red-400";
+                    lossIconEl.className = "w-9 h-9 sm:w-12 sm:h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-base sm:text-xl shrink-0";
                     lossIconEl.innerHTML = `<i class="fa-solid fa-store-slash"></i>`;
                 } else {
                     lossEl.innerText = "盈餘 " + Math.abs(shopNetLoss).toLocaleString();
-                    lossEl.className = "text-2xl font-black text-emerald-400";
-                    lossIconEl.className = "w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-xl";
+                    lossEl.className = "text-lg sm:text-2xl font-black text-emerald-400";
+                    lossIconEl.className = "w-9 h-9 sm:w-12 sm:h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-base sm:text-xl shrink-0";
                     lossIconEl.innerHTML = `<i class="fa-solid fa-building-circle-check"></i>`;
                 }
 
@@ -1441,8 +1469,8 @@
                     }
 
                     listEl.innerHTML = usersList.map((u, idx) => {
-                        let rankBadge = `<span class="w-8 text-center text-sm font-bold text-slate-400">#${idx + 1}</span>`;
-                        let bgStyle = "bg-slate-900 border-slate-700";
+                        let rankBadge = `<span class="w-6 sm:w-8 text-center text-xs sm:text-sm font-bold text-slate-400">#${idx + 1}</span>`;
+                        let bgStyle = "bg-slate-900 border-slate-700/80";
 
                         if (u.isVip) {
                             bgStyle = "vip-nameplate shadow-lg";
@@ -1450,19 +1478,19 @@
 
                         if (currentLbSubTab === 'lucky') {
                             if (idx === 0) {
-                                rankBadge = `<span class="w-8 text-center text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
+                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
                             } else if (idx === 1) {
-                                rankBadge = `<span class="w-8 text-center text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
+                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
                             } else if (idx === 2) {
-                                rankBadge = `<span class="w-8 text-center text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
+                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
                             }
                         } else {
                             if (idx === 0) {
-                                rankBadge = `<span class="w-8 text-center text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
+                                rankBadge = `<span class="w-6 sm:w-8 text-center text-lg sm:text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
                             } else if (idx === 1) {
-                                rankBadge = `<span class="w-8 text-center text-lg text-red-400"><i class="fa-solid fa-poop"></i></span>`;
+                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-400"><i class="fa-solid fa-poop"></i></span>`;
                             } else if (idx === 2) {
-                                rankBadge = `<span class="w-8 text-center text-lg text-red-300"><i class="fa-solid fa-heart-crack"></i></span>`;
+                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-300"><i class="fa-solid fa-heart-crack"></i></span>`;
                             }
                         }
 
@@ -1471,32 +1499,32 @@
 
                         let statusBadgeHtml = '';
                         if (u.isVip) {
-                            statusBadgeHtml = '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.5 rounded ml-1">👑 永久 VIP</span>';
+                            statusBadgeHtml = '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 py-0.2 rounded ml-1">👑 VIP</span>';
                         }
                         if (currentLbSubTab === 'unlucky' && idx === 0) {
-                            statusBadgeHtml += '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1.5 py-0.5 rounded border border-red-500 ml-1">🏿 首席黑手酋長</span>';
+                            statusBadgeHtml += '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1 py-0.2 rounded border border-red-500 ml-1">🏿 黑手酋長</span>';
                         }
 
                         return `
-                            <div class="p-3.5 rounded-xl border flex items-center justify-between gap-3 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
-                                <div class="flex items-center gap-3">
+                            <div class="p-2.5 sm:p-3.5 rounded-xl border flex items-center justify-between gap-2 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
+                                <div class="flex items-center gap-2 sm:gap-3">
                                     ${rankBadge}
                                     <div>
-                                        <div class="font-bold text-sm text-white flex items-center gap-1.5 flex-wrap">
+                                        <div class="font-bold text-xs sm:text-sm text-white flex items-center gap-1 flex-wrap">
                                             <span>${u.name}</span>
                                             ${statusBadgeHtml}
-                                            ${isSelf ? '<span class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded">你自己</span>' : ''}
+                                            ${isSelf ? '<span class="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1 py-0.2 rounded">你自己</span>' : ''}
                                         </div>
-                                        <div class="text-[11px] text-slate-400 mt-0.5">
-                                            圖鑑收集度: <b class="text-cyan-300">${u.unlockedCount}/${totalCardsInGame}</b> (${u.progressPct}%)
+                                        <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+                                            收集度: <b class="text-cyan-300">${u.unlockedCount}/${totalCardsInGame}</b> (${u.progressPct}%)
                                         </div>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="text-sm font-black ${isDebt ? 'text-red-400' : 'text-cyan-300'}">
-                                        <i class="${isDebt ? 'fa-solid fa-skull text-red-400 mr-1' : 'fa-solid fa-gem text-cyan-400 mr-1'}"></i>${u.points.toLocaleString()} 分
+                                    <div class="text-xs sm:text-sm font-black ${isDebt ? 'text-red-400' : 'text-cyan-300'}">
+                                        <i class="${isDebt ? 'fa-solid fa-skull text-red-400 mr-0.5' : 'fa-solid fa-gem text-cyan-400 mr-0.5'}"></i>${u.points.toLocaleString()} 分
                                     </div>
-                                    ${isDebt ? '<span class="text-[9px] bg-red-900/80 text-red-200 px-1 rounded">負債破產中</span>' : ''}
+                                    ${isDebt ? '<span class="text-[8px] bg-red-900/80 text-red-200 px-1 rounded">破產</span>' : ''}
                                 </div>
                             </div>
                         `;
@@ -1516,21 +1544,21 @@
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = "tab-btn px-3 py-1.5 rounded-lg font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm";
+                btn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition";
             });
             const activeNav = document.getElementById(`nav-${tab}`);
             if (activeNav) {
                 activeNav.className = tab === 'admin' 
-                    ? "tab-btn px-3 py-1.5 rounded-lg font-bold bg-amber-600 text-white border border-amber-500 text-sm" 
-                    : "tab-btn px-3 py-1.5 rounded-lg font-bold bg-red-600 text-white shadow text-sm";
+                    ? "tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600 text-white border border-amber-500 text-sm active:scale-95 transition" 
+                    : "tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition";
             }
 
             document.querySelectorAll('.mob-tab-btn').forEach(btn => {
-                btn.className = "mob-tab-btn flex flex-col items-center gap-1 text-slate-400 font-bold text-[11px]";
+                btn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition";
             });
             const activeMobNav = document.getElementById(`mob-nav-${tab}`);
             if (activeMobNav) {
-                activeMobNav.className = "mob-tab-btn flex flex-col items-center gap-1 text-red-500 font-bold text-[11px]";
+                activeMobNav.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition";
             }
 
             if (tab === 'binder') renderBinder();
