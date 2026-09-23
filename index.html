@@ -209,7 +209,7 @@
 
     <main class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
 
-        <!-- 📊 全服營運與玩家收益看板 -->
+        <!-- 📊 全服榮譽與統計看板 -->
         <section class="grid grid-cols-2 gap-3 sm:gap-4">
             <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-3 sm:p-4 rounded-2xl border border-slate-700/80 shadow-lg flex items-center justify-between">
                 <div>
@@ -222,14 +222,14 @@
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-3 sm:p-4 rounded-2xl border border-slate-700/80 shadow-lg flex items-center justify-between">
+            <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-3 sm:p-4 rounded-2xl border border-amber-500/30 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🏪 卡店累積損益</span>
-                    <span id="statShopLoss" class="text-lg sm:text-2xl font-black text-red-400">--</span>
-                    <span class="text-[10px] text-slate-500">分</span>
+                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🔥 本日 SAR / UR 爆卡</span>
+                    <span id="statTodayRares" class="text-lg sm:text-2xl font-black text-amber-400">0</span>
+                    <span class="text-[10px] text-slate-500">張</span>
                 </div>
-                <div id="statShopLossIcon" class="w-9 h-9 sm:w-12 sm:h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-base sm:text-xl shrink-0">
-                    <i class="fa-solid fa-store-slash"></i>
+                <div class="w-9 h-9 sm:w-12 sm:h-12 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20 text-amber-400 text-base sm:text-xl shrink-0">
+                    <i class="fa-solid fa-fire-flame-curved animate-pulse"></i>
                 </div>
             </div>
         </section>
@@ -266,7 +266,7 @@
             <!-- ⚡ 動態渲染卡包網格容器 -->
             <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
 
-            <!-- 🛡️ 告示牌區塊 (保留欄位，簡化文字) -->
+            <!-- 🛡️ 告示牌區塊 -->
             <div class="bg-slate-800/60 p-3 sm:p-4 rounded-xl border border-slate-700/70 flex flex-wrap justify-between items-center text-[11px] sm:text-xs text-slate-400 gap-2">
                 <div class="flex items-center gap-1.5 font-bold text-amber-400">
                     <i class="fa-solid fa-shield-halved"></i>
@@ -345,6 +345,25 @@
                         <i class="fa-solid fa-crown"></i> 最高管理員面板
                     </h3>
                     <span class="text-[10px] text-slate-400 font-mono">UID: eTYTRQFMmZc5...</span>
+                </div>
+
+                <!-- 📊 僅管理員可見：宏觀營運與卡店盈虧 -->
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 space-y-2">
+                    <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line"></i> 宏觀營運數據 (僅管理員可見)
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                            <span class="text-[10px] text-slate-400 block font-bold">全服玩家總淨收益</span>
+                            <span id="adminStatPlayerProfit" class="text-base sm:text-lg font-black text-emerald-400">--</span>
+                            <span class="text-[10px] text-slate-500">分</span>
+                        </div>
+                        <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                            <span class="text-[10px] text-slate-400 block font-bold">🏪 卡店累積損益</span>
+                            <span id="adminStatShopLoss" class="text-base sm:text-lg font-black text-red-400">--</span>
+                            <span class="text-[10px] text-slate-500">分</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 space-y-3 sm:space-y-4">
@@ -526,7 +545,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, updateDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
@@ -1419,10 +1438,27 @@
             }
 
             try {
+                // 1. 計算本日 SAR / UR 爆卡總數 (查詢今天 00:00 之後的廣播紀錄)
+                try {
+                    const todayStart = new Date();
+                    todayStart.setHours(0, 0, 0, 0);
+                    const qToday = query(
+                        collection(db, "broadcasts"),
+                        where("timestamp", ">=", todayStart.getTime())
+                    );
+                    const todaySnap = await getDocs(qToday);
+                    const todayRareCount = todaySnap.size;
+                    
+                    const todayRaresEl = document.getElementById('statTodayRares');
+                    if (todayRaresEl) todayRaresEl.innerText = todayRareCount.toLocaleString();
+                } catch (rareErr) {
+                    console.warn("計算本日爆卡數失敗:", rareErr);
+                }
+
+                // 2. 統計全服玩家與卡店盈虧數據
                 const snap = await getDocs(collection(db, "users"));
                 let usersList = [];
                 let totalCurrentPoints = 0;
-
                 const totalCardsInGame = Object.values(CARD_SETS).flat().length;
 
                 snap.forEach(docSnap => {
@@ -1448,24 +1484,27 @@
                 const netPlayerProfit = totalCurrentPoints - totalInitialCapital;
                 const shopNetLoss = netPlayerProfit;
                 
+                // 更新玩家端「全服總淨收益」
                 const profitEl = document.getElementById('statPlayerProfit');
-                profitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
-                profitEl.className = netPlayerProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
-
-                const lossEl = document.getElementById('statShopLoss');
-                const lossIconEl = document.getElementById('statShopLossIcon');
-                if (shopNetLoss >= 0) {
-                    lossEl.innerText = "虧損 " + shopNetLoss.toLocaleString();
-                    lossEl.className = "text-lg sm:text-2xl font-black text-red-400";
-                    lossIconEl.className = "w-9 h-9 sm:w-12 sm:h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 text-red-400 text-base sm:text-xl shrink-0";
-                    lossIconEl.innerHTML = `<i class="fa-solid fa-store-slash"></i>`;
-                } else {
-                    lossEl.innerText = "盈餘 " + Math.abs(shopNetLoss).toLocaleString();
-                    lossEl.className = "text-lg sm:text-2xl font-black text-emerald-400";
-                    lossIconEl.className = "w-9 h-9 sm:w-12 sm:h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-base sm:text-xl shrink-0";
-                    lossIconEl.innerHTML = `<i class="fa-solid fa-building-circle-check"></i>`;
+                if (profitEl) {
+                    profitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
+                    profitEl.className = netPlayerProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
                 }
 
+                // 更新管理員專屬面板「全服淨收益與卡店盈虧」
+                const adminProfitEl = document.getElementById('adminStatPlayerProfit');
+                if (adminProfitEl) {
+                    adminProfitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
+                    adminProfitEl.className = netPlayerProfit >= 0 ? "text-base sm:text-lg font-black text-emerald-400" : "text-base sm:text-lg font-black text-red-400";
+                }
+
+                const adminLossEl = document.getElementById('adminStatShopLoss');
+                if (adminLossEl) {
+                    adminLossEl.innerText = (shopNetLoss >= 0 ? "虧損 " : "盈餘 ") + Math.abs(shopNetLoss).toLocaleString();
+                    adminLossEl.className = shopNetLoss >= 0 ? "text-base sm:text-lg font-black text-red-400" : "text-base sm:text-lg font-black text-emerald-400";
+                }
+
+                // 3. 渲染排行榜
                 if (listEl) {
                     if (usersList.length === 0) {
                         listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
@@ -1482,35 +1521,22 @@
                         let rankBadge = `<span class="w-6 sm:w-8 text-center text-xs sm:text-sm font-bold text-slate-400">#${idx + 1}</span>`;
                         let bgStyle = "bg-slate-900 border-slate-700/80";
 
-                        if (u.isVip) {
-                            bgStyle = "vip-nameplate shadow-lg";
-                        }
+                        if (u.isVip) bgStyle = "vip-nameplate shadow-lg";
 
                         if (currentLbSubTab === 'lucky') {
-                            if (idx === 0) {
-                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
-                            } else if (idx === 1) {
-                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
-                            } else if (idx === 2) {
-                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
-                            }
+                            if (idx === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
+                            else if (idx === 1) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
+                            else if (idx === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
                         } else {
-                            if (idx === 0) {
-                                rankBadge = `<span class="w-6 sm:w-8 text-center text-lg sm:text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
-                            } else if (idx === 1) {
-                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-400"><i class="fa-solid fa-poop"></i></span>`;
-                            } else if (idx === 2) {
-                                rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-300"><i class="fa-solid fa-heart-crack"></i></span>`;
-                            }
+                            if (idx === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-lg sm:text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
+                            else if (idx === 1) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-400"><i class="fa-solid fa-poop"></i></span>`;
+                            else if (idx === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-300"><i class="fa-solid fa-heart-crack"></i></span>`;
                         }
 
                         const isDebt = u.points < 0;
                         const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
 
-                        let statusBadgeHtml = '';
-                        if (u.isVip) {
-                            statusBadgeHtml = '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 py-0.2 rounded ml-1">👑 VIP</span>';
-                        }
+                        let statusBadgeHtml = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 py-0.2 rounded ml-1">👑 VIP</span>' : '';
                         if (currentLbSubTab === 'unlucky' && idx === 0) {
                             statusBadgeHtml += '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1 py-0.2 rounded border border-red-500 ml-1">🏿 黑手酋長</span>';
                         }
