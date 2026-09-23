@@ -266,11 +266,11 @@
             <!-- ⚡ 動態渲染卡包網格容器 -->
             <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
 
-            <!-- 告示牌 -->
+            <!-- 🛡️ 告示牌區塊 (保留欄位，簡化文字) -->
             <div class="bg-slate-800/60 p-3 sm:p-4 rounded-xl border border-slate-700/70 flex flex-wrap justify-between items-center text-[11px] sm:text-xs text-slate-400 gap-2">
-                <div>
-                    <span class="font-bold text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i>Firestore 雲端安全防護：</span>
-                    已鎖定伺服器級安全規則，禁止 F12 竄改分數與解鎖 VIP。
+                <div class="flex items-center gap-1.5 font-bold text-amber-400">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Firestore 雲端安全防護</span>
                 </div>
                 <div class="text-slate-500">透支上限：無限負債 | 每日登入 +500 分</div>
             </div>
@@ -526,7 +526,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, updateDoc, collection, getDocs, onSnapshot, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
@@ -598,33 +598,33 @@
                 { id: 'm6a-135', name: '夢幻 ex FUR', rarity: 'UR', image: 'https://asia.pokemon-card.com/hk/card-img/hk00019745.png' }
             ],
             'sv2a': [
-                { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008124.png' },
-                { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008127.png' },
-                { id: 'sv2a-007', name: '傑尼龜', rarity: 'C', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008130.png' },
-                { id: 'sv2a-025', name: '皮卡丘', rarity: 'U', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008148.png' },
-                { id: 'sv2a-054', name: '可達鴨', rarity: 'U', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008177.png' },
-                { id: 'sv2a-094', name: '耿鬼', rarity: 'R', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008217.png' },
-                { id: 'sv2a-150', name: '超夢', rarity: 'R', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008273.png' },
-                { id: 'sv2a-003', name: '妙蛙花 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/tw/card-img/tw00013960.png' },
-                { id: 'sv2a-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/tw/card-img/tw00013163.png' },
-                { id: 'sv2a-009', name: '水箭龜 ex', rarity: 'RR', image: 'https://asia.pokemon-card.com/tw/card-img/tw00008132.png' },
-                { id: 'sv2a-166', name: '妙蛙種子 AR', rarity: 'AR', image: 'https://asia.pokemon-card.com/tw/card-img/tw00014182.png' },
-                { id: 'sv2a-173', name: '皮卡丘 AR', rarity: 'AR', image: 'https://samuraiswordtokyo.com/wp-content/uploads/2026/09/img_pikachu_sv2a_173_r_jp_1fd35f2d5358-1.webp' },
-                { id: 'sv2a-188', name: '莉佳的招待 SR', rarity: 'SR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr1xKOALk8UXGhyQeG4bNBBUDBW2D92YLauZv3J3GBQg&s=10' },
-                { id: 'sv2a-198', name: '妙蛙花 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/tw/card-img/tw00014205.png' },
-                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://asia.pokemon-card.com/tw/card-img/tw00018595.png' },
-                { id: 'sv2a-205', name: '夢幻 ex UR', rarity: 'UR', image: 'https://shoplineimg.com/595218e6d4e395b6870005a1/69f1cd50f977703cbaf13fdf/800x.jpg?' }
+                { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
+                { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
+                { id: 'sv2a-007', name: '傑尼龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
+                { id: 'sv2a-025', name: '皮卡丘', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
+                { id: 'sv2a-054', name: '可達鴨', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/54_hires.png' },
+                { id: 'sv2a-094', name: '耿鬼', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/94_hires.png' },
+                { id: 'sv2a-150', name: '超夢', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
+                { id: 'sv2a-003', name: '妙蛙花 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/3_hires.png' },
+                { id: 'sv2a-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/6_hires.png' },
+                { id: 'sv2a-009', name: '水箭龜 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/9_hires.png' },
+                { id: 'sv2a-166', name: '妙蛙種子 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/166_hires.png' },
+                { id: 'sv2a-173', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
+                { id: 'sv2a-188', name: '莉佳的招待 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3pt5/196_hires.png' },
+                { id: 'sv2a-198', name: '妙蛙花 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/198_hires.png' },
+                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
+                { id: 'sv2a-205', name: '夢幻 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' }
             ],
             'sv3': [
-                { id: 'sv3-001', name: '波波', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZoP6uqDe0Ekdp1NBffzhaDmmORgpMGoHWew0fZo4GnQ&s=10' },
-                { id: 'sv3-002', name: '刺甲貝', rarity: 'C', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsdg2q9xj4xNtljZtLLqBmF00wTP_qnB9KsT2ARz0HRw&s=10' },
-                { id: 'sv3-003', name: '戴魯比', rarity: 'U', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_E3MF98GpQkd7HqFhd59ZzBMFwXXcB0IXYCBPG1b86A&s=10' },
-                { id: 'sv3-004', name: '班基拉斯 ex', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5W1oEdfOSwtfz0EJh_25P6BQ9CKeQcy_3FuB7ILYcHg&s=10' },
-                { id: 'sv3-005', name: '大比鳥 ex', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQQfodhjj_-HJbbiosJtrDOQjwful_3ILvwsI4_358Xw&s=10' },
-                { id: 'sv3-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQguykjv2-v31XdNDL3SDL2IBt0kxa0Tgh8O_IbpqrFrA&s=10' },
-                { id: 'sv3-007', name: '波琵 SR', rarity: 'SR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTvR-erJl3TzuhMhMykK1WjqPzdI8hkYVcOgVZTwdfMg&s=10' },
-                { id: 'sv3-008', name: '惡體系噴火龍 ex SAR', rarity: 'SAR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqbzW4hwZRCRQgTuCtvM0nZFm9mf4QIqhdFRTaBVeJLQ&s=10' },
-                { id: 'sv3-009', name: '惡體系噴火龍 ex UR', rarity: 'UR', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSfJEcxybMqxaqtGTe_Q5YC9DCPHFi7Gew2fpwOwMQB-w&s=10' }
+                { id: 'sv3-001', name: '波波', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/106_hires.png' },
+                { id: 'sv3-002', name: '刺甲貝', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/28_hires.png' },
+                { id: 'sv3-003', name: '戴魯比', rarity: 'U', image: 'https://images.pokemontcg.io/sv3/113_hires.png' },
+                { id: 'sv3-004', name: '班基拉斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/66_hires.png' },
+                { id: 'sv3-005', name: '大比鳥 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/108_hires.png' },
+                { id: 'sv3-006', name: '惡體系噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/125_hires.png' },
+                { id: 'sv3-007', name: '波琵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3/220_hires.png' },
+                { id: 'sv3-008', name: '惡體系噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3/223_hires.png' },
+                { id: 'sv3-009', name: '惡體系噴火龍 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3/228_hires.png' }
             ],
             'sv4a': [
                 { id: 'sv4a-001', name: '色違榛果球', rarity: 'C', image: 'https://images.pokemontcg.io/sv4pt5/1_hires.png' },
@@ -685,12 +685,12 @@
                 { id: 'sv8-008', name: '太晶皮卡丘 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv8/135_hires.png' }
             ],
             's12a': [
-                { id: 's12a-001', name: '帕拉斯', rarity: 'C', image: 'https://shoplineimg.com/media/639c074a3c6ecc0001a2e96f/original.webp?source_format=png' },
-                { id: 's12a-002', name: '洗翠霹靂電球', rarity: 'C', image: 'https://shoplineimg.com/media/639c074a4c876a0001d86181/original.webp?source_format=png' },
-                { id: 's12a-003', name: '草苗龜', rarity: 'C', image: 'https://cardland.com.hk/wp-content/uploads/hk_pokemon_2484-1.png' },
-                { id: 's12a-004', name: '小火焰猴', rarity: 'C', image: 'https://cardland.com.hk/wp-content/uploads/015066.png' },
-                { id: 's12a-007', name: '樹林龜', rarity: 'C', image: 'https://beehivetcg.com/cdn/shop/products/52067812873b0575fae097b7b0c628ce.jpg?v=1672578135&width=600' },
-                { id: 's12a-069', name: '洗翠卡蒂狗', rarity: 'U', image: 'https://beehivetcg.com/cdn/shop/products/29697e363abe77adec9b7c4adc1097c0.jpg?v=1672578471&width=600' },
+                { id: 's12a-001', name: '帕拉斯', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/1_hires.png' },
+                { id: 's12a-002', name: '洗翠霹靂電球', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/3_hires.png' },
+                { id: 's12a-003', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/6_hires.png' },
+                { id: 's12a-004', name: '小火焰猴', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/16_hires.png' },
+                { id: 's12a-005', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/swsh12pt5/31_hires.png' },
+                { id: 's12a-020', name: '大牙狸', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/120_hires.png' },
                 { id: 's12a-021', name: '卡比獸', rarity: 'U', image: 'https://images.pokemontcg.io/swsh12pt5/121_hires.png' },
                 { id: 's12a-040', name: '洗翠索羅亞', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/104_hires.png' },
                 { id: 's12a-041', name: '奇魯莉安', rarity: 'R', image: 'https://images.pokemontcg.io/swsh12pt5/69_hires.png' },
@@ -815,7 +815,7 @@
                             freshData.lastDailyDate = today;
                             freshData.points = (freshData.points || 0) + 500;
                             try {
-                                await updateDoc(userRef, { points: freshData.points, lastDailyDate: today });
+                                await setDoc(userRef, { points: freshData.points, lastDailyDate: today }, { merge: true });
                             } catch (e) {}
                             alert("🎉 每日登入福利！雲端發放 500 抽卡積分！");
                         }
@@ -826,7 +826,7 @@
                     } else {
                         currentUserDoc = { name: "訓練家", points: INITIAL_GIFT_POINTS, isVip: false, lastDailyDate: new Date().toISOString().split('T')[0], cards: {}, totalSpent: 0, totalPulledValue: 0 };
                         try {
-                            await setDoc(userRef, currentUserDoc);
+                            await setDoc(userRef, currentUserDoc, { merge: true });
                         } catch (e) {}
                     }
                 });
@@ -872,7 +872,7 @@
                         cards: {},
                         totalSpent: 0,
                         totalPulledValue: 0
-                    });
+                    }, { merge: true });
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
@@ -908,18 +908,19 @@
             const trimmedName = newName.trim();
             if (trimmedName.length > 20) return alert("暱稱長度不能超過 20 個字！");
 
-            if ((currentUserDoc.points || 0) < 1000) {
-                return alert(`⚠️ 分數不足！修改暱稱需要 1,000 分，目前只有 ${(currentUserDoc.points || 0).toLocaleString()} 分。`);
+            const currentPts = (typeof currentUserDoc.points === 'number') ? currentUserDoc.points : INITIAL_GIFT_POINTS;
+            if (currentPts < 1000) {
+                return alert(`⚠️ 分數不足！修改暱稱需要 1,000 分，目前只有 ${currentPts.toLocaleString()} 分。`);
             }
 
             try {
                 const userRef = doc(db, "users", auth.currentUser.uid);
-                const newPoints = currentUserDoc.points - 1000;
+                const newPoints = currentPts - 1000;
 
-                await updateDoc(userRef, {
+                await setDoc(userRef, {
                     name: trimmedName,
                     points: newPoints
-                });
+                }, { merge: true });
 
                 currentUserDoc.name = trimmedName;
                 currentUserDoc.points = newPoints;
@@ -977,7 +978,7 @@
 
             const newVipStatus = !u.isVip;
             try {
-                await updateDoc(doc(db, "users", targetUid), { isVip: newVipStatus });
+                await setDoc(doc(db, "users", targetUid), { isVip: newVipStatus }, { merge: true });
                 alert(`👑 已成功將玩家 ${u.name} VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
@@ -996,7 +997,7 @@
 
             const newPoints = (u.points || 0) + delta;
             try {
-                await updateDoc(doc(db, "users", targetUid), { points: newPoints });
+                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
                 alert(`👑 成功將玩家 ${u.name} 分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
@@ -1013,7 +1014,7 @@
             if (!targetUid || isNaN(newPoints)) return alert("請選擇玩家並輸入目標分數！");
 
             try {
-                await updateDoc(doc(db, "users", targetUid), { points: newPoints });
+                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
                 alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
@@ -1025,7 +1026,7 @@
         async function syncToCloud(updateData) {
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
-            await updateDoc(userRef, updateData);
+            await setDoc(userRef, updateData, { merge: true });
         }
 
         function renderPackList() {
@@ -1148,27 +1149,35 @@
                     updatedCards[card.id] = (updatedCards[card.id] || 0) + 1;
                 });
 
-                const newPoints = currentUserDoc.points - cost;
+                const currentPts = (typeof currentUserDoc.points === 'number') ? currentUserDoc.points : INITIAL_GIFT_POINTS;
+                const newPoints = currentPts - cost;
                 const newTotalSpent = (currentUserDoc.totalSpent || 0) + cost;
                 const newTotalPulledValue = (currentUserDoc.totalPulledValue || 0) + batchPulledValue;
 
                 const userRef = doc(db, "users", auth.currentUser.uid);
-                await updateDoc(userRef, {
+                
+                await setDoc(userRef, {
+                    name: currentUserDoc.name || "訓練家",
+                    isVip: currentUserDoc.isVip || false,
                     points: newPoints,
                     cards: updatedCards,
                     totalSpent: newTotalSpent,
                     totalPulledValue: newTotalPulledValue
-                });
+                }, { merge: true });
 
-                const topCards = pulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
-                for (let rareCard of topCards) {
-                    await addDoc(collection(db, "broadcasts"), {
-                        playerName: currentUserDoc.name || "訓練家",
-                        cardName: rareCard.name,
-                        rarity: rareCard.rarity,
-                        isVip: currentUserDoc.isVip || false,
-                        timestamp: Date.now()
-                    });
+                try {
+                    const topCards = pulledCards.filter(c => ['SAR', 'UR'].includes(c.rarity));
+                    for (let rareCard of topCards) {
+                        await addDoc(collection(db, "broadcasts"), {
+                            playerName: currentUserDoc.name || "訓練家",
+                            cardName: rareCard.name,
+                            rarity: rareCard.rarity,
+                            isVip: currentUserDoc.isVip || false,
+                            timestamp: Date.now()
+                        });
+                    }
+                } catch (broadcastErr) {
+                    console.warn("廣播發布異常 (不影響玩家獲得卡牌):", broadcastErr);
                 }
 
                 currentUserDoc.points = newPoints;
@@ -1190,7 +1199,8 @@
                 }, 1000);
 
             } catch (err) {
-                alert("抽卡失敗: " + (err.message.includes("permission-denied") ? "分數不足或雲端安全規則攔截了違規修改！" : err.message));
+                console.error("抽卡詳細錯誤:", err);
+                alert("抽卡失敗: " + (err.message.includes("permission-denied") ? "雲端權限檢驗未通過，請重新整理頁面！" : err.message));
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
             }
@@ -1567,7 +1577,7 @@
             if (tab === 'admin') fetchAdminUserList();
         }
 
-        // 🌐 將所有函式安全掛載至全域 window，供 HTML onclick 呼叫
+        // 🌐 將所有函式掛載至 window
         window.toggleAuthMode = toggleAuthMode;
         window.handleAuthSubmit = handleAuthSubmit;
         window.handleSignOut = handleSignOut;
