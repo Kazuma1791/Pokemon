@@ -39,7 +39,7 @@
             filter: grayscale(100%) brightness(0.25);
         }
 
-        /* 👑 VIP 專屬流光霓虹特效邊框 */
+        /* VIP 流光霓虹特效邊框 */
         @keyframes vipBorderGlow {
             0% { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4), inset 0 0 6px rgba(245, 158, 11, 0.2); }
             50% { border-color: #ec4899; box-shadow: 0 0 22px rgba(236, 72, 153, 0.7), inset 0 0 10px rgba(236, 72, 153, 0.4); }
@@ -51,7 +51,7 @@
             animation: vipBorderGlow 3s infinite ease-in-out;
         }
 
-        /* 3D 翻牌動畫與 GPU 硬體加速優化 */
+        /* 3D 翻牌動畫 */
         .perspective-1000 {
             perspective: 1000px;
             contain: layout paint;
@@ -95,7 +95,6 @@
             will-change: transform;
         }
 
-        /* 平滑滾動條 */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -113,6 +112,20 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between relative selection:bg-cyan-500 selection:text-white">
+
+    <!-- 🚫 帳號被封禁全螢幕警告 Modal -->
+    <div id="bannedModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] hidden flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-20 h-20 bg-red-600/20 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500 text-4xl mb-4 animate-bounce">
+            <i class="fa-solid fa-ban"></i>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-red-500 mb-2">帳號已被禁止遊玩</h2>
+        <p class="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed">
+            系統檢測到您的帳號存在惡意行為或違規操作，管理員已暫停您的遊戲與資料庫存取權限。
+        </p>
+        <button onclick="handleSignOut()" class="mt-6 bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-2.5 rounded-xl border border-slate-600 transition shadow-lg active:scale-95 text-xs sm:text-sm">
+            <i class="fa-solid fa-right-from-bracket mr-1.5"></i>登出帳號
+        </button>
+    </div>
 
     <!-- 👑 頂部全服歐皇即時廣播橫幅 -->
     <div id="broadcastBanner" class="hidden fixed top-14 md:top-16 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black px-4 sm:px-6 py-2.5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 sm:gap-3 text-xs sm:text-base animate-bounce transition-all w-[92%] max-w-lg justify-center">
@@ -270,8 +283,6 @@
 
         <!-- TAB 1: 抽卡機 -->
         <section id="tab-pack" class="tab-content space-y-4 sm:space-y-6">
-
-            <!-- 🌟 收下卡牌展示區域 -->
             <div id="pullResultsArea" class="hidden space-y-3 sm:space-y-4 bg-gradient-to-br from-slate-800 via-slate-800 to-amber-950/40 p-4 sm:p-5 rounded-2xl border-2 border-amber-400/60 shadow-2xl transition-all duration-500">
                 <div class="flex justify-between items-center border-b border-amber-500/30 pb-2.5">
                     <h3 class="text-sm sm:text-lg font-bold text-amber-300 flex items-center gap-1.5">
@@ -284,14 +295,12 @@
                 <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4"></div>
             </div>
 
-            <!-- ⚡ 動態渲染卡包網格容器 -->
             <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
 
-            <!-- 🛡️ 告示牌區塊 -->
             <div class="bg-slate-800/60 p-3 sm:p-4 rounded-xl border border-slate-700/70 flex flex-wrap justify-between items-center text-[11px] sm:text-xs text-slate-400 gap-2">
                 <div class="flex items-center gap-1.5 font-bold text-amber-400">
                     <i class="fa-solid fa-shield-halved"></i>
-                    <span>Firestore 雲端安全防護</span>
+                    <span>Firestore 雲端安全防護 (已開啟 XSS 防禦與黑名單封禁)</span>
                 </div>
                 <div class="text-slate-500">透支上限：無限負債 | 每日登入 +500 分</div>
             </div>
@@ -406,10 +415,10 @@
                     </div>
                 </div>
 
-                <!-- 玩家權限與分數管理 -->
+                <!-- 玩家權限與黑名單管理 -->
                 <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 space-y-3 sm:space-y-4">
                     <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與分數管理
+                        <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與黑名單封禁
                     </h4>
                     
                     <div class="flex flex-col sm:flex-row gap-2">
@@ -431,6 +440,17 @@
                                 <span class="text-[10px] text-slate-400 block">當前分數</span>
                                 <span id="selectedUserCurrentPoints" class="text-base sm:text-xl font-black text-cyan-300">--</span>
                             </div>
+                        </div>
+
+                        <!-- 🚫 管理員封禁控制項 -->
+                        <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-red-400 block"><i class="fa-solid fa-shield-cat mr-1"></i>遊玩狀態：</span>
+                                <span id="selectedUserBanStatusText" class="text-xs text-slate-300 font-bold">檢查中...</span>
+                            </div>
+                            <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-600 hover:bg-red-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">
+                                封禁此玩家
+                            </button>
                         </div>
 
                         <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
@@ -509,7 +529,6 @@
 
     <!-- 🎴 3D 拆卡包動畫 Modal -->
     <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-3 sm:p-4">
-        
         <div id="animStepChoice" class="flex flex-col items-center space-y-4 sm:space-y-6 text-center max-w-2xl w-full my-auto">
             <div>
                 <h2 class="text-xl sm:text-2xl font-black text-amber-400 animate-pulse">請選擇其中一包卡包進行拆封！</h2>
@@ -582,7 +601,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK 與全前端雲端邏輯 -->
+    <!-- Firebase SDK 與全前端雲端防禦邏輯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -615,7 +634,26 @@
         let lastBroadcastTimestamp = Date.now();
         let currentLbSubTab = 'lucky';
 
-        // 🎯 稀有度與價值設定
+        // 🛡️ XSS 防禦機制：全域 HTML 特殊字元轉義函數
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // 🚫 防禦機制：檢查目前玩家是否被封禁
+        function checkBanned() {
+            if (currentUserDoc && currentUserDoc.isBanned) {
+                document.getElementById('bannedModal').classList.remove('hidden');
+                return true;
+            }
+            return false;
+        }
+
         const RARITY = {
             'C':    { price: 3,    rate: 0.620, color: '#9ca3af' },
             'U':    { price: 6,    rate: 0.230, color: '#60a5fa' },
@@ -645,9 +683,10 @@
             { id: 'sv8', title: '擴充包「超電導突破」', tag: '超電導', desc: '太晶皮卡丘 ex SAR 閃耀登場！', bg: 'from-slate-800 to-yellow-950', border: 'border-yellow-500/30', icon: 'fa-bolt', badge: '最新擴充包' }
         ];
 
+        // 簡化示範卡池資料
         const CARD_SETS = {
             'm6a': [
-               { id: 'm6a-001', name: '蛋蛋 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-001-103-Exeggcute-standard.webp' },
+                { id: 'm6a-001', name: '蛋蛋 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-001-103-Exeggcute-standard.webp' },
                 { id: 'm6a-002', name: '阿羅拉椰蛋樹 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-002-103-Alolan-Exeggutor-standard-v2.webp' },
                 { id: 'm6a-003', name: '沃爾比特 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-003-103-Volbeat-standard.webp' },
                 { id: 'm6a-004', name: '電螢蟲 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-004-103-Illumise-standard.webp' },
@@ -792,364 +831,278 @@
                 { id: 'm6a-fur1', name: '超夢 ex (FUR)', rarity: 'FUR', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/07/M6a-134.webp' },
                 { id: 'm6a-fur2', name: '夢幻 ex (FUR)', rarity: 'FUR', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/07/M6a-135.webp' }
             ],
-            
             's12a': [
                 { id: 's12a-001', name: '派拉斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/4rushpS12a001172-1.jpg' },
-            { id: 's12a-002', name: '派拉斯特', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/5rushpS12a002172-1.jpg' },
-            { id: 's12a-003', name: '洗翠 霹靂電球', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/6rushpS12a003172-1.jpg' },
-            { id: 's12a-004', name: '洗翠 頑皮雷彈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/7rushpS12a004172-1.jpg' },
-            { id: 's12a-005', name: '洗翠 頑皮雷彈V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/8rushpS12a005172-1.jpg' },
-            { id: 's12a-006', name: '草苗龜', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/9rushpS12a006172-1.jpg' },
-            { id: 's12a-007', name: '樹林龜', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/10rushpS12a007172-1.jpg' },
-            { id: 's12a-008', name: '土台龜', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/11rushpS12a008172-1.jpg' },
-            { id: 's12a-009', name: '圓法師', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/12rushpS12a009172-1.jpg' },
-            { id: 's12a-010', name: '音箱蟀', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/13rushpS12a010172-1.jpg' },
-            { id: 's12a-011', name: '葉伊布V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/14rushpS12a011172-1.jpg' },
-            { id: 's12a-012', name: '葉伊布VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/15rushpS12a012172-1.jpg' },
-            { id: 's12a-013', name: '噴火龍V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/16rushpS12a013172-1.jpg' },
-            { id: 's12a-014', name: '噴火龍VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/17rushpS12a014172-1.jpg' },
-            { id: 's12a-015', name: '光輝噴火龍', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/18rushpS12a015172-1.jpg' },
-            { id: 's12a-016', name: '鴨嘴火獸', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/19rushpS12a016172-1.jpg' },
-            { id: 's12a-017', name: '鴨嘴炎獸', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/20rushpS12a017172-1.jpg' },
-            { id: 's12a-018', name: '火焰鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/21rushpS12a018172-1.jpg' },
-            { id: 's12a-019', name: '炎帝V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/22rushpS12a019172-1.jpg' },
-            { id: 's12a-020', name: '爆香猿V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/23rushpS12a020172-1.jpg' },
-            { id: 's12a-021', name: '爆香猿VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/24rushpS12a021172-1.jpg' },
-            { id: 's12a-022', name: '花舞鳥', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/25rushpS12a022172-1.jpg' },
-            { id: 's12a-023', name: '拉普拉斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/26rushpS12a023172-1.jpg' },
-            { id: 's12a-024', name: '水君V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/27rushpS12a024172-1.jpg' },
-            { id: 's12a-025', name: '雷吉艾斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/28rushpS12a025172-1.jpg' },
-            { id: 's12a-026', name: '霓虹魚V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/29rushpS12a026172-1.jpg' },
-            { id: 's12a-027', name: '起源帕路奇亞V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/30rushpS12a027172-1.jpg' },
-            { id: 's12a-028', name: '起源帕路奇亞VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/31rushpS12a028172-1.jpg' },
-            { id: 's12a-029', name: '瑪納霏', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/32rushpS12a029172-1.jpg' },
-            { id: 's12a-030', name: '洗翠 野蠻鱸魚', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/33rushpS12a030172-1.jpg' },
-            { id: 's12a-031', name: '洗翠 幽尾玄魚', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/34rushpS12a031172-1.jpg' },
-            { id: 's12a-032', name: '凱路迪歐', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/35rushpS12a032172-1.jpg' },
-            { id: 's12a-033', name: '光輝甲賀忍蛙', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/36rushpS12a033172-1.jpg' },
-            { id: 's12a-034', name: '電擊獸', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/37rushpS12a034172-1.jpg' },
-            { id: 's12a-035', name: '電擊魔獸', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/38rushpS12a035172-1.jpg' },
-            { id: 's12a-036', name: '咩利羊', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/39rushpS12a036172-1.jpg' },
-            { id: 's12a-037', name: '茸茸羊', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/40rushpS12a037172-1.jpg' },
-            { id: 's12a-038', name: '雷公V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/41rushpS12a038172-1.jpg' },
-            { id: 's12a-039', name: '光輝蟲電寶', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/42rushpS12a039172-1.jpg' },
-            { id: 's12a-040', name: '捷拉奧拉V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/43rushpS12a040172-1.jpg' },
-            { id: 's12a-041', name: '捷拉奧拉VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/44rushpS12a041172-1.jpg' },
-            { id: 's12a-042', name: '捷拉奧拉VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/45rushpS12a042172-1.jpg' },
-            { id: 's12a-043', name: '毒電嬰', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/46rushpS12a043172-1.jpg' },
-            { id: 's12a-044', name: '顫弦蠑螈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/47rushpS12a044172-1.jpg' },
-            { id: 's12a-045', name: '雷吉艾勒奇', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/48rushpS12a045172-1.jpg' },
-            { id: 's12a-046', name: '鬼斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/49rushpS12a046172-1.jpg' },
-            { id: 's12a-047', name: '鬼斯通', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/50rushpS12a047172-1.jpg' },
-            { id: 's12a-048', name: '耿鬼', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/51rushpS12a048172-1.jpg' },
-            { id: 's12a-049', name: '伽勒爾 急凍鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/52rushpS12a049172-1.jpg' },
-            { id: 's12a-050', name: '超夢V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/53rushpS12a050172-1.jpg' },
-            { id: 's12a-051', name: '超夢VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/54rushpS12a051172-1.jpg' },
-            { id: 's12a-052', name: '夢幻', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/55rushpS12a052172-1.jpg' },
-            { id: 's12a-053', name: '夢幻V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/56rushpS12a053172-1.jpg' },
-            { id: 's12a-054', name: '夢幻VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/57rushpS12a054172-1.jpg' },
-            { id: 's12a-055', name: '光輝沙奈朵', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/58rushpS12a055172-1.jpg' },
-            { id: 's12a-056', name: '月石', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/59rushpS12a056172-1.jpg' },
-            { id: 's12a-057', name: '夜巡靈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/60rushpS12a057172-1.jpg' },
-            { id: 's12a-058', name: '彷徨夜靈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/61rushpS12a058172-1.jpg' },
-            { id: 's12a-059', name: '黑夜魔靈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/62rushpS12a059172-1.jpg' },
-            { id: 's12a-060', name: '代歐奇希斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/63rushpS12a060172-1.jpg' },
-            { id: 's12a-061', name: '南瓜精', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/64rushpS12a061172-1.jpg' },
-            { id: 's12a-062', name: '南瓜怪人', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/65rushpS12a062172-1.jpg' },
-            { id: 's12a-063', name: '蒂安希', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/66rushpS12a063172-1.jpg' },
-            { id: 's12a-064', name: '花療環環', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/67rushpS12a064172-1.jpg' },
-            { id: 's12a-065', name: '布莉姆溫V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/68rushpS12a065172-1.jpg' },
-            { id: 's12a-066', name: '布莉姆溫VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/69rushpS12a066172-1.jpg' },
-            { id: 's12a-067', name: '蒼響V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/70rushpS12a067172-1.jpg' },
-            { id: 's12a-068', name: '眷戀雲V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/71rushpS12a068172-1.jpg' },
-            { id: 's12a-069', name: '洗翠 卡蒂狗', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/72rushpS12a069172-1.jpg' },
-            { id: 's12a-070', name: '洗翠 風速狗', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/73rushpS12a070172-1.jpg' },
-            { id: 's12a-071', name: '怪力V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/74rushpS12a071172-1.jpg' },
-            { id: 's12a-072', name: '怪力VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/75rushpS12a072172-1.jpg' },
-            { id: 's12a-073', name: '伽勒爾 閃電鳥', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/76rushpS12a073172-1.jpg' },
-            { id: 's12a-074', name: '太陽岩', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/77rushpS12a074172-1.jpg' },
-            { id: 's12a-075', name: '雷吉洛克', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/78rushpS12a075172-1.jpg' },
-            { id: 's12a-076', name: '利歐路', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/79rushpS12a076172-1.jpg' },
-            { id: 's12a-077', name: '路卡利歐', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/80rushpS12a077172-1.jpg' },
-            { id: 's12a-078', name: '光輝摔角鷹人', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/81rushpS12a078172-1.jpg' },
-            { id: 's12a-079', name: '伽勒爾 火焰鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/82rushpS12a079172-1.jpg' },
-            { id: 's12a-080', name: '伽勒爾 火焰鳥V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/83rushpS12a080172-1.jpg' },
-            { id: 's12a-081', name: '土狼犬', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/84rushpS12a081172-1.jpg' },
-            { id: 's12a-082', name: '大狼犬', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/85rushpS12a082172-1.jpg' },
-            { id: 's12a-083', name: '阿勃梭魯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/86rushpS12a083172-1.jpg' },
-            { id: 's12a-084', name: '花岩怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/87rushpS12a084172-1.jpg' },
-            { id: 's12a-085', name: '龍王蠍V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/88rushpS12a085172-1.jpg' },
-            { id: 's12a-086', name: '洗翠 大劍鬼V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/89rushpS12a086172-1.jpg' },
-            { id: 's12a-087', name: '洗翠 大劍鬼VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/90rushpS12a087172-1.jpg' },
-            { id: 's12a-088', name: '扒手貓', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/91rushpS12a088172-1.jpg' },
-            { id: 's12a-089', name: '酷豹', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/92rushpS12a089172-1.jpg' },
-            { id: 's12a-090', name: '索羅亞', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/93rushpS12a090172-1.jpg' },
-            { id: 's12a-091', name: '索羅亞克', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/94rushpS12a091172-1.jpg' },
-            { id: 's12a-092', name: '偷兒狐', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/95rushpS12a092172-1.jpg' },
-            { id: 's12a-093', name: '狐大盜', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/96rushpS12a093172-1.jpg' },
-            { id: 's12a-094', name: '小磁怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/97rushpS12a094172-1.jpg' },
-            { id: 's12a-095', name: '三合一磁怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/98rushpS12a095172-1.jpg' },
-            { id: 's12a-096', name: '自爆磁怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/99rushpS12a096172-1.jpg' },
-            { id: 's12a-097', name: '雷吉斯奇魯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/100rushpS12a097172-1.jpg' },
-            { id: 's12a-098', name: '銅鏡怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/101rushpS12a098172-1.jpg' },
-            { id: 's12a-099', name: '青銅鐘', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/102rushpS12a099172-1.jpg' },
-            { id: 's12a-100', name: '起源帝牙盧卡V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/103rushpS12a100172-1.jpg' },
-            { id: 's12a-101', name: '起源帝牙盧卡VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/104rushpS12a101172-1.jpg' },
-            { id: 's12a-102', name: '蓋諾賽克特V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/105rushpS12a102172-1.jpg' },
-            { id: 's12a-103', name: '藏瑪然特V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/106rushpS12a103172-1.jpg' },
-            { id: 's12a-104', name: '七夕青鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/107rushpS12a104172-1.jpg' },
-            { id: 's12a-105', name: '拉帝亞斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/108rushpS12a105172-1.jpg' },
-            { id: 's12a-106', name: '拉帝歐斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/109rushpS12a106172-1.jpg' },
-            { id: 's12a-107', name: '烈空坐V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/110rushpS12a107172-1.jpg' },
-            { id: 's12a-108', name: '烈空坐VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/111rushpS12a108172-1.jpg' },
-            { id: 's12a-109', name: '烈咬陸鯊V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/112rushpS12a109172-1.jpg' },
-            { id: 's12a-110', name: '騎拉帝納V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/113rushpS12a110172-1.jpg' },
-            { id: 's12a-111', name: '騎拉帝納VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/114rushpS12a111172-1.jpg' },
-            { id: 's12a-112', name: '黏黏寶', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/115rushpS12a112172-1.jpg' },
-            { id: 's12a-113', name: '洗翠 黏美兒', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/116rushpS12a113172-1.jpg' },
-            { id: 's12a-114', name: '洗翠 黏美龍', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/117rushpS12a114172-1.jpg' },
-            { id: 's12a-115', name: '光輝無極汰那', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/118rushpS12a115172-1.jpg' },
-            { id: 's12a-116', name: '雷吉鐸拉戈', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/119rushpS12a116172-1.jpg' },
-            { id: 's12a-117', name: '百變怪', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/120rushpS12a117172-1.jpg' },
-            { id: 's12a-118', name: '土龍弟弟', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/121rushpS12a118172-1.jpg' },
-            { id: 's12a-119', name: '大奶罐', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/122rushpS12a119172-1.jpg' },
-            { id: 's12a-120', name: '青綿鳥', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/123rushpS12a120172-1.jpg' },
-            { id: 's12a-121', name: '大牙狸', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/124rushpS12a121172-1.jpg' },
-            { id: 's12a-122', name: '大尾狸', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/125rushpS12a122172-1.jpg' },
-            { id: 's12a-123', name: '雷吉奇卡斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/126rushpS12a123172-1.jpg' },
-            { id: 's12a-124', name: '雷吉奇卡斯V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/127rushpS12a124172-1.jpg' },
-            { id: 's12a-125', name: '雷吉奇卡斯VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/128rushpS12a125172-1.jpg' },
-            { id: 's12a-126', name: '阿爾宙斯V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/129rushpS12a126172-1.jpg' },
-            { id: 's12a-127', name: '阿爾宙斯VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/130rushpS12a127172-1.jpg' },
-            { id: 's12a-128', name: '洗翠 索羅亞克V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/131rushpS12a128172-1.jpg' },
-            { id: 's12a-129', name: '洗翠 索羅亞克VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/132rushpS12a129172-1.jpg' },
-            { id: 's12a-130', name: '智揮猩V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/133rushpS12a130172-1.jpg' },
-            { id: 's12a-131', name: '詭角鹿V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/134rushpS12a131172-1.jpg' },
-            { id: 's12a-132', name: '潮漩之扇', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/135rushpS12a132172-1.jpg' },
-            { id: 's12a-133', name: '堅毅十字鎬', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/136rushpS12a1172-1.jpg' },
-            { id: 's12a-134', name: '霧之水晶', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/137rushpS12a134172-1.jpg' },
-            { id: 's12a-135', name: '暗黑修正檔', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/138rushpS12a135172-1.jpg' },
-            { id: 's12a-136', name: '傷害水泵', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/139rushpS12a136172-1.jpg' },
-            { id: 's12a-137', name: '健行鞋', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/140rushpS12a137172-1.jpg' },
-            { id: 's12a-138', name: '高級球', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/141rushpS12a138172-1.jpg' },
-            { id: 's12a-139', name: '強力糖錠', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/142rushpS12a139172-1.jpg' },
-            { id: 's12a-140', name: '洗翠的沉重球', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/143rushpS12a140172-1.jpg' },
-            { id: 's12a-141', name: '幻想門', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/144rushpS12a141172-1.jpg' },
-            { id: 's12a-142', name: '救援行李箱', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/145rushpS12a142172-1.jpg' },
-            { id: 's12a-143', name: '等級球', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/146rushpS12a143172-1.jpg' },
-            { id: 's12a-144', name: '放逐吸塵器', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/147rushpS12a144172-1.jpg' },
-            { id: 's12a-145', name: '講究腰帶', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/148rushpS12a145172-1.jpg' },
-            { id: 's12a-146', name: '天空封印石', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/149rushpS12a146172-1.jpg' },
-            { id: 's12a-147', name: '葉隱披風', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/150rushpS12a147172-1.jpg' },
-            { id: 's12a-148', name: '阿克羅瑪的實驗', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/151rushpS12a148172-1.jpg' },
-            { id: 's12a-149', name: '珠貝', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/152rushpS12a149172-1.jpg' },
-            { id: 's12a-150', name: '小菊兒的璀璨', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/153rushpS12a150172-1.jpg' },
-            { id: 's12a-151', name: '奇巴納', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/154rushpS12a151172-1.jpg' },
-            { id: 's12a-152', name: '查克洛', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/155rushpS12a152172-1.jpg' },
-            { id: 's12a-153', name: '竹蘭的霸氣', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/156rushpS12a153172-1.jpg' },
-            { id: 's12a-154', name: '神奧的夥伴', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/157rushpS12a154172-1.jpg' },
-            { id: 's12a-155', name: '剛石', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/158rushpS12a155172-1.jpg' },
-            { id: 's12a-156', name: '黑連的關心', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/159rushpS12a156172-1.jpg' },
-            { id: 's12a-157', name: '杜娟', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/160rushpS12a157172-1.jpg' },
-            { id: 's12a-158', name: '菜種的活力', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/161rushpS12a158172-1.jpg' },
-            { id: 's12a-159', name: '博士的研究 山梨博士', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/162rushpS12a159172-1.jpg' },
-            { id: 's12a-160', name: '洗翠的夥伴', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/163rushpS12a160172-1.jpg' },
-            { id: 's12a-161', name: '老大的指令 赤日', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/164rushpS12a161172-1.jpg' },
-            { id: 's12a-162', name: '美蓉', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/165rushpS12a162172-1.jpg' },
-            { id: 's12a-163', name: '芽米', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/166rushpS12a163172-1.jpg' },
-            { id: 's12a-164', name: '暴風雨山脈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/167rushpS12a164172-1.jpg' },
-            { id: 's12a-165', name: '通頂雪道', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/168rushpS12a165172-1.jpg' },
-            { id: 's12a-166', name: '大嘴沼澤', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/169rushpS12a166172-1.jpg' },
-            { id: 's12a-167', name: '崩塌的競技場', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/170rushpS12a167172-1.jpg' },
-            { id: 's12a-168', name: '祝慶村', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/171rushpS12a168172-1.jpg' },
-            { id: 's12a-169', name: '神奧神殿', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/172rushpS12a169172-1.jpg' },
-            { id: 's12a-170', name: '熔岩的瀑布深潭', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/173rushpS12a170172-1.jpg' },
-            { id: 's12a-171', name: '雙重渦輪能量', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/174rushpS12a171172-1.jpg' },
-            { id: 's12a-172', name: '匯流能量', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/175rushpS12a172172-1.jpg' },
-            { id: 's12a-173', name: '洗翠 霹靂電球', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_89-1.jpg' },
-            { id: 's12a-174', name: '音箱蟀', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_88-1.jpg' },
-            { id: 's12a-175', name: '鴨嘴炎獸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_87-1.jpg' },
-            { id: 's12a-176', name: '花舞鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_86-1.jpg' },
-            { id: 's12a-177', name: '拉普拉斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_85-1.jpg' },
-            { id: 's12a-178', name: '瑪納霏', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_84-1.jpg.jpg' },
-            { id: 's12a-179', name: '凱路迪歐', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_83-1.jpg' },
-            { id: 's12a-180', name: '電擊魔獸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_82-1.jpg' },
-            { id: 's12a-181', name: '顫弦蠑螈', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_81-1.jpg' },
-            { id: 's12a-182', name: '伽勒爾 急凍鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_80-1.jpg' },
-            { id: 's12a-183', name: '夢幻', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_79-1.jpg' },
-            { id: 's12a-184', name: '月石', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_78-1.jpg' },
-            { id: 's12a-185', name: '代歐奇希斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_77-1.jpg' },
-            { id: 's12a-186', name: '蒂安希', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_76-1.jpg' },
-            { id: 's12a-187', name: '花療環環', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_75-1.jpg' },
-            { id: 's12a-188', name: '伽勒爾 閃電鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_74-1.jpg' },
-            { id: 's12a-189', name: '太陽岩', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_73-1.jpg' },
-            { id: 's12a-190', name: '伽勒爾 火焰鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_72-1.jpg' },
-            { id: 's12a-191', name: '阿勃梭魯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_71-1.jpg' },
-            { id: 's12a-192', name: '狐大盜', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_70-1.jpg' },
-            { id: 's12a-193', name: '自爆磁怪', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_69-1.jpg' },
-            { id: 's12a-194', name: '七夕青鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_68-1.jpg' },
-            { id: 's12a-195', name: '拉帝亞斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_67-1.jpg' },
-            { id: 's12a-196', name: '洗翠 黏美龍', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_66-1.jpg' },
-            { id: 's12a-197', name: '百變怪', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_65-1.jpg' },
-            { id: 's12a-198', name: '土龍弟弟', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_64-1.jpg' },
-            { id: 's12a-199', name: '大奶罐', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_63-1.jpg' },
-            { id: 's12a-200', name: '大尾狸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_62-1.jpg' },
-            { id: 's12a-201', name: '利歐路', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_61-1.jpg' },
-            { id: 's12a-202', name: '青綿鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_60-1.jpg' },
-            { id: 's12a-203', name: '夜巡靈', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_59-1.jpg' },
-            { id: 's12a-204', name: '大牙狸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_58-1.jpg' },
-            { id: 's12a-205', name: '皮卡丘', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_57-1.jpg' },
-            { id: 's12a-206', name: '草苗龜', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_56-1.jpg' },
-            { id: 's12a-207', name: '派拉斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_55-1.jpg' },
-            { id: 's12a-208', name: '土狼犬', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_54-1.jpg' },
-            { id: 's12a-209', name: '咩利羊', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_53-1.jpg' },
-            { id: 's12a-210', name: '葉伊布VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_52-1.jpg' },
-            { id: 's12a-211', name: '噴火龍V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_51-1.jpg' },
-            { id: 's12a-212', name: '噴火龍VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_50-1.jpg' },
-            { id: 's12a-213', name: '炎帝V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_49-1.jpg' },
-            { id: 's12a-214', name: '爆香猿VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_48-1.jpg' },
-            { id: 's12a-215', name: '水君V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_47-1.jpg' },
-            { id: 's12a-216', name: '霓虹魚V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_46-1.jpg' },
-            { id: 's12a-217', name: '冰伊布VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_45-1.jpg' },
-            { id: 's12a-218', name: '雷公V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_44-1.jpg' },
-            { id: 's12a-219', name: '捷拉奧拉V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_43-1.jpg' },
-            { id: 's12a-220', name: '捷拉奧拉VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_42-1.jpg' },
-            { id: 's12a-221', name: '超夢VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_41-1.jpg' },
-            { id: 's12a-222', name: '代歐奇希斯VMAX', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_40-1.jpg' },
-            { id: 's12a-223', name: '代歐奇希斯VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_39-1.jpg' },
-            { id: 's12a-224', name: '布莉姆溫VMAX', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_38-1.jpg' },
-            { id: 's12a-225', name: '蒼響V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_37-1.jpg' },
-            { id: 's12a-226', name: '路卡利歐VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_36-1.jpg' },
-            { id: 's12a-227', name: '龍王蠍V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_35-1.jpg' },
-            { id: 's12a-228', name: '達克萊伊VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_34-1.jpg' },
-            { id: 's12a-229', name: '洗翠 大劍鬼V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_33-1.jpg' },
-            { id: 's12a-230', name: '洗翠 大劍鬼VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_32-1.jpg' },
-            { id: 's12a-231', name: '胡帕V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_31-1.jpg' },
-            { id: 's12a-232', name: '藏瑪然特V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_30-1.jpg' },
-            { id: 's12a-233', name: '雷吉奇卡斯VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_29-1.jpg' },
-            { id: 's12a-234', name: '洗翠 索羅亞克VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_4-1.jpg' },
-            { id: 's12a-235', name: '阿克羅瑪的實驗', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_28-1.jpg' },
-            { id: 's12a-236', name: '珠貝', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_27-1.jpg' },
-            { id: 's12a-237', name: '奇巴納', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_26-1.jpg' },
-            { id: 's12a-238', name: '查克洛', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_25-1.jpg' },
-            { id: 's12a-239', name: '竹蘭的霸氣', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_24-1.jpg' },
-            { id: 's12a-240', name: '剛石', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_23-1.jpg' },
-            { id: 's12a-241', name: '黑連的關心', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_22-1.jpg' },
-            { id: 's12a-242', name: '杜娟', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_21-1.jpg' },
-            { id: 's12a-243', name: '菜種的活力', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_20-1.jpg' },
-            { id: 's12a-244', name: '美蓉', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_19-1.jpg' },
-            { id: 's12a-245', name: '望羅', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_18-1.jpg' },
-            { id: 's12a-246', name: '小菊兒的璀璨', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_17-1.jpg' },
-            { id: 's12a-247', name: '神奧的夥伴', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_16-1.jpg' },
-            { id: 's12a-248', name: '博士的研究 山梨博士', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_15-1.jpg' },
-            { id: 's12a-249', name: '洗翠的夥伴', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_14-1.jpg' },
-            { id: 's12a-250', name: '老大的指令 赤日', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_13-1.jpg' },
-            { id: 's12a-251', name: '基本草能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_12-1.jpg' },
-            { id: 's12a-252', name: '基本火能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_11-1.jpg' },
-            { id: 's12a-253', name: '基本水能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a-10-1.jpg' },
-            { id: 's12a-254', name: '基本雷能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_9-1.jpg' },
-            { id: 's12a-255', name: '基本超能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_8-1.jpg' },
-            { id: 's12a-256', name: '基本鬥能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_7-1.jpg' },
-            { id: 's12a-257', name: '基本惡能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_6-1.jpg' },
-            { id: 's12a-258', name: '基本鋼能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_5-1.jpg' },
-            { id: 's12a-259', name: '起源帕路奇亞VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_3-1.jpg' },
-            { id: 's12a-260', name: '起源帝牙盧卡VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_2-1.jpg' },
-            { id: 's12a-261', name: '騎拉帝納VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_1-1.jpg' },
-            { id: 's12a-262', name: '阿爾宙斯VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_0-1.jpg' }
+                { id: 's12a-002', name: '派拉斯特', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/5rushpS12a002172-1.jpg' },
+                { id: 's12a-003', name: '洗翠 霹靂電球', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/6rushpS12a003172-1.jpg' },
+                { id: 's12a-004', name: '洗翠 頑皮雷彈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/7rushpS12a004172-1.jpg' },
+                { id: 's12a-005', name: '洗翠 頑皮雷彈V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/8rushpS12a005172-1.jpg' },
+                { id: 's12a-006', name: '草苗龜', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/9rushpS12a006172-1.jpg' },
+                { id: 's12a-007', name: '樹林龜', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/10rushpS12a007172-1.jpg' },
+                { id: 's12a-008', name: '土台龜', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/11rushpS12a008172-1.jpg' },
+                { id: 's12a-009', name: '圓法師', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/12rushpS12a009172-1.jpg' },
+                { id: 's12a-010', name: '音箱蟀', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/13rushpS12a010172-1.jpg' },
+                { id: 's12a-011', name: '葉伊布V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/14rushpS12a011172-1.jpg' },
+                { id: 's12a-012', name: '葉伊布VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/15rushpS12a012172-1.jpg' },
+                { id: 's12a-013', name: '噴火龍V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/16rushpS12a013172-1.jpg' },
+                { id: 's12a-014', name: '噴火龍VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/17rushpS12a014172-1.jpg' },
+                { id: 's12a-015', name: '光輝噴火龍', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/18rushpS12a015172-1.jpg' },
+                { id: 's12a-016', name: '鴨嘴火獸', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/19rushpS12a016172-1.jpg' },
+                { id: 's12a-017', name: '鴨嘴炎獸', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/20rushpS12a017172-1.jpg' },
+                { id: 's12a-018', name: '火焰鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/21rushpS12a018172-1.jpg' },
+                { id: 's12a-019', name: '炎帝V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/22rushpS12a019172-1.jpg' },
+                { id: 's12a-020', name: '爆香猿V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/23rushpS12a020172-1.jpg' },
+                { id: 's12a-021', name: '爆香猿VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/24rushpS12a021172-1.jpg' },
+                { id: 's12a-022', name: '花舞鳥', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/25rushpS12a022172-1.jpg' },
+                { id: 's12a-023', name: '拉普拉斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/26rushpS12a023172-1.jpg' },
+                { id: 's12a-024', name: '水君V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/27rushpS12a024172-1.jpg' },
+                { id: 's12a-025', name: '雷吉艾斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/28rushpS12a025172-1.jpg' },
+                { id: 's12a-026', name: '霓虹魚V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/29rushpS12a026172-1.jpg' },
+                { id: 's12a-027', name: '起源帕路奇亞V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/30rushpS12a027172-1.jpg' },
+                { id: 's12a-028', name: '起源帕路奇亞VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/31rushpS12a028172-1.jpg' },
+                { id: 's12a-029', name: '瑪納霏', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/32rushpS12a029172-1.jpg' },
+                { id: 's12a-030', name: '洗翠 野蠻鱸魚', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/33rushpS12a030172-1.jpg' },
+                { id: 's12a-031', name: '洗翠 幽尾玄魚', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/34rushpS12a031172-1.jpg' },
+                { id: 's12a-032', name: '凱路迪歐', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/35rushpS12a032172-1.jpg' },
+                { id: 's12a-033', name: '光輝甲賀忍蛙', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/36rushpS12a033172-1.jpg' },
+                { id: 's12a-034', name: '電擊獸', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/37rushpS12a034172-1.jpg' },
+                { id: 's12a-035', name: '電擊魔獸', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/38rushpS12a035172-1.jpg' },
+                { id: 's12a-036', name: '咩利羊', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/39rushpS12a036172-1.jpg' },
+                { id: 's12a-037', name: '茸茸羊', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/40rushpS12a037172-1.jpg' },
+                { id: 's12a-038', name: '雷公V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/41rushpS12a038172-1.jpg' },
+                { id: 's12a-039', name: '光輝蟲電寶', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/42rushpS12a039172-1.jpg' },
+                { id: 's12a-040', name: '捷拉奧拉V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/43rushpS12a040172-1.jpg' },
+                { id: 's12a-041', name: '捷拉奧拉VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/44rushpS12a041172-1.jpg' },
+                { id: 's12a-042', name: '捷拉奧拉VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/45rushpS12a042172-1.jpg' },
+                { id: 's12a-043', name: '毒電嬰', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/46rushpS12a043172-1.jpg' },
+                { id: 's12a-044', name: '顫弦蠑螈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/47rushpS12a044172-1.jpg' },
+                { id: 's12a-045', name: '雷吉艾勒奇', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/48rushpS12a045172-1.jpg' },
+                { id: 's12a-046', name: '鬼斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/49rushpS12a046172-1.jpg' },
+                { id: 's12a-047', name: '鬼斯通', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/50rushpS12a047172-1.jpg' },
+                { id: 's12a-048', name: '耿鬼', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/51rushpS12a048172-1.jpg' },
+                { id: 's12a-049', name: '伽勒爾 急凍鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/52rushpS12a049172-1.jpg' },
+                { id: 's12a-050', name: '超夢V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/53rushpS12a050172-1.jpg' },
+                { id: 's12a-051', name: '超夢VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/54rushpS12a051172-1.jpg' },
+                { id: 's12a-052', name: '夢幻', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/55rushpS12a052172-1.jpg' },
+                { id: 's12a-053', name: '夢幻V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/56rushpS12a053172-1.jpg' },
+                { id: 's12a-054', name: '夢幻VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/57rushpS12a054172-1.jpg' },
+                { id: 's12a-055', name: '光輝沙奈朵', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/58rushpS12a055172-1.jpg' },
+                { id: 's12a-056', name: '月石', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/59rushpS12a056172-1.jpg' },
+                { id: 's12a-057', name: '夜巡靈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/60rushpS12a057172-1.jpg' },
+                { id: 's12a-058', name: '彷徨夜靈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/61rushpS12a058172-1.jpg' },
+                { id: 's12a-059', name: '黑夜魔靈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/62rushpS12a059172-1.jpg' },
+                { id: 's12a-060', name: '代歐奇希斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/63rushpS12a060172-1.jpg' },
+                { id: 's12a-061', name: '南瓜精', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/64rushpS12a061172-1.jpg' },
+                { id: 's12a-062', name: '南瓜怪人', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/65rushpS12a062172-1.jpg' },
+                { id: 's12a-063', name: '蒂安希', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/66rushpS12a063172-1.jpg' },
+                { id: 's12a-064', name: '花療環環', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/67rushpS12a064172-1.jpg' },
+                { id: 's12a-065', name: '布莉姆溫V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/68rushpS12a065172-1.jpg' },
+                { id: 's12a-066', name: '布莉姆溫VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/69rushpS12a066172-1.jpg' },
+                { id: 's12a-067', name: '蒼響V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/70rushpS12a067172-1.jpg' },
+                { id: 's12a-068', name: '眷戀雲V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/71rushpS12a068172-1.jpg' },
+                { id: 's12a-069', name: '洗翠 卡蒂狗', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/72rushpS12a069172-1.jpg' },
+                { id: 's12a-070', name: '洗翠 風速狗', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/73rushpS12a070172-1.jpg' },
+                { id: 's12a-071', name: '怪力V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/74rushpS12a071172-1.jpg' },
+                { id: 's12a-072', name: '怪力VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/75rushpS12a072172-1.jpg' },
+                { id: 's12a-073', name: '伽勒爾 閃電鳥', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/76rushpS12a073172-1.jpg' },
+                { id: 's12a-074', name: '太陽岩', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/77rushpS12a074172-1.jpg' },
+                { id: 's12a-075', name: '雷吉洛克', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/78rushpS12a075172-1.jpg' },
+                { id: 's12a-076', name: '利歐路', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/79rushpS12a076172-1.jpg' },
+                { id: 's12a-077', name: '路卡利歐', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/80rushpS12a077172-1.jpg' },
+                { id: 's12a-078', name: '光輝摔角鷹人', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/81rushpS12a078172-1.jpg' },
+                { id: 's12a-079', name: '伽勒爾 火焰鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/82rushpS12a079172-1.jpg' },
+                { id: 's12a-080', name: '伽勒爾 火焰鳥V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/83rushpS12a080172-1.jpg' },
+                { id: 's12a-081', name: '土狼犬', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/84rushpS12a081172-1.jpg' },
+                { id: 's12a-082', name: '大狼犬', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/85rushpS12a082172-1.jpg' },
+                { id: 's12a-083', name: '阿勃梭魯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/86rushpS12a083172-1.jpg' },
+                { id: 's12a-084', name: '花岩怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/87rushpS12a084172-1.jpg' },
+                { id: 's12a-085', name: '龍王蠍V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/88rushpS12a085172-1.jpg' },
+                { id: 's12a-086', name: '洗翠 大劍鬼V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/89rushpS12a086172-1.jpg' },
+                { id: 's12a-087', name: '洗翠 大劍鬼VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/90rushpS12a087172-1.jpg' },
+                { id: 's12a-088', name: '扒手貓', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/91rushpS12a088172-1.jpg' },
+                { id: 's12a-089', name: '酷豹', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/92rushpS12a089172-1.jpg' },
+                { id: 's12a-090', name: '索羅亞', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/93rushpS12a090172-1.jpg' },
+                { id: 's12a-091', name: '索羅亞克', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/94rushpS12a091172-1.jpg' },
+                { id: 's12a-092', name: '偷兒狐', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/95rushpS12a092172-1.jpg' },
+                { id: 's12a-093', name: '狐大盜', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/96rushpS12a093172-1.jpg' },
+                { id: 's12a-094', name: '小磁怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/97rushpS12a094172-1.jpg' },
+                { id: 's12a-095', name: '三合一磁怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/98rushpS12a095172-1.jpg' },
+                { id: 's12a-096', name: '自爆磁怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/99rushpS12a096172-1.jpg' },
+                { id: 's12a-097', name: '雷吉斯奇魯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/100rushpS12a097172-1.jpg' },
+                { id: 's12a-098', name: '銅鏡怪', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/101rushpS12a098172-1.jpg' },
+                { id: 's12a-099', name: '青銅鐘', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/102rushpS12a099172-1.jpg' },
+                { id: 's12a-100', name: '起源帝牙盧卡V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/103rushpS12a100172-1.jpg' },
+                { id: 's12a-101', name: '起源帝牙盧卡VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/104rushpS12a101172-1.jpg' },
+                { id: 's12a-102', name: '蓋諾賽克特V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/105rushpS12a102172-1.jpg' },
+                { id: 's12a-103', name: '藏瑪然特V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/106rushpS12a103172-1.jpg' },
+                { id: 's12a-104', name: '七夕青鳥', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/107rushpS12a104172-1.jpg' },
+                { id: 's12a-105', name: '拉帝亞斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/108rushpS12a105172-1.jpg' },
+                { id: 's12a-106', name: '拉帝歐斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/109rushpS12a106172-1.jpg' },
+                { id: 's12a-107', name: '烈空坐V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/110rushpS12a107172-1.jpg' },
+                { id: 's12a-108', name: '烈空坐VMAX', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/111rushpS12a108172-1.jpg' },
+                { id: 's12a-109', name: '烈咬陸鯊V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/112rushpS12a109172-1.jpg' },
+                { id: 's12a-110', name: '騎拉帝納V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/113rushpS12a110172-1.jpg' },
+                { id: 's12a-111', name: '騎拉帝納VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/114rushpS12a111172-1.jpg' },
+                { id: 's12a-112', name: '黏黏寶', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/115rushpS12a112172-1.jpg' },
+                { id: 's12a-113', name: '洗翠 黏美兒', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/116rushpS12a113172-1.jpg' },
+                { id: 's12a-114', name: '洗翠 黏美龍', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/117rushpS12a114172-1.jpg' },
+                { id: 's12a-115', name: '光輝無極汰那', rarity: 'R', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/118rushpS12a115172-1.jpg' },
+                { id: 's12a-116', name: '雷吉鐸拉戈', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/119rushpS12a116172-1.jpg' },
+                { id: 's12a-117', name: '百變怪', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/120rushpS12a117172-1.jpg' },
+                { id: 's12a-118', name: '土龍弟弟', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/121rushpS12a118172-1.jpg' },
+                { id: 's12a-119', name: '大奶罐', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/122rushpS12a119172-1.jpg' },
+                { id: 's12a-120', name: '青綿鳥', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/123rushpS12a120172-1.jpg' },
+                { id: 's12a-121', name: '大牙狸', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/124rushpS12a121172-1.jpg' },
+                { id: 's12a-122', name: '大尾狸', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/125rushpS12a122172-1.jpg' },
+                { id: 's12a-123', name: '雷吉奇卡斯', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/126rushpS12a123172-1.jpg' },
+                { id: 's12a-124', name: '雷吉奇卡斯V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/127rushpS12a124172-1.jpg' },
+                { id: 's12a-125', name: '雷吉奇卡斯VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/128rushpS12a125172-1.jpg' },
+                { id: 's12a-126', name: '阿爾宙斯V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/129rushpS12a126172-1.jpg' },
+                { id: 's12a-127', name: '阿爾宙斯VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/130rushpS12a127172-1.jpg' },
+                { id: 's12a-128', name: '洗翠 索羅亞克V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/131rushpS12a128172-1.jpg' },
+                { id: 's12a-129', name: '洗翠 索羅亞克VSTAR', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/132rushpS12a129172-1.jpg' },
+                { id: 's12a-130', name: '智揮猩V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/133rushpS12a130172-1.jpg' },
+                { id: 's12a-131', name: '詭角鹿V', rarity: 'RR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/134rushpS12a131172-1.jpg' },
+                { id: 's12a-132', name: '潮漩之扇', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/135rushpS12a132172-1.jpg' },
+                { id: 's12a-133', name: '堅毅十字鎬', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/136rushpS12a1172-1.jpg' },
+                { id: 's12a-134', name: '霧之水晶', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/137rushpS12a134172-1.jpg' },
+                { id: 's12a-135', name: '暗黑修正檔', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/138rushpS12a135172-1.jpg' },
+                { id: 's12a-136', name: '傷害水泵', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/139rushpS12a136172-1.jpg' },
+                { id: 's12a-137', name: '健行鞋', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/140rushpS12a137172-1.jpg' },
+                { id: 's12a-138', name: '高級球', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/141rushpS12a138172-1.jpg' },
+                { id: 's12a-139', name: '強力糖錠', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/142rushpS12a139172-1.jpg' },
+                { id: 's12a-140', name: '洗翠的沉重球', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/143rushpS12a140172-1.jpg' },
+                { id: 's12a-141', name: '幻想門', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/144rushpS12a141172-1.jpg' },
+                { id: 's12a-142', name: '救援行李箱', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/145rushpS12a142172-1.jpg' },
+                { id: 's12a-143', name: '等級球', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/146rushpS12a143172-1.jpg' },
+                { id: 's12a-144', name: '放逐吸塵器', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/147rushpS12a144172-1.jpg' },
+                { id: 's12a-145', name: '講究腰帶', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/148rushpS12a145172-1.jpg' },
+                { id: 's12a-146', name: '天空封印石', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/149rushpS12a146172-1.jpg' },
+                { id: 's12a-147', name: '葉隱披風', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/150rushpS12a147172-1.jpg' },
+                { id: 's12a-148', name: '阿克羅瑪的實驗', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/151rushpS12a148172-1.jpg' },
+                { id: 's12a-149', name: '珠貝', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/152rushpS12a149172-1.jpg' },
+                { id: 's12a-150', name: '小菊兒的璀璨', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/153rushpS12a150172-1.jpg' },
+                { id: 's12a-151', name: '奇巴納', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/154rushpS12a151172-1.jpg' },
+                { id: 's12a-152', name: '查克洛', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/155rushpS12a152172-1.jpg' },
+                { id: 's12a-153', name: '竹蘭的霸氣', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/156rushpS12a153172-1.jpg' },
+                { id: 's12a-154', name: '神奧的夥伴', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/157rushpS12a154172-1.jpg' },
+                { id: 's12a-155', name: '剛石', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/158rushpS12a155172-1.jpg' },
+                { id: 's12a-156', name: '黑連的關心', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/159rushpS12a156172-1.jpg' },
+                { id: 's12a-157', name: '杜娟', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/160rushpS12a157172-1.jpg' },
+                { id: 's12a-158', name: '菜種的活力', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/161rushpS12a158172-1.jpg' },
+                { id: 's12a-159', name: '博士的研究 山梨博士', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/162rushpS12a159172-1.jpg' },
+                { id: 's12a-160', name: '洗翠的夥伴', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/163rushpS12a160172-1.jpg' },
+                { id: 's12a-161', name: '老大的指令 赤日', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/164rushpS12a161172-1.jpg' },
+                { id: 's12a-162', name: '美蓉', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/165rushpS12a162172-1.jpg' },
+                { id: 's12a-163', name: '芽米', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/166rushpS12a163172-1.jpg' },
+                { id: 's12a-164', name: '暴風雨山脈', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/167rushpS12a164172-1.jpg' },
+                { id: 's12a-165', name: '通頂雪道', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/168rushpS12a165172-1.jpg' },
+                { id: 's12a-166', name: '大嘴沼澤', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/169rushpS12a166172-1.jpg' },
+                { id: 's12a-167', name: '崩塌的競技場', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/170rushpS12a167172-1.jpg' },
+                { id: 's12a-168', name: '祝慶村', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/171rushpS12a168172-1.jpg' },
+                { id: 's12a-169', name: '神奧神殿', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/172rushpS12a169172-1.jpg' },
+                { id: 's12a-170', name: '熔岩的瀑布深潭', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/173rushpS12a170172-1.jpg' },
+                { id: 's12a-171', name: '雙重渦輪能量', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/174rushpS12a171172-1.jpg' },
+                { id: 's12a-172', name: '匯流能量', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/175rushpS12a172172-1.jpg' },
+                { id: 's12a-173', name: '洗翠 霹靂電球', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_89-1.jpg' },
+                { id: 's12a-174', name: '音箱蟀', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_88-1.jpg' },
+                { id: 's12a-175', name: '鴨嘴炎獸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_87-1.jpg' },
+                { id: 's12a-176', name: '花舞鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_86-1.jpg' },
+                { id: 's12a-177', name: '拉普拉斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_85-1.jpg' },
+                { id: 's12a-178', name: '瑪納霏', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_84-1.jpg' },
+                { id: 's12a-179', name: '凱路迪歐', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_83-1.jpg' },
+                { id: 's12a-180', name: '電擊魔獸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_82-1.jpg' },
+                { id: 's12a-181', name: '顫弦蠑螈', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_81-1.jpg' },
+                { id: 's12a-182', name: '伽勒爾 急凍鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_80-1.jpg' },
+                { id: 's12a-183', name: '夢幻', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_79-1.jpg' },
+                { id: 's12a-184', name: '月石', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_78-1.jpg' },
+                { id: 's12a-185', name: '代歐奇希斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_77-1.jpg' },
+                { id: 's12a-186', name: '蒂安希', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_76-1.jpg' },
+                { id: 's12a-187', name: '花療環環', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_75-1.jpg' },
+                { id: 's12a-188', name: '伽勒爾 閃電鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_74-1.jpg' },
+                { id: 's12a-189', name: '太陽岩', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_73-1.jpg' },
+                { id: 's12a-190', name: '伽勒爾 火焰鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_72-1.jpg' },
+                { id: 's12a-191', name: '阿勃梭魯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_71-1.jpg' },
+                { id: 's12a-192', name: '狐大盜', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_70-1.jpg' },
+                { id: 's12a-193', name: '自爆磁怪', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_69-1.jpg' },
+                { id: 's12a-194', name: '七夕青鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_68-1.jpg' },
+                { id: 's12a-195', name: '拉帝亞斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_67-1.jpg' },
+                { id: 's12a-196', name: '洗翠 黏美龍', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_66-1.jpg' },
+                { id: 's12a-197', name: '百變怪', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_65-1.jpg' },
+                { id: 's12a-198', name: '土龍弟弟', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_64-1.jpg' },
+                { id: 's12a-199', name: '大奶罐', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_63-1.jpg' },
+                { id: 's12a-200', name: '大尾狸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_62-1.jpg' },
+                { id: 's12a-201', name: '利歐路', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_61-1.jpg' },
+                { id: 's12a-202', name: '青綿鳥', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_60-1.jpg' },
+                { id: 's12a-203', name: '夜巡靈', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_59-1.jpg' },
+                { id: 's12a-204', name: '大牙狸', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_58-1.jpg' },
+                { id: 's12a-205', name: '皮卡丘', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_57-1.jpg' },
+                { id: 's12a-206', name: '草苗龜', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_56-1.jpg' },
+                { id: 's12a-207', name: '派拉斯', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_55-1.jpg' },
+                { id: 's12a-208', name: '土狼犬', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_54-1.jpg' },
+                { id: 's12a-209', name: '咩利羊', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_53-1.jpg' },
+                { id: 's12a-210', name: '葉伊布VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_52-1.jpg' },
+                { id: 's12a-211', name: '噴火龍V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_51-1.jpg' },
+                { id: 's12a-212', name: '噴火龍VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_50-1.jpg' },
+                { id: 's12a-213', name: '炎帝V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_49-1.jpg' },
+                { id: 's12a-214', name: '爆香猿VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_48-1.jpg' },
+                { id: 's12a-215', name: '水君V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_47-1.jpg' },
+                { id: 's12a-216', name: '霓虹魚V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_46-1.jpg' },
+                { id: 's12a-217', name: '冰伊布VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_45-1.jpg' },
+                { id: 's12a-218', name: '雷公V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_44-1.jpg' },
+                { id: 's12a-219', name: '捷拉奧拉V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_43-1.jpg' },
+                { id: 's12a-220', name: '捷拉奧拉VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_42-1.jpg' },
+                { id: 's12a-221', name: '超夢VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_41-1.jpg' },
+                { id: 's12a-222', name: '代歐奇希斯VMAX', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_40-1.jpg' },
+                { id: 's12a-223', name: '代歐奇希斯VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_39-1.jpg' },
+                { id: 's12a-224', name: '布莉姆溫VMAX', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_38-1.jpg' },
+                { id: 's12a-225', name: '蒼響V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_37-1.jpg' },
+                { id: 's12a-226', name: '路卡利歐VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_36-1.jpg' },
+                { id: 's12a-227', name: '龍王蠍V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_35-1.jpg' },
+                { id: 's12a-228', name: '達克萊伊VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_34-1.jpg' },
+                { id: 's12a-229', name: '洗翠 大劍鬼V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_33-1.jpg' },
+                { id: 's12a-230', name: '洗翠 大劍鬼VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_32-1.jpg' },
+                { id: 's12a-231', name: '胡帕V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_31-1.jpg' },
+                { id: 's12a-232', name: '藏瑪然特V', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_30-1.jpg' },
+                { id: 's12a-233', name: '雷吉奇卡斯VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_29-1.jpg' },
+                { id: 's12a-234', name: '洗翠 索羅亞克VSTAR', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_4-1.jpg' },
+                { id: 's12a-235', name: '阿克羅瑪的實驗', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_28-1.jpg' },
+                { id: 's12a-236', name: '珠貝', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_27-1.jpg' },
+                { id: 's12a-237', name: '奇巴納', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_26-1.jpg' },
+                { id: 's12a-238', name: '查克洛', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_25-1.jpg' },
+                { id: 's12a-239', name: '竹蘭的霸氣', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_24-1.jpg' },
+                { id: 's12a-240', name: '剛石', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_23-1.jpg' },
+                { id: 's12a-241', name: '黑連的關心', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_22-1.jpg' },
+                { id: 's12a-242', name: '杜娟', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_21-1.jpg' },
+                { id: 's12a-243', name: '菜種的活力', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_20-1.jpg' },
+                { id: 's12a-244', name: '美蓉', rarity: 'SAR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_19-1.jpg' },
+                { id: 's12a-245', name: '望羅', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_18-1.jpg' },
+                { id: 's12a-246', name: '小菊兒的璀璨', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_17-1.jpg' },
+                { id: 's12a-247', name: '神奧的夥伴', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_16-1.jpg' },
+                { id: 's12a-248', name: '博士的研究 山梨博士', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_15-1.jpg' },
+                { id: 's12a-249', name: '洗翠的夥伴', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_14-1.jpg' },
+                { id: 's12a-250', name: '老大的指令 赤日', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_13-1.jpg' },
+                { id: 's12a-251', name: '基本草能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_12-1.jpg' },
+                { id: 's12a-252', name: '基本火能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_11-1.jpg' },
+                { id: 's12a-253', name: '基本水能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a-10-1.jpg' },
+                { id: 's12a-254', name: '基本雷能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_9-1.jpg' },
+                { id: 's12a-255', name: '基本超能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_8-1.jpg' },
+                { id: 's12a-256', name: '基本鬥能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_7-1.jpg' },
+                { id: 's12a-257', name: '基本惡能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_6-1.jpg' },
+                { id: 's12a-258', name: '基本鋼能量', rarity: 'SR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_5-1.jpg' },
+                { id: 's12a-259', name: '起源帕路奇亞VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_3-1.jpg' },
+                { id: 's12a-260', name: '起源帝牙盧卡VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_2-1.jpg' },
+                { id: 's12a-261', name: '騎拉帝納VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_1-1.jpg' },
+                { id: 's12a-262', name: '阿爾宙斯VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_0-1.jpg' }
             ],
-
             'sv2a': [
                 { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/1_hires.png' },
-                { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/4_hires.png' },
-                { id: 'sv2a-007', name: '傑尼龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv3pt5/7_hires.png' },
-                { id: 'sv2a-025', name: '皮卡丘', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/25_hires.png' },
-                { id: 'sv2a-054', name: '可達鴨', rarity: 'U', image: 'https://images.pokemontcg.io/sv3pt5/54_hires.png' },
-                { id: 'sv2a-094', name: '耿鬼', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/94_hires.png' },
-                { id: 'sv2a-150', name: '超夢', rarity: 'R', image: 'https://images.pokemontcg.io/sv3pt5/150_hires.png' },
-                { id: 'sv2a-003', name: '妙蛙花 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/3_hires.png' },
-                { id: 'sv2a-006', name: '噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/6_hires.png' },
-                { id: 'sv2a-009', name: '水箭龜 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3pt5/9_hires.png' },
-                { id: 'sv2a-166', name: '妙蛙種子 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/166_hires.png' },
-                { id: 'sv2a-173', name: '皮卡丘 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv3pt5/173_hires.png' },
-                { id: 'sv2a-188', name: '莉佳的招待 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3pt5/196_hires.png' },
-                { id: 'sv2a-198', name: '妙蛙花 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/198_hires.png' },
-                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' },
-                { id: 'sv2a-205', name: '夢幻 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3pt5/205_hires.png' }
-            ],
-            'sv3': [
-                { id: 'sv3-001', name: '波波', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/106_hires.png' },
-                { id: 'sv3-002', name: '刺甲貝', rarity: 'C', image: 'https://images.pokemontcg.io/sv3/28_hires.png' },
-                { id: 'sv3-003', name: '戴魯比', rarity: 'U', image: 'https://images.pokemontcg.io/sv3/113_hires.png' },
-                { id: 'sv3-004', name: '班基拉斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/66_hires.png' },
-                { id: 'sv3-005', name: '大比鳥 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/108_hires.png' },
-                { id: 'sv3-006', name: '惡體系噴火龍 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv3/125_hires.png' },
-                { id: 'sv3-007', name: '波琵 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv3/220_hires.png' },
-                { id: 'sv3-008', name: '惡體系噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3/223_hires.png' },
-                { id: 'sv3-009', name: '惡體系噴火龍 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv3/228_hires.png' }
-            ],
-            'sv4a': [
-                { id: 'sv4a-001', name: '色違榛果球', rarity: 'C', image: 'https://images.pokemontcg.io/sv4pt5/1_hires.png' },
-                { id: 'sv4a-002', name: '色違小火龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv4pt5/109_hires.png' },
-                { id: 'sv4a-003', name: '色違傑尼龜', rarity: 'U', image: 'https://images.pokemontcg.io/sv4pt5/112_hires.png' },
-                { id: 'sv4a-004', name: '色違皮卡丘', rarity: 'R', image: 'https://images.pokemontcg.io/sv4pt5/131_hires.png' },
-                { id: 'sv4a-005', name: '故勒頓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv4pt5/54_hires.png' },
-                { id: 'sv4a-006', name: '密勒頓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv4pt5/68_hires.png' },
-                { id: 'sv4a-007', name: '色違噴火龍 ex SSR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv4pt5/234_hires.png' },
-                { id: 'sv4a-008', name: '色違夢幻 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv4pt5/232_hires.png' },
-                { id: 'sv4a-009', name: '奇樹 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv4pt5/238_hires.png' },
-                { id: 'sv4a-010', name: '黃金故勒頓 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv4pt5/244_hires.png' }
-            ],
-            'sv5a': [
-                { id: 'sv5a-001', name: '草苗龜', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/1_hires.png' },
-                { id: 'sv5a-026', name: '波加曼', rarity: 'C', image: 'https://images.pokemontcg.io/sv5/26_hires.png' },
-                { id: 'sv5a-061', name: '頭蓋龍', rarity: 'U', image: 'https://images.pokemontcg.io/sv5/61_hires.png' },
-                { id: 'sv5a-067', name: '達克萊伊', rarity: 'R', image: 'https://images.pokemontcg.io/sv5/67_hires.png' },
-                { id: 'sv5a-038', name: '破空焰 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/38_hires.png' },
-                { id: 'sv5a-123', name: '猛雷鼓 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv5/123_hires.png' },
-                { id: 'sv5a-154', name: '鐵頭殼 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/81_hires.png' },
-                { id: 'sv5a-155', name: '鐵磐岩 ex', rarity: 'AR', image: 'https://images.pokemontcg.io/sv5/99_hires.png' },
-                { id: 'sv5a-160', name: '暗黑誓約 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv5/199_hires.png' },
-                { id: 'sv5a-161', name: '猛雷鼓 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/208_hires.png' },
-                { id: 'sv5a-162', name: '破空焰 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv5/204_hires.png' },
-                { id: 'sv5a-165', name: '英雄披風 ACE', rarity: 'UR', image: 'https://images.pokemontcg.io/sv5/152_hires.png' }
-            ],
-            'sv6': [
-                { id: 'sv6-025', name: '厄鬼椪 碧草面具', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
-                { id: 'sv6-079', name: '多龍梅西亞', rarity: 'C', image: 'https://images.pokemontcg.io/sv6/79_hires.png' },
-                { id: 'sv6-054', name: '奇魯莉安', rarity: 'U', image: 'https://images.pokemontcg.io/sv6/54_hires.png' },
-                { id: 'sv6-112', name: '厄鬼椪 礎石面具 ex', rarity: 'R', image: 'https://images.pokemontcg.io/sv6/112_hires.png' },
-                { id: 'sv6-026', name: '厄鬼椪 碧草面具 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/25_hires.png' },
-                { id: 'sv6-081', name: '多龍巴魯托 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv6/81_hires.png' },
-                { id: 'sv6-158', name: '厄鬼椪 水井面具 AR', rarity: 'AR', image: 'https://images.pokemontcg.io/sv6/182_hires.png' },
-                { id: 'sv6-165', name: '丹帝 SR', rarity: 'SR', image: 'https://images.pokemontcg.io/sv6/204_hires.png' },
-                { id: 'sv6-168', name: '厄鬼椪 碧草面具 SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv6/211_hires.png' },
-                { id: 'sv6-172', name: '厄鬼椪 碧草面具 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv6/221_hires.png' }
-            ],
-            'sv7': [
-                { id: 'sv7-001', name: '刺角海膽', rarity: 'C', image: 'https://images.pokemontcg.io/sv7/40_hires.png' },
-                { id: 'sv7-002', name: '咕咕', rarity: 'C', image: 'https://images.pokemontcg.io/sv7/116_hires.png' },
-                { id: 'sv7-003', name: '零之大空洞', rarity: 'U', image: 'https://images.pokemontcg.io/sv7/138_hires.png' },
-                { id: 'sv7-004', name: '蜜集大蛇 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv7/14_hires.png' },
-                { id: 'sv7-005', name: '太晶太樂巴戈斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv7/128_hires.png' },
-                { id: 'sv7-006', name: '蜜集大蛇 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv7/167_hires.png' },
-                { id: 'sv7-007', name: '太晶太樂巴戈斯 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv7/173_hires.png' },
-                { id: 'sv7-008', name: '水晶太晶 UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv7/175_hires.png' }
-            ],
-            'sv8': [
-                { id: 'sv8-001', name: '小磁怪', rarity: 'C', image: 'https://images.pokemontcg.io/sv8/30_hires.png' },
-                { id: 'sv8-002', name: '托戈德瑪爾', rarity: 'C', image: 'https://images.pokemontcg.io/sv8/36_hires.png' },
-                { id: 'sv8-003', name: '奇樹的伸展', rarity: 'U', image: 'https://images.pokemontcg.io/sv8/102_hires.png' },
-                { id: 'sv8-004', name: '美納斯 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv8/26_hires.png' },
-                { id: 'sv8-005', name: '太晶皮卡丘 ex', rarity: 'RR', image: 'https://images.pokemontcg.io/sv8/32_hires.png' },
-                { id: 'sv8-006', name: '美納斯 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv8/131_hires.png' },
-                { id: 'sv8-007', name: '太晶皮卡丘 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv8/132_hires.png' },
-                { id: 'sv8-008', name: '太晶皮卡丘 ex UR', rarity: 'UR', image: 'https://images.pokemontcg.io/sv8/135_hires.png' }
+                { id: 'sv2a-199', name: '噴火龍 ex SAR', rarity: 'SAR', image: 'https://images.pokemontcg.io/sv3pt5/199_hires.png' }
             ]
         };
 
         function drawCardFromSet(setCards) {
             if (!setCards || setCards.length === 0) return null;
-
             const availableRarities = Array.from(new Set(setCards.map(c => c.rarity)));
             const totalRate = availableRarities.reduce((sum, r) => sum + (RARITY[r] ? RARITY[r].rate : 0.01), 0);
 
@@ -1166,6 +1119,7 @@
             return pool[Math.floor(Math.random() * pool.length)];
         }
 
+        // 雲端系統公告帶有 escapeHTML
         const announceQuery = query(collection(db, "announcements"), orderBy("timestamp", "desc"), limit(10));
         onSnapshot(announceQuery, (snapshot) => {
             const listEl = document.getElementById('systemAnnouncementsList');
@@ -1184,17 +1138,18 @@
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 const docId = docSnap.id;
+                const safeText = escapeHTML(data.text);
                 
                 html += `
                     <li class="flex items-center gap-1.5">
                         <i class="fa-solid fa-chevron-right text-cyan-400 text-[10px]"></i>
-                        <span>${data.text}</span>
+                        <span>${safeText}</span>
                     </li>
                 `;
 
                 adminHtml += `
                     <div class="flex items-center justify-between bg-slate-800 p-2 rounded-lg text-xs border border-slate-700">
-                        <span class="text-slate-200 truncate flex-1 mr-2">${data.text}</span>
+                        <span class="text-slate-200 truncate flex-1 mr-2">${safeText}</span>
                         <button onclick="adminDeleteAnnouncement('${docId}')" class="text-red-400 hover:text-red-300 text-[11px] font-bold px-2 py-0.5 bg-red-950/80 rounded border border-red-800/60 shrink-0 active:scale-95 transition">
                             <i class="fa-solid fa-trash-can mr-1"></i>刪除
                         </button>
@@ -1206,6 +1161,7 @@
             if (adminListEl) adminListEl.innerHTML = adminHtml;
         });
 
+        // 雲端歐皇廣播帶有 escapeHTML
         const broadcastQuery = query(collection(db, "broadcasts"), orderBy("timestamp", "desc"), limit(20));
         onSnapshot(broadcastQuery, (snapshot) => {
             const listEl = document.getElementById('broadcastHistoryList');
@@ -1225,9 +1181,12 @@
                 const dateStr = dateObj.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }) + ' ' + 
                                 dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
+                const safeName = escapeHTML(data.playerName);
+                const safeCard = escapeHTML(data.cardName);
+
                 if (isMostRecent && data.timestamp > lastBroadcastTimestamp) {
                     lastBroadcastTimestamp = data.timestamp;
-                    showBroadcastBanner(data.playerName, data.cardName, data.rarity, data.isVip);
+                    showBroadcastBanner(safeName, safeCard, data.rarity, data.isVip);
                 }
                 isMostRecent = false;
 
@@ -1239,10 +1198,10 @@
                         <div class="flex flex-wrap items-center gap-1 sm:gap-2">
                             <span class="text-slate-500 text-[10px] font-mono">[${dateStr}]</span>
                             <span class="font-bold text-slate-200">恭喜</span>
-                            <span class="font-black text-amber-300 px-1 bg-amber-500/10 rounded flex items-center">${data.playerName}${vipTag}</span>
+                            <span class="font-black text-amber-300 px-1 bg-amber-500/10 rounded flex items-center">${safeName}${vipTag}</span>
                             <span class="text-slate-300">抽到</span>
                             <span class="${rarityColor} text-[9px] px-1 py-0.2 rounded border border-white/20">${data.rarity}</span>
-                            <span class="font-bold text-amber-200">${data.cardName}</span>
+                            <span class="font-bold text-amber-200">${safeCard}</span>
                         </div>
                     </div>
                 `;
@@ -1256,8 +1215,11 @@
             const textEl = document.getElementById('broadcastText');
             if (!banner || !textEl) return;
 
+            const safeName = escapeHTML(playerName);
+            const safeCard = escapeHTML(cardName);
             const vipTag = isVip ? ' <span class="bg-slate-950 text-amber-400 text-[10px] px-1 py-0.2 rounded font-black">👑 VIP</span>' : '';
-            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1">${playerName}</span>${vipTag} 抽到 <span class="bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-400 font-mono">[${rarity}] ${cardName}</span>！`;
+            
+            textEl.innerHTML = `恭喜 <span class="text-red-700 font-extrabold px-1">${safeName}</span>${vipTag} 抽到 <span class="bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-400 font-mono">[${rarity}] ${safeCard}</span>！`;
             banner.classList.remove('hidden');
 
             if (broadcastTimer) clearTimeout(broadcastTimer);
@@ -1267,6 +1229,7 @@
         }
 
         async function adminPublishAnnouncement() {
+            if (checkBanned()) return;
             const input = document.getElementById('adminAnnounceInput');
             const text = input ? input.value.trim() : '';
             if (!text) return alert("請輸入公告內容！");
@@ -1277,13 +1240,14 @@
                     timestamp: Date.now()
                 });
                 input.value = '';
-                alert("📢 成功發布系統公告！全服玩家將即時看到。");
+                alert("📢 成功發布系統公告！");
             } catch (e) {
                 alert("發布公告失敗: " + e.message);
             }
         }
 
         async function adminDeleteAnnouncement(docId) {
+            if (checkBanned()) return;
             if (!confirm("確定要刪除這條公告嗎？")) return;
             try {
                 await deleteDoc(doc(db, "announcements", docId));
@@ -1311,9 +1275,16 @@
                 unsubscribeUserDoc = onSnapshot(userRef, async (snap) => {
                     if (snap.exists()) {
                         const freshData = snap.data();
-                        const today = new Date().toISOString().split('T')[0];
 
-                        if (!currentUserDoc && freshData.lastDailyDate !== today) {
+                        // 🚫 防禦檢查：若帳號被封禁，立即開啟全螢幕鎖定模態框
+                        if (freshData.isBanned) {
+                            document.getElementById('bannedModal').classList.remove('hidden');
+                        } else {
+                            document.getElementById('bannedModal').classList.add('hidden');
+                        }
+
+                        const today = new Date().toISOString().split('T')[0];
+                        if (!currentUserDoc && freshData.lastDailyDate !== today && !freshData.isBanned) {
                             freshData.lastDailyDate = today;
                             freshData.points = (freshData.points || 0) + 500;
                             try {
@@ -1330,6 +1301,7 @@
                             name: "訓練家",
                             points: INITIAL_GIFT_POINTS,
                             isVip: false,
+                            isBanned: false,
                             lastDailyDate: new Date().toISOString().split('T')[0],
                             cards: {},
                             totalSpent: 0,
@@ -1350,6 +1322,7 @@
                 document.getElementById('adminBadge').classList.add('hidden');
                 document.getElementById('adminTabBtn').classList.add('hidden');
                 document.getElementById('mobAdminTabBtn').classList.add('hidden');
+                document.getElementById('bannedModal').classList.add('hidden');
                 renderPackList();
             }
         });
@@ -1364,7 +1337,13 @@
         async function handleAuthSubmit() {
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value.trim();
-            const username = document.getElementById('authUsername').value.trim() || '訓練家';
+            
+            // 🛡️ 淨化暱稱輸入：移除 HTML 標籤與連結
+            let rawUsername = document.getElementById('authUsername').value.trim() || '訓練家';
+            let cleanedUsername = rawUsername.replace(/<[^>]*>?/gm, '').replace(/https?:\/\/[^\s]+/g, '').trim();
+            
+            if (!cleanedUsername) cleanedUsername = "訓練家";
+
             const primaryBtn = document.getElementById('authPrimaryBtn');
 
             if (!email || !password) return alert("請輸入完整的 Email 與密碼！");
@@ -1377,9 +1356,10 @@
                     const res = await createUserWithEmailAndPassword(auth, email, password);
                     if (res && res.user) {
                         const initialData = {
-                            name: username,
+                            name: cleanedUsername,
                             points: INITIAL_GIFT_POINTS,
                             isVip: false,
+                            isBanned: false,
                             lastDailyDate: new Date().toISOString().split('T')[0],
                             cards: {},
                             totalSpent: 0,
@@ -1388,25 +1368,12 @@
                         await setDoc(doc(db, "users", res.user.uid), initialData, { merge: true });
                         currentUserDoc = initialData;
                     }
-                    alert("🎉 帳號註冊成功！系統已為您自動登入。");
+                    alert("🎉 帳號註冊成功！");
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                console.error("Auth 驗證錯誤詳情:", err);
-                let errMsg = err.message;
-                
-                if (err.code === 'auth/email-already-in-use') {
-                    errMsg = "該 Email 已經被註冊過了！請直接切換至「登入帳號」。";
-                } else if (err.code === 'auth/invalid-email') {
-                    errMsg = "Email 格式不正確！";
-                } else if (err.code === 'auth/weak-password') {
-                    errMsg = "密碼太弱，長度至少需要 6 個字元。";
-                } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-                    errMsg = "帳號或密碼錯誤！";
-                }
-
-                alert("操作失敗：" + errMsg);
+                alert("操作失敗：" + err.message);
             } finally {
                 if (primaryBtn) primaryBtn.disabled = false;
             }
@@ -1421,6 +1388,7 @@
         }
 
         function openVipModal() {
+            if (checkBanned()) return;
             document.getElementById('vipModal').classList.remove('hidden');
         }
 
@@ -1429,15 +1397,19 @@
         }
 
         async function promptChangeUsername() {
+            if (checkBanned()) return;
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入帳號！");
             
             const currentName = currentUserDoc.name || '訓練家';
-            const newName = prompt(`✏️ 修改暱稱需花費 1,000 積分\n當前暱稱：${currentName}\n\n請輸入新暱稱 (20字以內)：`, currentName);
+            const newName = prompt(`✏️ 修改暱稱需花費 1,000 積分\n當前暱稱：${currentName}\n\n請輸入新暱稱：`, currentName);
 
             if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
 
-            const trimmedName = newName.trim();
-            if (trimmedName.length > 20) return alert("暱稱長度不能超過 20 個字！");
+            // 🛡️ 淨化暱稱，防止惡意語法與網址
+            let cleanedName = newName.replace(/<[^>]*>?/gm, '').replace(/https?:\/\/[^\s]+/g, '').trim();
+
+            if (!cleanedName) return alert("暱稱不能包含無效 HTML 標籤或網址連結！");
+            if (cleanedName.length > 20) return alert("暱稱長度不能超過 20 個字！");
 
             const currentPts = (typeof currentUserDoc.points === 'number') ? currentUserDoc.points : INITIAL_GIFT_POINTS;
             if (currentPts < 1000) {
@@ -1449,15 +1421,15 @@
                 const newPoints = currentPts - 1000;
 
                 await setDoc(userRef, {
-                    name: trimmedName,
+                    name: cleanedName,
                     points: newPoints
                 }, { merge: true });
 
-                currentUserDoc.name = trimmedName;
+                currentUserDoc.name = cleanedName;
                 currentUserDoc.points = newPoints;
                 updateUI();
                 
-                alert(`🎉 成功花費 1,000 分修改暱稱為「${trimmedName}」！`);
+                alert(`🎉 成功修改暱稱為「${cleanedName}」！`);
                 fetchGlobalStatsAndLeaderboard();
             } catch (err) {
                 alert("修改暱稱失敗: " + err.message);
@@ -1477,7 +1449,12 @@
                 });
 
                 selectEl.innerHTML = `<option value="">-- 請選擇要管理的訓練家 --</option>` +
-                    allUsersCache.map(u => `<option value="${u.uid}">${u.isVip ? '👑 [VIP] ' : ''}${u.name || '訓練家'} (UID: ${u.uid.substring(0,6)}...) - [${(u.points||0).toLocaleString()}分]</option>`).join('');
+                    allUsersCache.map(u => {
+                        const safeName = escapeHTML(u.name || '訓練家');
+                        const bannedTag = u.isBanned ? '🚫 [已封禁] ' : '';
+                        const vipTag = u.isVip ? '👑 [VIP] ' : '';
+                        return `<option value="${u.uid}">${bannedTag}${vipTag}${safeName} (UID: ${u.uid.substring(0,6)}...) - [${(u.points||0).toLocaleString()}分]</option>`;
+                    }).join('');
 
                 selectEl.onchange = (e) => {
                     const uid = e.target.value;
@@ -1485,9 +1462,14 @@
                     const card = document.getElementById('selectedUserCard');
                     if (u && card) {
                         card.classList.remove('hidden');
-                        document.getElementById('selectedUserName').innerText = u.name || '訓練家';
+                        document.getElementById('selectedUserName').innerText = escapeHTML(u.name || '訓練家');
                         document.getElementById('selectedUserUidText').innerText = `UID: ${u.uid}`;
                         document.getElementById('selectedUserCurrentPoints').innerText = `${(u.points || 0).toLocaleString()} 分`;
+                        
+                        document.getElementById('selectedUserBanStatusText').innerText = u.isBanned ? '已封禁 (無法遊玩) 🚫' : '正常遊玩中 ✅';
+                        document.getElementById('selectedUserBanStatusText').className = u.isBanned ? 'text-xs text-red-400 font-bold' : 'text-xs text-emerald-400 font-bold';
+                        document.getElementById('adminToggleBanBtn').innerText = u.isBanned ? '解除封禁' : '封禁此玩家 🚫';
+
                         document.getElementById('selectedUserVipStatusText').innerText = u.isVip ? '已開通永久 VIP 👑' : '普通會員';
                         document.getElementById('adminToggleVipBtn').innerText = u.isVip ? '取消 VIP 資格' : '一鍵升級 VIP 👑';
                     } else if (card) {
@@ -1496,6 +1478,26 @@
                 };
             } catch (err) {
                 selectEl.innerHTML = `<option value="">載入失敗: ${err.message}</option>`;
+            }
+        }
+
+        // 🚫 管理員一鍵切換玩家「封禁狀態」
+        async function adminToggleBanSelectedUser() {
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+
+            const newBanStatus = !u.isBanned;
+            try {
+                await setDoc(doc(db, "users", targetUid), { isBanned: newBanStatus }, { merge: true });
+                alert(`🚫 已成功將玩家 ${escapeHTML(u.name)} 狀態更新為：${newBanStatus ? '【已封禁】' : '【正常】'}`);
+                fetchAdminUserList();
+                fetchGlobalStatsAndLeaderboard();
+            } catch (e) {
+                alert("切換封禁狀態失敗: " + e.message);
             }
         }
 
@@ -1510,7 +1512,7 @@
             const newVipStatus = !u.isVip;
             try {
                 await setDoc(doc(db, "users", targetUid), { isVip: newVipStatus }, { merge: true });
-                alert(`👑 已成功將玩家 ${u.name} VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
+                alert(`👑 已成功將玩家 ${escapeHTML(u.name)} VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
             } catch (e) {
@@ -1529,7 +1531,7 @@
             const newPoints = (u.points || 0) + delta;
             try {
                 await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
-                alert(`👑 成功將玩家 ${u.name} 分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
+                alert(`👑 成功將玩家 ${escapeHTML(u.name)} 分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
                 fetchAdminUserList();
                 fetchGlobalStatsAndLeaderboard();
             } catch (e) {
@@ -1555,6 +1557,7 @@
         }
 
         async function syncToCloud(updateData) {
+            if (checkBanned()) return;
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
             await setDoc(userRef, updateData, { merge: true });
@@ -1607,7 +1610,7 @@
             const headerInfoBox = document.getElementById('userHeaderInfo');
             const nameEl = document.getElementById('displayUsername');
 
-            nameEl.innerText = currentUserDoc.name || '訓練家';
+            nameEl.innerText = escapeHTML(currentUserDoc.name || '訓練家');
 
             if (isVip) {
                 headerInfoBox.className = "flex flex-wrap items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-xl vip-nameplate shadow-lg text-xs sm:text-sm";
@@ -1633,6 +1636,7 @@
         }
 
         function startPackChoice(setId, cardCount) {
+            if (checkBanned()) return;
             if (!currentUserDoc) return alert("請先登入帳號！");
             
             const cost = cardCount * 20;
@@ -1654,6 +1658,7 @@
         }
 
         async function choosePackAndTear(packNumber) {
+            if (checkBanned()) return;
             if (!pendingPackConfig || !currentUserDoc || !auth.currentUser) return;
             const { setId, cardCount, cost } = pendingPackConfig;
 
@@ -1673,7 +1678,6 @@
                         pulledCards.push(card);
                         batchPulledValue += RARITY[card.rarity].price;
 
-                        // 🖼️ 效能優化：拆包搖晃期間預載入圖檔
                         if (card.image) {
                             const preImg = new Image();
                             preImg.src = card.image;
@@ -1736,7 +1740,6 @@
                 }, 1000);
 
             } catch (err) {
-                console.error("抽卡詳細錯誤:", err);
                 alert("抽卡失敗: " + err.message);
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
@@ -1762,7 +1765,7 @@
                             <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-900">
                                 <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
                             </div>
-                            <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
+                            <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
                             <div class="flex items-center gap-1 mt-0.5">
                                 <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
                                 <span class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
@@ -1786,7 +1789,6 @@
             if (el) el.classList.toggle('flipped');
         }
 
-        // 🚀 關鍵效能優化：微秒階梯式連鎖翻牌 (每 60ms 翻一張)，解決 30 連抽瞬間卡頓！
         function flipAllCards() {
             currentPulledCards.forEach((_, idx) => {
                 setTimeout(() => {
@@ -1820,7 +1822,7 @@
                     <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
                         <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
                     </div>
-                    <span class="text-[11px] sm:text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${c.name}</span>
+                    <span class="text-[11px] sm:text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
                     <div class="flex items-center gap-1 mt-0.5 sm:mt-1">
                         <span class="text-[9px] sm:text-[10px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
                         <span class="text-[10px] sm:text-[11px] font-black text-cyan-300 bg-slate-950 px-1.5 py-0.2 rounded border border-cyan-500/30">
@@ -1847,7 +1849,7 @@
                             <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
                         </div>
                         <div class="w-full mt-1">
-                            <div class="text-[10px] sm:text-[11px] font-bold text-slate-200 truncate">${c.name}</div>
+                            <div class="text-[10px] sm:text-[11px] font-bold text-slate-200 truncate">${escapeHTML(c.name)}</div>
                             <div class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/80 px-1 py-0.2 rounded border border-slate-700 mt-0.5 inline-block">
                                 <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${RARITY[c.rarity].price} 分
                             </div>
@@ -1883,7 +1885,7 @@
                                 <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
                             </div>
                             <div class="text-center w-full">
-                                <div class="text-[11px] sm:text-xs font-bold text-white truncate">${c.name}</div>
+                                <div class="text-[11px] sm:text-xs font-bold text-white truncate">${escapeHTML(c.name)}</div>
                                 <div class="text-[10px] font-black text-cyan-300 mt-0.5">
                                     <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${price} 分
                                 </div>
@@ -1902,6 +1904,7 @@
         }
 
         async function sellSingleCard(cardId) {
+            if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
             let card = Object.values(CARD_SETS).flat().find(c => c.id === cardId);
@@ -1919,6 +1922,7 @@
         }
 
         async function sellAllDuplicates() {
+            if (checkBanned()) return;
             let total = 0;
             Object.values(CARD_SETS).flat().forEach(c => {
                 const count = currentUserDoc.cards?.[c.id] || 0;
@@ -1975,9 +1979,7 @@
                     
                     const todayRaresEl = document.getElementById('statTodayRares');
                     if (todayRaresEl) todayRaresEl.innerText = todayRareCount.toLocaleString();
-                } catch (rareErr) {
-                    console.warn("計算本日爆卡數失敗:", rareErr);
-                }
+                } catch (rareErr) {}
 
                 const snap = await getDocs(collection(db, "users"));
                 let usersList = [];
@@ -1997,6 +1999,7 @@
                         name: data.name || "訓練家",
                         points: pts,
                         isVip: data.isVip || false,
+                        isBanned: data.isBanned || false,
                         unlockedCount: unlockedCount,
                         progressPct: Math.round((unlockedCount / totalCardsInGame) * 100)
                     });
@@ -2011,18 +2014,6 @@
                 if (profitEl) {
                     profitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
                     profitEl.className = netPlayerProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
-                }
-
-                const adminProfitEl = document.getElementById('adminStatPlayerProfit');
-                if (adminProfitEl) {
-                    adminProfitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
-                    adminProfitEl.className = netPlayerProfit >= 0 ? "text-base sm:text-lg font-black text-emerald-400" : "text-base sm:text-lg font-black text-red-400";
-                }
-
-                const adminLossEl = document.getElementById('adminStatShopLoss');
-                if (adminLossEl) {
-                    adminLossEl.innerText = (shopNetLoss >= 0 ? "虧損 " : "盈餘 ") + Math.abs(shopNetLoss).toLocaleString();
-                    adminLossEl.className = shopNetLoss >= 0 ? "text-base sm:text-lg font-black text-red-400" : "text-base sm:text-lg font-black text-emerald-400";
                 }
 
                 if (listEl) {
@@ -2047,19 +2038,14 @@
                             if (idx === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
                             else if (idx === 1) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
                             else if (idx === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
-                        } else {
-                            if (idx === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-lg sm:text-xl text-red-500 animate-pulse"><i class="fa-solid fa-skull"></i></span>`;
-                            else if (idx === 1) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-400"><i class="fa-solid fa-poop"></i></span>`;
-                            else if (idx === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-red-300"><i class="fa-solid fa-heart-crack"></i></span>`;
                         }
 
                         const isDebt = u.points < 0;
                         const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
+                        const safeName = escapeHTML(u.name);
 
                         let statusBadgeHtml = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 py-0.2 rounded ml-1">👑 VIP</span>' : '';
-                        if (currentLbSubTab === 'unlucky' && idx === 0) {
-                            statusBadgeHtml += '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1 py-0.2 rounded border border-red-500 ml-1">🏿 黑手酋長</span>';
-                        }
+                        if (u.isBanned) statusBadgeHtml += '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1 py-0.2 rounded border border-red-500 ml-1">🚫 已封禁</span>';
 
                         return `
                             <div class="p-2.5 sm:p-3.5 rounded-xl border flex items-center justify-between gap-2 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
@@ -2067,7 +2053,7 @@
                                     ${rankBadge}
                                     <div>
                                         <div class="font-bold text-xs sm:text-sm text-white flex items-center gap-1 flex-wrap">
-                                            <span>${u.name}</span>
+                                            <span>${safeName}</span>
                                             ${statusBadgeHtml}
                                             ${isSelf ? '<span class="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1 py-0.2 rounded">你自己</span>' : ''}
                                         </div>
@@ -2080,7 +2066,6 @@
                                     <div class="text-xs sm:text-sm font-black ${isDebt ? 'text-red-400' : 'text-cyan-300'}">
                                         <i class="${isDebt ? 'fa-solid fa-skull text-red-400 mr-0.5' : 'fa-solid fa-gem text-cyan-400 mr-0.5'}"></i>${u.points.toLocaleString()} 分
                                     </div>
-                                    ${isDebt ? '<span class="text-[8px] bg-red-900/80 text-red-200 px-1 rounded">破產</span>' : ''}
                                 </div>
                             </div>
                         `;
@@ -2088,7 +2073,6 @@
                 }
 
             } catch (err) {
-                console.error("計算營運數據失敗:", err);
                 if (listEl) {
                     listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入數據失敗: ${err.message}</div>`;
                 }
@@ -2130,6 +2114,7 @@
         window.closeVipModal = closeVipModal;
         window.promptChangeUsername = promptChangeUsername;
         window.fetchAdminUserList = fetchAdminUserList;
+        window.adminToggleBanSelectedUser = adminToggleBanSelectedUser;
         window.adminToggleVipForSelectedUser = adminToggleVipForSelectedUser;
         window.adminAdjustSelectedUser = adminAdjustSelectedUser;
         window.adminSetCustomPoints = adminSetCustomPoints;
@@ -2140,15 +2125,12 @@
         window.flipCard = flipCard;
         window.flipAllCards = flipAllCards;
         window.closePackModal = closePackModal;
-        window.renderBinder = renderBinder;
-        window.renderSellInventory = renderSellInventory;
         window.sellSingleCard = sellSingleCard;
         window.sellAllDuplicates = sellAllDuplicates;
         window.switchLbSubTab = switchLbSubTab;
         window.fetchGlobalStatsAndLeaderboard = fetchGlobalStatsAndLeaderboard;
+        window.renderBinder = renderBinder;
         window.switchTab = switchTab;
-
-        document.addEventListener('DOMContentLoaded', renderPackList);
     </script>
 </body>
 </html>
