@@ -366,119 +366,9 @@
             </div>
         </section>
 
-        <!-- TAB 5: 最高管理員控制台 (預設隱藏) -->
+        <!-- TAB 5: 最高管理員控制台 (改為完全動態渲染，防止原始碼洩漏) -->
         <section id="tab-admin" class="tab-content hidden space-y-4 sm:space-y-6">
-            <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-4 sm:space-y-6">
-                <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
-                    <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-crown"></i> 最高管理員面板
-                    </h3>
-                    <span class="text-[10px] text-slate-400 font-mono">UID: eTYTRQFMmZc5...</span>
-                </div>
-
-                <!-- 📢 管理員專屬：發布動態公告欄功能 -->
-                <div class="bg-slate-900/90 p-4 rounded-xl border border-cyan-500/40 space-y-3">
-                    <h4 class="font-bold text-sm sm:text-base text-cyan-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-bullhorn"></i> 發布全服系統公告
-                    </h4>
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <input type="text" id="adminAnnounceInput" placeholder="請輸入新的公告內容..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm">
-                        <button onclick="adminPublishAnnouncement()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-2 rounded-xl text-xs font-bold text-white shadow shrink-0">
-                            發布公告
-                        </button>
-                    </div>
-                    <div class="border-t border-slate-800 pt-2 space-y-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold block">目前已發布的公告 (點擊可刪除)：</span>
-                        <div id="adminAnnounceList" class="space-y-1.5 max-h-36 overflow-y-auto">
-                            <div class="text-xs text-slate-500">載入公告中...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 📊 宏觀營運與卡店盈虧 -->
-                <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 space-y-2">
-                    <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-chart-line"></i> 宏觀營運數據 (僅管理員可見)
-                    </h4>
-                    <div class="grid grid-cols-2 gap-3 pt-1">
-                        <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-                            <span class="text-[10px] text-slate-400 block font-bold">全服玩家總淨收益</span>
-                            <span id="adminStatPlayerProfit" class="text-base sm:text-lg font-black text-emerald-400">--</span>
-                            <span class="text-[10px] text-slate-500">分</span>
-                        </div>
-                        <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-                            <span class="text-[10px] text-slate-400 block font-bold">🏪 卡店累積損益</span>
-                            <span id="adminStatShopLoss" class="text-base sm:text-lg font-black text-red-400">--</span>
-                            <span class="text-[10px] text-slate-500">分</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 玩家權限與黑名單管理 -->
-                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 space-y-3 sm:space-y-4">
-                    <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與黑名單封禁
-                    </h4>
-                    
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <select id="adminUserSelect" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm font-bold">
-                            <option value="">載入全服玩家清單中...</option>
-                        </select>
-                        <button onclick="fetchAdminUserList()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 shrink-0">
-                            <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
-                        </button>
-                    </div>
-
-                    <div id="selectedUserCard" class="hidden bg-slate-800/90 p-3 sm:p-4 rounded-xl border border-cyan-500/40 space-y-3">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span id="selectedUserName" class="font-black text-base sm:text-lg text-white">--</span>
-                                <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono block">UID: --</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] text-slate-400 block">當前分數</span>
-                                <span id="selectedUserCurrentPoints" class="text-base sm:text-xl font-black text-cyan-300">--</span>
-                            </div>
-                        </div>
-
-                        <!-- 🚫 管理員封禁控制項 -->
-                        <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
-                            <div>
-                                <span class="text-xs font-bold text-red-400 block"><i class="fa-solid fa-shield-cat mr-1"></i>遊玩狀態：</span>
-                                <span id="selectedUserBanStatusText" class="text-xs text-slate-300 font-bold">檢查中...</span>
-                            </div>
-                            <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-600 hover:bg-red-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">
-                                封禁此玩家
-                            </button>
-                        </div>
-
-                        <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
-                            <div>
-                                <span class="text-xs font-bold text-amber-300 block">VIP 狀態：</span>
-                                <span id="selectedUserVipStatusText" class="text-xs text-slate-400">檢查中...</span>
-                            </div>
-                            <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-950 shadow">
-                                切換 VIP
-                            </button>
-                        </div>
-
-                        <div class="border-t border-slate-700 pt-2.5">
-                            <span class="text-xs font-bold text-slate-300 block mb-1.5">快速增減分數：</span>
-                            <div class="flex flex-wrap gap-1.5">
-                                <button onclick="adminAdjustSelectedUser(1000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+1,000</button>
-                                <button onclick="adminAdjustSelectedUser(5000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+5,000</button>
-                                <button onclick="adminAdjustSelectedUser(50000)" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+50,000</button>
-                                <button onclick="adminAdjustSelectedUser(-1000)" class="bg-red-600 hover:bg-red-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">-1,000</button>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-2 pt-1">
-                            <input type="number" id="adminCustomPointsInput" placeholder="指定目標分數..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white focus:outline-none text-xs">
-                            <button onclick="adminSetCustomPoints()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-1.5 rounded-xl text-xs font-bold text-white shadow shrink-0">設定分數</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- 內容將會在管理員成功驗證身分後動態生成 -->
         </section>
 
     </main>
@@ -1249,7 +1139,7 @@
                 const data = docSnap.data();
                 const dateObj = new Date(data.timestamp || Date.now());
                 const dateStr = dateObj.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }) + ' ' + 
-                                dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                            dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
                 const safeName = escapeHTML(data.playerName);
                 const safeCard = escapeHTML(data.cardName);
@@ -2149,13 +2039,140 @@
             }
         }
 
-        // 🛡️ 安全防護的 switchTab：嚴格檢查 ADMIN_UID
+        // 🛡️ 動態渲染管理員控制台（防範原始碼外洩）
+        function renderAdminPanelContent() {
+            const adminContainer = document.getElementById('tab-admin');
+            if (!adminContainer) return;
+
+            // 再次進行嚴格 UID 檢查
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
+                adminContainer.innerHTML = '';
+                return;
+            }
+
+            adminContainer.innerHTML = `
+                <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-4 sm:space-y-6">
+                    <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+                        <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-crown"></i> 最高管理員面板
+                        </h3>
+                        <span class="text-[10px] text-slate-400 font-mono">UID: eTYTRQFMmZc5...</span>
+                    </div>
+
+                    <!-- 📢 管理員專屬：發布動態公告欄功能 -->
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-cyan-500/40 space-y-3">
+                        <h4 class="font-bold text-sm sm:text-base text-cyan-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-bullhorn"></i> 發布全服系統公告
+                        </h4>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="adminAnnounceInput" placeholder="請輸入新的公告內容..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm">
+                            <button onclick="adminPublishAnnouncement()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-2 rounded-xl text-xs font-bold text-white shadow shrink-0">
+                                發布公告
+                            </button>
+                        </div>
+                        <div class="border-t border-slate-800 pt-2 space-y-1.5">
+                            <span class="text-[10px] text-slate-400 font-bold block">目前已發布的公告 (點擊可刪除)：</span>
+                            <div id="adminAnnounceList" class="space-y-1.5 max-h-36 overflow-y-auto">
+                                <div class="text-xs text-slate-500">載入公告中...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📊 宏觀營運與卡店盈虧 -->
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 space-y-2">
+                        <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-line"></i> 宏觀營運數據 (僅管理員可見)
+                        </h4>
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                                <span class="text-[10px] text-slate-400 block font-bold">全服玩家總淨收益</span>
+                                <span id="adminStatPlayerProfit" class="text-base sm:text-lg font-black text-emerald-400">--</span>
+                                <span class="text-[10px] text-slate-500">分</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                                <span class="text-[10px] text-slate-400 block font-bold">🏪 卡店累積損益</span>
+                                <span id="adminStatShopLoss" class="text-base sm:text-lg font-black text-red-400">--</span>
+                                <span class="text-[10px] text-slate-500">分</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 玩家權限與黑名單管理 -->
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 space-y-3 sm:space-y-4">
+                        <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與黑名單封禁
+                        </h4>
+                        
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <select id="adminUserSelect" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm font-bold">
+                                <option value="">載入全服玩家清單中...</option>
+                            </select>
+                            <button onclick="fetchAdminUserList()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 shrink-0">
+                                <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
+                            </button>
+                        </div>
+
+                        <div id="selectedUserCard" class="hidden bg-slate-800/90 p-3 sm:p-4 rounded-xl border border-cyan-500/40 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span id="selectedUserName" class="font-black text-base sm:text-lg text-white">--</span>
+                                    <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono block">UID: --</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-slate-400 block">當前分數</span>
+                                    <span id="selectedUserCurrentPoints" class="text-base sm:text-xl font-black text-cyan-300">--</span>
+                                </div>
+                            </div>
+
+                            <!-- 🚫 管理員封禁控制項 -->
+                            <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-bold text-red-400 block"><i class="fa-solid fa-shield-cat mr-1"></i>遊玩狀態：</span>
+                                    <span id="selectedUserBanStatusText" class="text-xs text-slate-300 font-bold">檢查中...</span>
+                                </div>
+                                <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-600 hover:bg-red-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">
+                                    封禁此玩家
+                                </button>
+                            </div>
+
+                            <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-bold text-amber-300 block">VIP 狀態：</span>
+                                    <span id="selectedUserVipStatusText" class="text-xs text-slate-400">檢查中...</span>
+                                </div>
+                                <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-950 shadow">
+                                    切換 VIP
+                                </button>
+                            </div>
+
+                            <div class="border-t border-slate-700 pt-2.5">
+                                <span class="text-xs font-bold text-slate-300 block mb-1.5">快速增減分數：</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button onclick="adminAdjustSelectedUser(1000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+1,000</button>
+                                    <button onclick="adminAdjustSelectedUser(5000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+5,000</button>
+                                    <button onclick="adminAdjustSelectedUser(50000)" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+50,000</button>
+                                    <button onclick="adminAdjustSelectedUser(-1000)" class="bg-red-600 hover:bg-red-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">-1,000</button>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 pt-1">
+                                <input type="number" id="adminCustomPointsInput" placeholder="指定目標分數..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white focus:outline-none text-xs">
+                                <button onclick="adminSetCustomPoints()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-1.5 rounded-xl text-xs font-bold text-white shadow shrink-0">設定分數</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 🛡️ 安全防護的 switchTab：嚴格檢查 ADMIN_UID 並動態渲染管理控制台
         function switchTab(tab) {
             if (tab === 'admin') {
                 if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
                     alert("⚠️ 權限不足！此為最高管理員專屬介面。");
                     return;
                 }
+                renderAdminPanelContent(); // 通過後動態渲染
             }
 
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
