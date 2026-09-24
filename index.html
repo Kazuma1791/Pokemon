@@ -191,6 +191,9 @@
                 <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
                     <i class="fa-solid fa-trophy text-amber-400 mr-1"></i> 排行榜
                 </button>
+                <button onclick="switchTab('guestbook')" id="nav-guestbook" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
+                    <i class="fa-solid fa-comments text-cyan-400 mr-1"></i> 留言板
+                </button>
                 <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-sm active:scale-95 transition">
                     <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員
                 </button>
@@ -215,6 +218,10 @@
         <button onclick="switchTab('leaderboard')" id="mob-nav-leaderboard" class="mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-trophy text-base"></i>
             <span>排行榜</span>
+        </button>
+        <button onclick="switchTab('guestbook')" id="mob-nav-guestbook" class="mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition">
+            <i class="fa-solid fa-comments text-base"></i>
+            <span>留言板</span>
         </button>
         <button id="mobAdminTabBtn" onclick="switchTab('admin')" class="hidden mob-tab-btn flex flex-col items-center gap-0.5 text-amber-400 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-crown text-base"></i>
@@ -302,7 +309,7 @@
                     <i class="fa-solid fa-shield-halved"></i>
                     <span>Firestore 雲端安全防護 (已開啟 XSS 防禦與黑名單封禁)</span>
                 </div>
-                <div class="text-slate-500">透支上限：無限負債 | 每日登入 +500 分</div>
+                <div class="text-slate-500">透債上限：無限負債 | 每日登入 +500 分</div>
             </div>
         </section>
 
@@ -366,9 +373,87 @@
             </div>
         </section>
 
-        <!-- TAB 5: 最高管理員控制台 (動態渲染，確保原始碼絕對乾淨) -->
+        <!-- TAB 5: 💬 全服留言板 (玩家發表，無修改/刪除權限；僅管理員可刪除) -->
+        <section id="tab-guestbook" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-cyan-500/30 shadow-xl space-y-4">
+                <div class="border-b border-slate-700 pb-3 flex justify-between items-center flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-base sm:text-xl font-bold text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-comments"></i> 全服訓練家留言板
+                        </h3>
+                        <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">歡迎交流與分享抽卡戰利品！注意：留言送出後玩家無法修改與刪除。</p>
+                    </div>
+                </div>
+
+                <!-- 留言輸入框區塊 -->
+                <div class="bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-slate-700 space-y-2.5">
+                    <textarea id="guestbookInput" rows="3" placeholder="寫下你想對大家說的話（遵守社群規範）..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500 text-xs sm:text-sm resize-none"></textarea>
+                    <div class="flex justify-between items-center gap-2">
+                        <span class="text-[10px] text-slate-400">系統自動安全防護已防範 XSS 與黑名單</span>
+                        <button onclick="postGuestbookMessage()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-2 rounded-xl text-xs font-bold text-white shadow transition shrink-0">
+                            <i class="fa-solid fa-paper-plane mr-1"></i>發布留言
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 即時留言動態列表 -->
+                <div id="guestbookMessagesList" class="space-y-2.5 sm:space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                    <div class="text-center py-8 text-slate-500">載入留言板數據中...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: 最高管理員控制台 (動態渲染) -->
         <section id="tab-admin" class="tab-content hidden space-y-4 sm:space-y-6">
-            <!-- 內容將會在管理員成功驗證身分後動態生成 -->
+            <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border-2 border-amber-500/40 shadow-xl space-y-6">
+                <div class="border-b border-slate-700 pb-3 flex justify-between items-center flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-screwdriver-wrench"></i> 最高管理員控制台
+                        </h3>
+                        <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">管理員 UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                        <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-bullhorn mr-1"></i> 發布系統公告</h4>
+                        <textarea id="adminAnnounceInput" rows="2" placeholder="輸入要發布給全服的公告訊息..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-amber-500 resize-none"></textarea>
+                        <button onclick="adminPublishAnnouncement()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-95 py-2 rounded-lg text-xs font-bold text-slate-950 shadow transition">發布公告</button>
+                        <div id="adminAnnounceList" class="space-y-1.5 max-h-32 overflow-y-auto pt-2"></div>
+                    </div>
+
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                        <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-users-gear mr-1"></i> 玩家帳號特權管理</h4>
+                        <select id="adminUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs font-bold focus:outline-none">
+                            <option value="">載入全服玩家中...</option>
+                        </select>
+                        <div id="selectedUserCard" class="hidden space-y-2 bg-slate-800/90 p-3 rounded-lg border border-slate-700">
+                            <div class="flex justify-between items-center text-xs">
+                                <span id="selectedUserName" class="font-bold text-white">--</span>
+                                <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono">--</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">當前積分：<b id="selectedUserCurrentPoints" class="text-cyan-300">--</b></span>
+                                <span id="selectedUserBanStatusText" class="text-emerald-400 font-bold">正常</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">VIP 狀態：<b id="selectedUserVipStatusText" class="text-amber-300">普通</b></span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <button onclick="adminAdjustSelectedUser(1000)" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">+1,000 分</button>
+                                <button onclick="adminAdjustSelectedUser(-1000)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">-1,000 分</button>
+                                <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 rounded text-xs active:scale-95 transition">一鍵升級 VIP</button>
+                                <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">封禁此玩家</button>
+                            </div>
+                            <div class="flex gap-2 pt-1">
+                                <input type="number" id="adminCustomPointsInput" placeholder="設定目標分數" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs">
+                                <button onclick="adminSetCustomPoints()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1 rounded text-xs">設定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
     </main>
@@ -544,20 +629,20 @@
         }
 
         const RARITY = {
-            'C':    { price: 3,    rate: 0.450, color: '#9ca3af' }, // 下調普通卡機率
+            'C':    { price: 3,    rate: 0.450, color: '#9ca3af' },
             'U':    { price: 6,    rate: 0.280, color: '#60a5fa' },
             'R':    { price: 15,   rate: 0.120, color: '#fbbf24' },
-            'RR':   { price: 35,   rate: 0.080, color: '#f43f5e' }, // 提升 RR 機率
-            'SR':   { price: 200,  rate: 0.035, color: '#ec4899' }, // 大幅提升 SR 機率
-            'UR':   { price: 2000, rate: 0.015, color: '#eab308' }, // 大幅提升 UR 機率
+            'RR':   { price: 35,   rate: 0.080, color: '#f43f5e' },
+            'SR':   { price: 200,  rate: 0.035, color: '#ec4899' },
+            'UR':   { price: 2000, rate: 0.015, color: '#eab308' },
 
             'MAIN': { price: 4,    rate: 0.5000, color: '#9ca3af' },
             'PIKA': { price: 10,   rate: 0.1800, color: '#facc15' },
             'AR':   { price: 20,   rate: 0.1500, color: '#fb923c' },
             'SPEC': { price: 40,   rate: 0.0800, color: '#a855f7' },
-            'SAR':  { price: 250,  rate: 0.0500, color: '#10b981' }, // 大幅提升 SAR 歐皇卡機率
-            'FUR':  { price: 500,  rate: 0.0200, color: '#3b82f6' }, // 大幅提升 FUR 機率
-            'RGB':  { price: 2000, rate: 0.0050, color: '#ec4899' }  // 大幅提升 RGB 三色夢幻機率
+            'SAR':  { price: 250,  rate: 0.0500, color: '#10b981' },
+            'FUR':  { price: 500,  rate: 0.0200, color: '#3b82f6' },
+            'RGB':  { price: 2000, rate: 0.0050, color: '#ec4899' }
         };
 
         const PACK_DEFINITIONS = [
@@ -571,7 +656,7 @@
             { id: 'sv8', title: '擴充包「超電導突破」', tag: '超電導', desc: '太晶皮卡丘 ex SAR 閃耀登場！', bg: 'from-slate-800 to-yellow-950', border: 'border-yellow-500/30', icon: 'fa-bolt', badge: '最新擴充包' }
         ];
 
-        // 卡池資料
+        // 卡池完整資料（100% 保留無缺失）
         const CARD_SETS = {
             'm6a': [
                 { id: 'm6a-001', name: '蛋蛋 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-001-103-Exeggcute-standard.webp' },
@@ -682,7 +767,30 @@
                 { id: 'm6a-s03', name: '30th 復刻經典卡 濛濛', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-138-103-Misty-classic-reprint.webp' },
                 { id: 'm6a-s04', name: '30th 復刻經典卡 胖丁', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-139-103-Erika-s-Jigglypuff-classic-reprint.webp' },
                 { id: 'm6a-s05', name: '30th 復刻經典卡 狃拉', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-140-103-Sneasel-classic-reprint.webp' },
-                { id: 'm6a-s06', name: '30th 復刻經典卡 閃光時拉比', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-141-103-Shining-Celebi-classic-reprint.webp' },               
+                { id: 'm6a-s06', name: '30th 復刻經典卡 閃光時拉比', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-141-103-Shining-Celebi-classic-reprint.webp' },
+                { id: 'm6a-s07', name: '30th 復刻經典卡 洛奇亞', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-142-103-Lugia-classic-reprint.webp' },
+                { id: 'm6a-s08', name: '30th 復刻經典卡 優雅貓', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-143-103-Delcatty-classic-reprint.webp' },
+                { id: 'm6a-s09', name: '30th 復刻經典卡 班基拉斯', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/08/M6a-144-103-Dark-Tyranitar-classic-reprint.webp' },
+                { id: 'm6a-s10', name: '30th 復刻經典卡 巨鉗螳螂 ex', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-145-103-Scizor-ex-classic-reprint.webp' },
+                { id: 'm6a-s11', name: '30th 復刻經典卡 大金怪', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-146-103-Metagross-classic-reprint.webp' },
+                { id: 'm6a-s12', name: '30th 復刻經典卡 帕路奇亞 LV.X', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-147-103-Palkia-LV-X-classic-reprint.webp' },
+                { id: 'm6a-s13', name: '30th 復刻經典卡 由克希', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-148-103-Uxie-classic-reprint.webp' },
+                { id: 'm6a-s14', name: '30th 復刻經典卡 叉字蝠 G', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-149-103-Crobat-G-classic-reprint.webp' },
+                { id: 'm6a-s15', name: '30th 復刻經典卡 耿鬼', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-150-103-Gengar-classic-reprint.webp' },
+                { id: 'm6a-s16', name: '30th 復刻經典卡 達克萊伊&克雷色利亞', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-151-103-152-103-Darkrai-and-Cresselia-LEGEND-classic-pair.webp' },
+                { id: 'm6a-s17', name: '30th 復刻經典卡 N', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-153-103-N-classic-reprint.webp' },
+                { id: 'm6a-s18', name: '30th 復刻經典卡 烈空坐 EX', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-154-103-Rayquaza-EX-classic-reprint.webp' },
+                { id: 'm6a-s19', name: '30th 復刻經典卡 蓋諾賽克特 EX', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-155-103-Genesect-EX-classic-reprint.webp' },
+                { id: 'm6a-s20', name: '30th 復刻經典卡 沙奈朵 EX', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-156-103-M-Gardevoir-EX-classic-reprint.webp' },
+                { id: 'm6a-s21', name: '30th 復刻經典卡 甲賀忍蛙 BREAK', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-157-103-Greninja-BREAK-classic-reprint.webp' },
+                { id: 'm6a-s22', name: '30th 復刻經典卡 索爾迦雷歐GX', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-158-103-Solgaleo-GX-classic-reprint.webp' },
+                { id: 'm6a-s23', name: '30th 復刻經典卡 爆肌蚊-GX', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-159-103-Buzzwole-GX-classic-reprint.webp' },
+                { id: 'm6a-s24', name: '30th 復刻經典卡 皮卡丘&捷克羅姆 GX', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/07/M6a-160.webp' },
+                { id: 'm6a-s25', name: '30th 復刻經典卡 蒼響 V', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-161-103-Zacian-V-classic-reprint.webp' },
+                { id: 'm6a-s26', name: '30th 復刻經典卡 雷公', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-162-103-Raikou-classic-reprint.webp' },
+                { id: 'm6a-s27', name: '30th 復刻經典卡 夢幻 VMAX', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-163-103-Mew-VMAX-classic-reprint.webp' },
+                { id: 'm6a-s28', name: '30th 復刻經典卡 阿爾宙斯 VSTAR', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-164-103-Arceus-VSTAR-classic-reprint.webp' },
+                { id: 'm6a-s29', name: '30th 復刻經典卡 鯉魚王', rarity: 'SPEC', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-165-103-Magikarp-classic-reprint.webp' },               
                 { id: 'm6a-104', name: '阿羅拉椰蛋樹 AR', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-104-103-Alolan-Exeggutor-standard.webp' },
                 { id: 'm6a-105', name: '火焰鳥 AR', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-105-103-Moltres-standard.webp' },
                 { id: 'm6a-106', name: '拉普拉斯 AR', rarity: 'AR', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/07/M6a-106.webp' },
@@ -1079,6 +1187,97 @@
             return pool[Math.floor(Math.random() * pool.length)];
         }
 
+        // 💬 全服留言板 (messages) 即時監聽與對應渲染邏輯
+        const messagesQuery = query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(50));
+        onSnapshot(messagesQuery, (snapshot) => {
+            const listEl = document.getElementById('guestbookMessagesList');
+            if (!listEl) return;
+
+            if (snapshot.empty) {
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無留言，快來搶沙發！</div>`;
+                return;
+            }
+
+            const isAdmin = auth.currentUser && auth.currentUser.uid === ADMIN_UID;
+            let html = '';
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const docId = docSnap.id;
+                const dateObj = new Date(data.timestamp || Date.now());
+                const dateStr = dateObj.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }) + ' ' + 
+                                dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+                const safeName = escapeHTML(data.userName || '訓練家');
+                const safeText = escapeHTML(data.text || '');
+                const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded">👑 VIP</span>' : '';
+
+                html += `
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1.5 shadow">
+                        <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-1.5">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-xs sm:text-sm text-cyan-300 flex items-center gap-1">${safeName} ${vipTag}</span>
+                                <span class="text-[10px] text-slate-500 font-mono">[${dateStr}]</span>
+                            </div>
+                            ${isAdmin ? `
+                                <button onclick="deleteGuestbookMessage('${docId}')" class="text-[10px] bg-red-950/80 hover:bg-red-800 active:scale-95 text-red-200 px-2 py-0.5 rounded border border-red-800/60 font-bold transition">
+                                    <i class="fa-solid fa-trash-can mr-0.5"></i>刪除
+                                </button>
+                            ` : ''}
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-wrap break-words">${safeText}</p>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
+        });
+
+        // 💬 發布留言 (玩家與管理員均可發布，但不提供修改功能)
+        window.postGuestbookMessage = async function() {
+            if (checkBanned()) return;
+            if (!auth.currentUser || !currentUserDoc) return alert("請先登入帳號後再進行留言！");
+
+            const inputEl = document.getElementById('guestbookInput');
+            const text = inputEl ? inputEl.value.trim() : '';
+
+            if (!text) return alert("請輸入留言內容！");
+            if (text.length > 300) return alert("留言字數上限為 300 字！");
+
+            let cleanedText = text.replace(/<[^>]*>?/gm, '').trim();
+
+            try {
+                await addDoc(collection(db, "messages"), {
+                    uid: auth.currentUser.uid,
+                    userName: currentUserDoc.name || '訓練家',
+                    isVip: currentUserDoc.isVip || false,
+                    text: cleanedText,
+                    timestamp: Date.now()
+                });
+
+                inputEl.value = '';
+                alert("💬 留言發布成功！");
+            } catch (err) {
+                alert("留言失敗: " + err.message);
+            }
+        };
+
+        // 🗑️ 刪除留言 (僅管理員可用)
+        window.deleteGuestbookMessage = async function(docId) {
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
+                return alert("⚠️ 權限不足！只有最高管理員能刪除留言。");
+            }
+
+            if (!confirm("確定要刪除這條留言嗎？")) return;
+
+            try {
+                await deleteDoc(doc(db, "messages", docId));
+                alert("🗑️ 留言已成功刪除！");
+            } catch (err) {
+                alert("刪除留言失敗: " + err.message);
+            }
+        };
+
         // 雲端系統公告
         const announceQuery = query(collection(db, "announcements"), orderBy("timestamp", "desc"), limit(10));
         onSnapshot(announceQuery, (snapshot) => {
@@ -1139,7 +1338,7 @@
                 const data = docSnap.data();
                 const dateObj = new Date(data.timestamp || Date.now());
                 const dateStr = dateObj.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }) + ' ' + 
-                            dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                                dateObj.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
                 const safeName = escapeHTML(data.playerName);
                 const safeCard = escapeHTML(data.cardName);
@@ -1188,7 +1387,7 @@
             }, 5000);
         }
 
-        async function adminPublishAnnouncement() {
+        window.adminPublishAnnouncement = async function() {
             if (checkBanned()) return;
             const input = document.getElementById('adminAnnounceInput');
             const text = input ? input.value.trim() : '';
@@ -1204,9 +1403,9 @@
             } catch (e) {
                 alert("發布公告失敗: " + e.message);
             }
-        }
+        };
 
-        async function adminDeleteAnnouncement(docId) {
+        window.adminDeleteAnnouncement = async function(docId) {
             if (checkBanned()) return;
             if (!confirm("確定要刪除這條公告嗎？")) return;
             try {
@@ -1215,21 +1414,19 @@
             } catch (e) {
                 alert("刪除失敗: " + e.message);
             }
-        }
+        };
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 document.getElementById('authModal').classList.add('hidden');
                 document.getElementById('userHeaderInfo').classList.remove('hidden');
                 
-                // 🛡️ 嚴格身分判定：只有最高管理員才能顯示管理按鈕
                 if (user.uid === ADMIN_UID) {
                     document.getElementById('adminBadge').classList.remove('hidden');
                     document.getElementById('adminTabBtn').classList.remove('hidden');
                     document.getElementById('mobAdminTabBtn').classList.remove('hidden');
                     fetchAdminUserList();
                 } else {
-                    // 🔒 一般玩家/非管理員：強制隱藏所有管理介面與按鈕
                     document.getElementById('adminBadge').classList.add('hidden');
                     document.getElementById('adminTabBtn').classList.add('hidden');
                     document.getElementById('mobAdminTabBtn').classList.add('hidden');
@@ -1243,7 +1440,6 @@
                     if (snap.exists()) {
                         const freshData = snap.data();
 
-                        // 🚫 防禦檢查：若帳號被封禁，開啟全螢幕鎖定模態框
                         if (freshData.isBanned) {
                             document.getElementById('bannedModal').classList.remove('hidden');
                         } else {
@@ -1295,18 +1491,17 @@
             }
         });
 
-        function toggleAuthMode() {
+        window.toggleAuthMode = function() {
             isRegisterMode = !isRegisterMode;
             document.getElementById('authTitle').innerText = isRegisterMode ? "註冊新訓練家帳號" : "雲端訓練家登入";
             document.getElementById('authPrimaryBtn').innerText = isRegisterMode ? "註冊並登入" : "登入帳號";
             document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「登入帳號」" : "還沒有帳號？點此切換至「註冊帳號」";
-        }
+        };
 
-        async function handleAuthSubmit() {
+        window.handleAuthSubmit = async function() {
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value.trim();
             
-            // 🛡️ 淨化暱稱輸入
             let rawUsername = document.getElementById('authUsername').value.trim() || '訓練家';
             let cleanedUsername = rawUsername.replace(/<[^>]*>?/gm, '').replace(/https?:\/\/[^\s]+/g, '').trim();
             
@@ -1345,26 +1540,26 @@
             } finally {
                 if (primaryBtn) primaryBtn.disabled = false;
             }
-        }
+        };
 
-        function handleSignOut() {
+        window.handleSignOut = function() {
             if (unsubscribeUserDoc) {
                 unsubscribeUserDoc();
                 unsubscribeUserDoc = null;
             }
             signOut(auth);
-        }
+        };
 
-        function openVipModal() {
+        window.openVipModal = function() {
             if (checkBanned()) return;
             document.getElementById('vipModal').classList.remove('hidden');
-        }
+        };
 
-        function closeVipModal() {
+        window.closeVipModal = function() {
             document.getElementById('vipModal').classList.add('hidden');
-        }
+        };
 
-        async function promptChangeUsername() {
+        window.promptChangeUsername = async function() {
             if (checkBanned()) return;
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入帳號！");
             
@@ -1401,7 +1596,7 @@
             } catch (err) {
                 alert("修改暱稱失敗: " + err.message);
             }
-        }
+        };
 
         async function fetchAdminUserList() {
             const selectEl = document.getElementById('adminUserSelect');
@@ -1448,7 +1643,7 @@
             }
         }
 
-        async function adminToggleBanSelectedUser() {
+        window.adminToggleBanSelectedUser = async function() {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
@@ -1465,9 +1660,9 @@
             } catch (e) {
                 alert("切換封禁狀態失敗: " + e.message);
             }
-        }
+        };
 
-        async function adminToggleVipForSelectedUser() {
+        window.adminToggleVipForSelectedUser = async function() {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
@@ -1484,9 +1679,9 @@
             } catch (e) {
                 alert("修改 VIP 失敗: " + e.message);
             }
-        }
+        };
 
-        async function adminAdjustSelectedUser(delta) {
+        window.adminAdjustSelectedUser = async function(delta) {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
@@ -1503,9 +1698,9 @@
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
-        }
+        };
 
-        async function adminSetCustomPoints() {
+        window.adminSetCustomPoints = async function() {
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             const inputVal = document.getElementById('adminCustomPointsInput').value;
@@ -1521,7 +1716,7 @@
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
-        }
+        };
 
         async function syncToCloud(updateData) {
             if (checkBanned()) return;
@@ -1602,7 +1797,7 @@
             }
         }
 
-        function startPackChoice(setId, cardCount) {
+        window.startPackChoice = function(setId, cardCount) {
             if (checkBanned()) return;
             if (!currentUserDoc) return alert("請先登入帳號！");
             
@@ -1622,9 +1817,9 @@
             document.getElementById('animStepTear').classList.add('hidden');
             document.getElementById('animStepReveal').classList.add('hidden');
             modal.classList.remove('hidden');
-        }
+        };
 
-        async function choosePackAndTear(packNumber) {
+        window.choosePackAndTear = async function(packNumber) {
             if (checkBanned()) return;
             if (!pendingPackConfig || !currentUserDoc || !auth.currentUser) return;
             const { setId, cardCount, cost } = pendingPackConfig;
@@ -1647,13 +1842,12 @@
                     }
                 }
 
-                // 🚀 【新增位置】在抽卡完成後，非同步等待所有圖片載入完成，確保 3D 翻牌時不卡頓
                 await Promise.all(pulledCards.map(c => new Promise(resolve => {
                     if (!c.image) return resolve();
                     const img = new Image();
                     img.src = c.image;
                     img.onload = resolve;
-                    img.onerror = resolve; // 即使圖片載入失敗也繼續執行，避免程式卡死
+                    img.onerror = resolve;
                 })));
 
                 const updatedCards = { ...(currentUserDoc.cards || {}) };
@@ -1715,7 +1909,7 @@
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
             }
-        }
+        };
 
         function getImgSrcWithFallback(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
@@ -1755,12 +1949,12 @@
             }
         }
 
-        function flipCard(idx) {
+        window.flipCard = function(idx) {
             const el = document.getElementById(`cardInner-${idx}`);
             if (el) el.classList.toggle('flipped');
-        }
+        };
 
-        function flipAllCards() {
+        window.flipAllCards = function() {
             currentPulledCards.forEach((_, idx) => {
                 setTimeout(() => {
                     const el = document.getElementById(`cardInner-${idx}`);
@@ -1769,9 +1963,9 @@
                     }
                 }, idx * 60);
             });
-        }
+        };
 
-        function closePackModal() {
+        window.closePackModal = function() {
             document.getElementById('packModal').classList.add('hidden');
             renderResults(currentPulledCards);
 
@@ -1781,7 +1975,7 @@
                     area.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, 100);
-        }
+        };
 
         function renderResults(cards) {
             const area = document.getElementById('pullResultsArea');
@@ -1804,7 +1998,7 @@
             `).join('');
         }
 
-        function renderBinder() {
+        window.renderBinder = function() {
             const setId = document.getElementById('binderSetFilter').value;
             const grid = document.getElementById('binderGrid');
             const cards = CARD_SETS[setId] || [];
@@ -1836,9 +2030,9 @@
 
             const pct = cards.length > 0 ? Math.round((unlocked / cards.length) * 100) : 0;
             document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${pct}%)`;
-        }
+        };
 
-        function renderSellInventory() {
+        window.renderSellInventory = function() {
             const grid = document.getElementById('sellInventoryGrid');
             if (!grid || !currentUserDoc) return;
             
@@ -1873,9 +2067,9 @@
             if (!hasCards) {
                 grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12 font-bold"><i class="fa-solid fa-box-open text-3xl block mb-2 opacity-50"></i>背包裡沒有可出售的卡牌！</div>`;
             }
-        }
+        };
 
-        async function sellSingleCard(cardId) {
+        window.sellSingleCard = async function(cardId) {
             if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
@@ -1891,9 +2085,9 @@
                 points: currentUserDoc.points
             });
             renderSellInventory();
-        }
+        };
 
-        async function sellAllDuplicates() {
+        window.sellAllDuplicates = async function() {
             if (checkBanned()) return;
             let total = 0;
             Object.values(CARD_SETS).flat().forEach(c => {
@@ -1913,9 +2107,9 @@
                 renderSellInventory();
             }
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
-        }
+        };
 
-        function switchLbSubTab(subTab) {
+        window.switchLbSubTab = function(subTab) {
             currentLbSubTab = subTab;
             
             const luckyBtn = document.getElementById('lbBtnLucky');
@@ -1930,9 +2124,9 @@
             }
 
             fetchGlobalStatsAndLeaderboard();
-        }
+        };
 
-        async function fetchGlobalStatsAndLeaderboard() {
+        window.fetchGlobalStatsAndLeaderboard = async function() {
             const listEl = document.getElementById('leaderboardList');
             if (listEl) {
                 listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服排行榜數據中...</div>`;
@@ -2008,256 +2202,61 @@
                         if (currentLbSubTab === 'lucky') {
                             if (idx === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
                             else if (idx === 1) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
-                            else if (idx === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-award"></i></span>`;
+                            else if (idx === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-medal"></i></span>`;
                         }
 
-                        const isDebt = u.points < 0;
-                        const isSelf = auth.currentUser && auth.currentUser.uid === u.uid;
                         const safeName = escapeHTML(u.name);
-
-                        let statusBadgeHtml = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 py-0.2 rounded ml-1">👑 VIP</span>' : '';
-                        if (u.isBanned) statusBadgeHtml += '<span class="text-[9px] bg-red-900 text-red-200 font-black px-1 py-0.2 rounded border border-red-500 ml-1">🚫 已封禁</span>';
+                        const vipTag = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
+                        const banTag = u.isBanned ? '<span class="text-[9px] bg-red-600 text-white font-bold px-1 rounded ml-1">已封禁</span>' : '';
 
                         return `
-                            <div class="p-2.5 sm:p-3.5 rounded-xl border flex items-center justify-between gap-2 ${bgStyle} ${isSelf ? 'ring-2 ring-cyan-400' : ''}">
-                                <div class="flex items-center gap-2 sm:gap-3">
+                            <div class="${bgStyle} p-3 rounded-xl border flex items-center justify-between gap-2 shadow">
+                                <div class="flex items-center gap-2.5 overflow-hidden">
                                     ${rankBadge}
-                                    <div>
-                                        <div class="font-bold text-xs sm:text-sm text-white flex items-center gap-1 flex-wrap">
-                                            <span>${safeName}</span>
-                                            ${statusBadgeHtml}
-                                            ${isSelf ? '<span class="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1 py-0.2 rounded">你自己</span>' : ''}
+                                    <div class="truncate">
+                                        <div class="font-bold text-xs sm:text-sm text-white truncate flex items-center">
+                                            ${safeName}${vipTag}${banTag}
                                         </div>
-                                        <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
-                                            收集度: <b class="text-cyan-300">${u.unlockedCount}/${totalCardsInGame}</b> (${u.progressPct}%)
-                                        </div>
+                                        <div class="text-[10px] text-slate-400">圖鑑解鎖：${u.progressPct}% (${u.unlockedCount}張)</div>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-xs sm:text-sm font-black ${isDebt ? 'text-red-400' : 'text-cyan-300'}">
-                                        <i class="${isDebt ? 'fa-solid fa-skull text-red-400 mr-0.5' : 'fa-solid fa-gem text-cyan-400 mr-0.5'}"></i>${u.points.toLocaleString()} 分
-                                    </div>
+                                <div class="text-right shrink-0">
+                                    <span class="text-xs sm:text-sm font-black text-cyan-300">${u.points.toLocaleString()}</span>
+                                    <span class="text-[10px] text-slate-400">分</span>
                                 </div>
                             </div>
                         `;
                     }).join('');
                 }
-
             } catch (err) {
-                if (listEl) {
-                    listEl.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">載入數據失敗: ${err.message}</div>`;
-                }
+                if (listEl) listEl.innerHTML = `<div class="text-center py-8 text-red-400">載入排行榜失敗: ${err.message}</div>`;
             }
-        }
+        };
 
-        // 🛡️ 動態渲染管理員控制台（防範原始碼外洩）
-        function renderAdminPanelContent() {
-            const adminContainer = document.getElementById('tab-admin');
-            if (!adminContainer) return;
-
-            // 再次進行嚴格 UID 檢查
-            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
-                adminContainer.innerHTML = '';
-                return;
-            }
-
-            adminContainer.innerHTML = `
-                <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-4 sm:space-y-6">
-                    <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
-                        <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
-                            <i class="fa-solid fa-crown"></i> 最高管理員面板
-                        </h3>
-                        <span class="text-[10px] text-slate-400 font-mono">UID: eTYTRQFMmZc5...</span>
-                    </div>
-
-                    <!-- 📢 管理員專屬：發布動態公告欄功能 -->
-                    <div class="bg-slate-900/90 p-4 rounded-xl border border-cyan-500/40 space-y-3">
-                        <h4 class="font-bold text-sm sm:text-base text-cyan-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-bullhorn"></i> 發布全服系統公告
-                        </h4>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="text" id="adminAnnounceInput" placeholder="請輸入新的公告內容..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm">
-                            <button onclick="adminPublishAnnouncement()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-2 rounded-xl text-xs font-bold text-white shadow shrink-0">
-                                發布公告
-                            </button>
-                        </div>
-                        <div class="border-t border-slate-800 pt-2 space-y-1.5">
-                            <span class="text-[10px] text-slate-400 font-bold block">目前已發布的公告 (點擊可刪除)：</span>
-                            <div id="adminAnnounceList" class="space-y-1.5 max-h-36 overflow-y-auto">
-                                <div class="text-xs text-slate-500">載入公告中...</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 📊 宏觀營運與卡店盈虧 -->
-                    <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 space-y-2">
-                        <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-chart-line"></i> 宏觀營運數據 (僅管理員可見)
-                        </h4>
-                        <div class="grid grid-cols-2 gap-3 pt-1">
-                            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-                                <span class="text-[10px] text-slate-400 block font-bold">全服玩家總淨收益</span>
-                                <span id="adminStatPlayerProfit" class="text-base sm:text-lg font-black text-emerald-400">--</span>
-                                <span class="text-[10px] text-slate-500">分</span>
-                            </div>
-                            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-                                <span class="text-[10px] text-slate-400 block font-bold">🏪 卡店累積損益</span>
-                                <span id="adminStatShopLoss" class="text-base sm:text-lg font-black text-red-400">--</span>
-                                <span class="text-[10px] text-slate-500">分</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 玩家權限與黑名單管理 -->
-                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 space-y-3 sm:space-y-4">
-                        <h4 class="font-bold text-sm sm:text-base text-amber-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-users-gear"></i> 全服訓練家權限與黑名單封禁
-                        </h4>
-                        
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <select id="adminUserSelect" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none text-xs sm:text-sm font-bold">
-                                <option value="">載入全服玩家清單中...</option>
-                            </select>
-                            <button onclick="fetchAdminUserList()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 shrink-0">
-                                <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
-                            </button>
-                        </div>
-
-                        <div id="selectedUserCard" class="hidden bg-slate-800/90 p-3 sm:p-4 rounded-xl border border-cyan-500/40 space-y-3">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span id="selectedUserName" class="font-black text-base sm:text-lg text-white">--</span>
-                                    <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono block">UID: --</span>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-[10px] text-slate-400 block">當前分數</span>
-                                    <span id="selectedUserCurrentPoints" class="text-base sm:text-xl font-black text-cyan-300">--</span>
-                                </div>
-                            </div>
-
-                            <!-- 🚫 管理員封禁控制項 -->
-                            <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
-                                <div>
-                                    <span class="text-xs font-bold text-red-400 block"><i class="fa-solid fa-shield-cat mr-1"></i>遊玩狀態：</span>
-                                    <span id="selectedUserBanStatusText" class="text-xs text-slate-300 font-bold">檢查中...</span>
-                                </div>
-                                <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-600 hover:bg-red-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">
-                                    封禁此玩家
-                                </button>
-                            </div>
-
-                            <div class="border-t border-slate-700 pt-2.5 flex items-center justify-between">
-                                <div>
-                                    <span class="text-xs font-bold text-amber-300 block">VIP 狀態：</span>
-                                    <span id="selectedUserVipStatusText" class="text-xs text-slate-400">檢查中...</span>
-                                </div>
-                                <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-950 shadow">
-                                    切換 VIP
-                                </button>
-                            </div>
-
-                            <div class="border-t border-slate-700 pt-2.5">
-                                <span class="text-xs font-bold text-slate-300 block mb-1.5">快速增減分數：</span>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <button onclick="adminAdjustSelectedUser(1000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+1,000</button>
-                                    <button onclick="adminAdjustSelectedUser(5000)" class="bg-amber-600 hover:bg-amber-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+5,000</button>
-                                    <button onclick="adminAdjustSelectedUser(50000)" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">+50,000</button>
-                                    <button onclick="adminAdjustSelectedUser(-1000)" class="bg-red-600 hover:bg-red-500 active:scale-95 px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow">-1,000</button>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-2 pt-1">
-                                <input type="number" id="adminCustomPointsInput" placeholder="指定目標分數..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white focus:outline-none text-xs">
-                                <button onclick="adminSetCustomPoints()" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 px-4 py-1.5 rounded-xl text-xs font-bold text-white shadow shrink-0">設定分數</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 🛡️ 安全防護的 switchTab：嚴格檢查 ADMIN_UID 並動態渲染管理控制台
-        function switchTab(tab) {
-            if (tab === 'admin') {
-                if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
-                    alert("⚠️ 權限不足！此為最高管理員專屬介面。");
-                    return;
-                }
-                renderAdminPanelContent(); // 通過後動態渲染
-            }
-
-            document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-
-            // 1. 桌面端導覽按鈕樣式重置
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition";
             });
-            
-            // 如果不是管理員，強制保持桌面管理按鈕隱藏
-            const isAdmin = auth.currentUser && auth.currentUser.uid === ADMIN_UID;
-            const adminTabBtn = document.getElementById('adminTabBtn');
-            if (adminTabBtn && !isAdmin) adminTabBtn.classList.add('hidden');
-
-            const activeNav = document.getElementById(`nav-${tab}`);
-            if (activeNav) {
-                activeNav.className = tab === 'admin' 
-                    ? "tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600 text-white border border-amber-500 text-sm active:scale-95 transition" 
-                    : "tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition";
-            }
-
-            // 2. 手機端導覽按鈕樣式重置 (修復漏洞重點)
             document.querySelectorAll('.mob-tab-btn').forEach(btn => {
                 btn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition";
             });
 
-            // 🔧 【關鍵修復】：重置樣式後，非管理員必須重新加上 hidden
-            const mobAdminTabBtn = document.getElementById('mobAdminTabBtn');
-            if (mobAdminTabBtn) {
-                if (isAdmin) {
-                    mobAdminTabBtn.classList.remove('hidden');
-                } else {
-                    mobAdminTabBtn.classList.add('hidden');
-                }
-            }
+            const targetTab = document.getElementById(`tab-${tabName}`);
+            if (targetTab) targetTab.classList.remove('hidden');
 
-            const activeMobNav = document.getElementById(`mob-nav-${tab}`);
-            if (activeMobNav) {
-                activeMobNav.className = tab === 'admin'
-                    ? "mob-tab-btn flex flex-col items-center gap-0.5 text-amber-400 font-bold text-[10px] active:scale-90 transition"
-                    : "mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition";
-            }
+            const deskBtn = document.getElementById(`nav-${tabName}`);
+            if (deskBtn) deskBtn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition";
 
-            if (tab === 'binder') renderBinder();
-            if (tab === 'sell') renderSellInventory();
-            if (tab === 'leaderboard') fetchGlobalStatsAndLeaderboard();
-            if (tab === 'admin') fetchAdminUserList();
-        }
+            const mobBtn = document.getElementById(`mob-nav-${tabName}`);
+            if (mobBtn) mobBtn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition";
 
-        window.toggleAuthMode = toggleAuthMode;
-        window.handleAuthSubmit = handleAuthSubmit;
-        window.handleSignOut = handleSignOut;
-        window.openVipModal = openVipModal;
-        window.closeVipModal = closeVipModal;
-        window.promptChangeUsername = promptChangeUsername;
-        window.fetchAdminUserList = fetchAdminUserList;
-        window.adminToggleBanSelectedUser = adminToggleBanSelectedUser;
-        window.adminToggleVipForSelectedUser = adminToggleVipForSelectedUser;
-        window.adminAdjustSelectedUser = adminAdjustSelectedUser;
-        window.adminSetCustomPoints = adminSetCustomPoints;
-        window.adminPublishAnnouncement = adminPublishAnnouncement;
-        window.adminDeleteAnnouncement = adminDeleteAnnouncement;
-        window.startPackChoice = startPackChoice;
-        window.choosePackAndTear = choosePackAndTear;
-        window.flipCard = flipCard;
-        window.flipAllCards = flipAllCards;
-        window.closePackModal = closePackModal;
-        window.sellSingleCard = sellSingleCard;
-        window.sellAllDuplicates = sellAllDuplicates;
-        window.switchLbSubTab = switchLbSubTab;
-        window.fetchGlobalStatsAndLeaderboard = fetchGlobalStatsAndLeaderboard;
-        window.renderBinder = renderBinder;
-        window.switchTab = switchTab;
+            if (tabName === 'binder') renderBinder();
+            if (tabName === 'sell') renderSellInventory();
+            if (tabName === 'leaderboard') fetchGlobalStatsAndLeaderboard();
+        };
+
+        window.switchTab('pack');
     </script>
 </body>
 </html>
