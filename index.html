@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="zh-TW" class="dark">
 <head>
+    <script>
+        // 🚫 禁用右鍵選單
+        document.addEventListener('contextmenu', event => event.preventDefault());
+    
+        // 🚫 禁用 F12, Ctrl+Shift+I, Ctrl+U 等開發者快捷鍵
+        document.addEventListener('keydown', event => {
+            if (event.key === 'F12' || 
+               (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'J' || event.key === 'C')) ||
+               (event.ctrlKey && event.key === 'U')) {
+                event.preventDefault();
+                alert("⚠️ 系統安全防護已啟動，禁止開啟開發者工具！");
+            }
+        });
+    
+        // 🚫 無限 Debugger 陷阱 (如果玩家強行打開 F12，瀏覽器會直接卡死在這裡)
+        setInterval(() => {
+            (function() { return false; }['constructor']('debugger')());
+        }, 1000);
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>寶可夢卡牌模擬器</title>
@@ -1421,7 +1441,10 @@
             }, 5000);
         }
 
-        window.adminPublishAnnouncement = async function() {
+        window.adminAdjustSelectedUser = async function(delta) {
+            if (checkBanned()) return;
+            // 👇 加入這行！防禦 F12 強制呼叫
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
             if (checkBanned()) return;
             const input = document.getElementById('adminAnnounceInput');
             const text = input ? input.value.trim() : '';
@@ -1451,39 +1474,41 @@
         };
 
         onAuthStateChanged(auth, async (user) => {
-    // 🧹 每次切換帳號或登出時，先清理舊的管理員介面
-    const existingAdminBtnDesk = document.getElementById('adminTabBtn');
-    if (existingAdminBtnDesk) existingAdminBtnDesk.remove();
-    
-    const existingAdminBtnMob = document.getElementById('mobAdminTabBtn');
-    if (existingAdminBtnMob) existingAdminBtnMob.remove();
-
-    const existingAdminTab = document.getElementById('tab-admin');
-    if (existingAdminTab) existingAdminTab.remove();
-
-    const existingAdminBadge = document.getElementById('adminBadge');
-    if (existingAdminBadge) existingAdminBadge.classList.add('hidden');
-
-    // 1. 先渲染卡包列表（無論登入與否都必須渲染！）
-    try {
-        if (typeof renderPackList === 'function') {
-            renderPackList();
-        }
-    } catch (e) {
-        console.error("渲染卡包列表失敗:", e);
-    }
-
-    if (user) {
-        // --- 已登入狀態 ---
-        const authModal = document.getElementById('authModal');
-        const userHeaderInfo = document.getElementById('userHeaderInfo');
-        if (authModal) authModal.classList.add('hidden');
-        if (userHeaderInfo) userHeaderInfo.classList.remove('hidden');
+            // 1. 先渲染卡包列表
+            try {
+                if (typeof renderPackList === 'function') renderPackList();
+            } catch (e) {
+                console.error("渲染卡包列表失敗:", e);
+            }
         
-        // 👑 嚴格驗證是否為最高管理員 UID
-        if (user.uid === ADMIN_UID) {
-            let badge = document.getElementById('adminBadge');
-            if (badge) badge.classList.remove('hidden');
+            if (user) {
+                // --- 已登入狀態 ---
+                const authModal = document.getElementById('authModal');
+                const userHeaderInfo = document.getElementById('userHeaderInfo');
+                if (authModal) authModal.classList.add('hidden');
+                if (userHeaderInfo) userHeaderInfo.classList.remove('hidden');
+                
+                // 👑 嚴格驗證是否為最高管理員 UID
+                const adminBtnDesk = document.getElementById('adminTabBtn'); // 桌機按鈕
+                const adminBtnMob = document.getElementById('mobAdminTabBtn'); // 手機按鈕
+                const adminBadge = document.getElementById('adminBadge'); // 標籤
+                const adminTab = document.getElementById('tab-admin'); // 整個面板區塊
+        
+                if (user.uid === ADMIN_UID) {
+                    // 是管理員：顯示按鈕與標籤
+                    if (adminBtnDesk) adminBtnDesk.classList.remove('hidden');
+                    if (adminBtnMob) adminBtnMob.classList.remove('hidden');
+                    if (adminBadge) adminBadge.classList.remove('hidden');
+                    
+                    // 載入全服玩家清單
+                    if (typeof fetchAdminUserList === 'function') fetchAdminUserList();
+                } else {
+                    // 🚫 不是管理員：隱藏按鈕，並【徹底清空】管理員面板的 HTML，防 F12 偷開！
+                    if (adminBtnDesk) adminBtnDesk.classList.add('hidden');
+                    if (adminBtnMob) adminBtnMob.classList.add('hidden');
+                    if (adminBadge) adminBadge.classList.add('hidden');
+                    if (adminTab) adminTab.innerHTML = `<div class="text-center text-red-500 py-12 font-black text-xl">⚠️ 警告：您沒有管理員權限！</div>`;
+                }
 
             // 電腦端管理員按鈕
             const desktopNav = document.querySelector('header nav');
@@ -1775,7 +1800,10 @@
             }
         }
 
-        window.adminToggleBanSelectedUser = async function() {
+        window.adminAdjustSelectedUser = async function(delta) {
+            if (checkBanned()) return;
+            // 👇 加入這行！防禦 F12 強制呼叫
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
@@ -1794,7 +1822,10 @@
             }
         };
 
-        window.adminToggleVipForSelectedUser = async function() {
+        window.adminAdjustSelectedUser = async function(delta) {
+            if (checkBanned()) return;
+            // 👇 加入這行！防禦 F12 強制呼叫
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
@@ -1813,7 +1844,10 @@
             }
         };
 
-        window.adminAdjustSelectedUser = async function(delta) {
+       window.adminAdjustSelectedUser = async function(delta) {
+            if (checkBanned()) return;
+            // 👇 加入這行！防禦 F12 強制呼叫
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
