@@ -15,7 +15,7 @@
             }
         });
     
-        // 🚫 無限 Debugger 陷阱
+        // 🚫 無限 Debugger 陷阱 (如果玩家強行打開 F12，瀏覽器會直接卡死在這裡)
         setInterval(() => {
             (function() { return false; }['constructor']('debugger')());
         }, 1000);
@@ -221,9 +221,8 @@
                 <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員
             </button>
         </nav>
-
     </div>
-</header>
+    </header>
 
     <!-- 📱 手機專用固定底部導覽列 -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 z-40 flex justify-around py-2 px-1 text-center shadow-2xl pb-[calc(8px+env(safe-area-inset-bottom))]">
@@ -596,31 +595,44 @@
 
     <!-- 一般 script 標籤 -->
     <script>
-        window.switchTab = function(tabId) {
+        window.switchTab = function(tabName) {
+            // 1. 隱藏所有 tab-content
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    
-            const targetTab = document.getElementById('tab-' + tabId);
-            if (targetTab) targetTab.classList.remove('hidden');
-    
+            
+            // 2. 移除所有桌機按鈕的 active 狀態
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-red-600', 'text-white');
                 btn.classList.add('bg-slate-800', 'text-slate-300');
             });
-            const activeNav = document.getElementById('nav-' + tabId);
-            if (activeNav) {
-                activeNav.classList.remove('bg-slate-800', 'text-slate-300');
-                activeNav.classList.add('bg-red-600', 'text-white');
-            }
-    
+
+            // 3. 移除所有手機按鈕的 active 狀態
             document.querySelectorAll('.mob-tab-btn').forEach(btn => {
                 btn.classList.remove('text-red-500');
                 btn.classList.add('text-slate-400');
             });
-            const activeMobNav = document.getElementById('mob-nav-' + tabId);
-            if (activeMobNav) {
-                activeMobNav.classList.remove('text-slate-400');
-                activeMobNav.classList.add('text-red-500');
+
+            // 4. 顯示目標 Tab
+            const targetTab = document.getElementById(`tab-${tabName}`);
+            if (targetTab) targetTab.classList.remove('hidden');
+
+            // 5. 亮起目標桌機按鈕
+            const deskBtn = document.getElementById(`nav-${tabName}`);
+            if (deskBtn) {
+                deskBtn.classList.remove('bg-slate-800', 'text-slate-300');
+                deskBtn.classList.add('bg-red-600', 'text-white');
             }
+
+            // 6. 亮起目標手機按鈕
+            const mobBtn = document.getElementById(`mob-nav-${tabName}`);
+            if (mobBtn) {
+                mobBtn.classList.remove('text-slate-400');
+                mobBtn.classList.add('text-red-500');
+            }
+
+            // 7. 觸發各頁面的渲染更新
+            if (tabName === 'binder' && typeof window.renderBinder === 'function') window.renderBinder();
+            if (tabName === 'sell' && typeof window.renderSellInventory === 'function') window.renderSellInventory();
+            if (tabName === 'leaderboard' && typeof window.fetchGlobalStatsAndLeaderboard === 'function') window.fetchGlobalStatsAndLeaderboard();
         };
     </script>
 
@@ -658,7 +670,7 @@
         let currentLbSubTab = 'lucky';
 
         // 🛡️ XSS 防禦機制：全域 HTML 特殊字元轉義函數
-        function escapeHTML(str) {
+        window.escapeHTML = function(str) {
             if (!str) return '';
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -669,7 +681,7 @@
         }
 
         // 🚫 防禦機制：檢查目前玩家是否被封禁
-        function checkBanned() {
+        window.checkBanned = function() {
             if (currentUserDoc && currentUserDoc.isBanned) {
                 document.getElementById('bannedModal').classList.remove('hidden');
                 return true;
@@ -1486,7 +1498,7 @@
             }
         };
 
-        function renderPackList() {
+        window.renderPackList = function() {
             const container = document.getElementById('packListGrid');
             if (!container) return;
 
@@ -1524,11 +1536,10 @@
                 </div>
             `).join('');
         }
-
         
         onAuthStateChanged(auth, async (user) => {
             try {
-                if (typeof renderPackList === 'function') renderPackList();
+                if (typeof window.renderPackList === 'function') window.renderPackList();
             } catch (e) {
                 console.error("渲染卡包列表失敗:", e);
             }
@@ -1540,25 +1551,23 @@
                 if (authModal) authModal.classList.add('hidden');
                 if (userHeaderInfo) userHeaderInfo.classList.remove('hidden');
                 
-                // 👑 嚴格驗證是否為最高管理員 UID
-                const adminBtnDesk = document.getElementById('adminTabBtn'); // 桌機按鈕
-                const adminBtnMob = document.getElementById('mobAdminTabBtn'); // 手機按鈕
-                const adminBadge = document.getElementById('adminBadge'); // 標籤
-                const adminTab = document.getElementById('tab-admin'); // 整個面板區塊
+                const adminBtnDesk = document.getElementById('adminTabBtn'); 
+                const adminBtnMob = document.getElementById('mobAdminTabBtn'); 
+                const adminBadge = document.getElementById('adminBadge'); 
+                const adminTab = document.getElementById('tab-admin'); 
         
                 if (user.uid === ADMIN_UID) {
-                    // 是管理員：顯示按鈕與標籤
                     if (adminBtnDesk) adminBtnDesk.classList.remove('hidden');
                     if (adminBtnMob) adminBtnMob.classList.remove('hidden');
                     if (adminBadge) adminBadge.classList.remove('hidden');
                     
                     if (typeof fetchAdminUserList === 'function') fetchAdminUserList();
                 } else {
-                    // 🚫 不是管理員：隱藏按鈕，並【徹底清空】管理員面板的 HTML，防 F12 偷開！
-                    if (adminBtnDesk) adminBtnDesk.classList.add('hidden');
-                    if (adminBtnMob) adminBtnMob.classList.add('hidden');
-                    if (adminBadge) adminBadge.classList.add('hidden');
-                    if (adminTab) adminTab.innerHTML = `<div class="text-center text-red-500 py-12 font-black text-xl">⚠️ 警告：您沒有管理員權限！</div>`;
+                    // 物理銷毀管理員節點，防止 switchTab 把隱藏屬性洗掉
+                    if (adminBtnDesk) adminBtnDesk.remove();
+                    if (adminBtnMob) adminBtnMob.remove();
+                    if (adminBadge) adminBadge.remove();
+                    if (adminTab) adminTab.remove();
                 }
 
                 const userRef = doc(db, "users", user.uid);
@@ -1569,7 +1578,7 @@
                     if (snap.exists()) {
                         currentUserDoc = snap.data();
                         
-                        // 檢查每日登入獎勵 (+500 分) - 採用非阻塞方式，避免 onSnapshot 死鎖
+                        // 檢查每日登入獎勵 (+500 分)
                         const todayStr = new Date().toISOString().split('T')[0];
                         if (currentUserDoc.lastDailyDate !== todayStr) {
                             const newPoints = (currentUserDoc.points || 0) + 500;
@@ -1582,22 +1591,22 @@
                             }, { merge: true }).catch(err => console.error("每日獎勵更新失敗:", err));
                         }
 
-                        if (typeof updateUI === 'function') updateUI();
-                        if (typeof checkBanned === 'function') checkBanned();
+                        if (typeof window.updateUI === 'function') window.updateUI();
+                        if (typeof window.checkBanned === 'function') window.checkBanned();
                         
                         const binderTab = document.getElementById('tab-binder');
                         if (binderTab && !binderTab.classList.contains('hidden')) {
-                            if (typeof renderBinder === 'function') renderBinder();
+                            if (typeof window.renderBinder === 'function') window.renderBinder();
                         }
                         
                         const sellTab = document.getElementById('tab-sell');
                         if (sellTab && !sellTab.classList.contains('hidden')) {
-                            if (typeof renderSellInventory === 'function') renderSellInventory();
+                            if (typeof window.renderSellInventory === 'function') window.renderSellInventory();
                         }
                     }
                 });
 
-                if (typeof fetchGlobalStatsAndLeaderboard === 'function') fetchGlobalStatsAndLeaderboard();
+                if (typeof window.fetchGlobalStatsAndLeaderboard === 'function') window.fetchGlobalStatsAndLeaderboard();
                 
             } else {
                 // --- 未登入狀態 ---
@@ -1715,16 +1724,16 @@
 
                 currentUserDoc.name = cleanedName;
                 currentUserDoc.points = newPoints;
-                updateUI();
+                window.updateUI();
                 
                 alert(`🎉 成功修改暱稱為「${cleanedName}」！`);
-                fetchGlobalStatsAndLeaderboard();
+                window.fetchGlobalStatsAndLeaderboard();
             } catch (err) {
                 alert("修改暱稱失敗: " + err.message);
             }
         };
 
-        async function fetchAdminUserList() {
+        window.fetchAdminUserList = async function() {
             const selectEl = document.getElementById('adminUserSelect');
             if (!selectEl) return;
             selectEl.innerHTML = `<option value="">載入全服玩家中...</option>`;
@@ -1780,21 +1789,21 @@
             try {
                 await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
                 alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
-                fetchAdminUserList();
-                fetchGlobalStatsAndLeaderboard();
+                window.fetchAdminUserList();
+                window.fetchGlobalStatsAndLeaderboard();
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
         };
 
-        async function syncToCloud(updateData) {
+        window.syncToCloud = async function(updateData) {
             if (checkBanned()) return;
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
             await setDoc(userRef, updateData, { merge: true });
         }
 
-        function updateUI() {
+        window.updateUI = function() {
             if (!currentUserDoc) return;
             const points = currentUserDoc.points || 0;
             const isVip = currentUserDoc.isVip || false;
@@ -1922,7 +1931,7 @@
                 currentUserDoc.totalPulledValue = newTotalPulledValue;
                 currentPulledCards = pulledCards;
 
-                updateUI();
+                window.updateUI();
 
                 document.getElementById('animStepChoice').classList.add('hidden');
                 document.getElementById('animStepTear').classList.remove('hidden');
@@ -1931,7 +1940,7 @@
                 setTimeout(() => {
                     document.getElementById('animStepTear').classList.add('hidden');
                     document.getElementById('animStepReveal').classList.remove('hidden');
-                    renderModalFlipCards(currentPulledCards);
+                    window.renderModalFlipCards(currentPulledCards);
                 }, 1000);
 
             } catch (err) {
@@ -1941,12 +1950,12 @@
             }
         };
 
-        function getImgSrcWithFallback(card) {
+        window.getImgSrcWithFallback = function(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
             return `src="${card.image}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}';"`;
         }
 
-        function renderModalFlipCards(cards) {
+        window.renderModalFlipCards = function(cards) {
             const grid = document.getElementById('modalCardsGrid');
             grid.innerHTML = cards.map((c, idx) => `
                 <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${idx})">
@@ -1958,7 +1967,7 @@
                         </div>
                         <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
                             <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-900">
-                                <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
+                                <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
                             </div>
                             <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
                             <div class="flex items-center gap-1 mt-0.5">
@@ -1997,7 +2006,7 @@
 
         window.closePackModal = function() {
             document.getElementById('packModal').classList.add('hidden');
-            renderResults(currentPulledCards);
+            window.renderResults(currentPulledCards);
 
             setTimeout(() => {
                 const area = document.getElementById('pullResultsArea');
@@ -2007,7 +2016,7 @@
             }, 100);
         };
 
-        function renderResults(cards) {
+        window.renderResults = function(cards) {
             const area = document.getElementById('pullResultsArea');
             const grid = document.getElementById('cardsGrid');
             if (!area || !grid || cards.length === 0) return;
@@ -2015,7 +2024,7 @@
             grid.innerHTML = cards.map(c => `
                 <div class="bg-slate-900/90 p-2 sm:p-2.5 rounded-xl border border-slate-700/80 flex flex-col items-center hover:scale-105 transition shadow-lg">
                     <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
-                        <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
+                        <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
                     </div>
                     <span class="text-[11px] sm:text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
                     <div class="flex items-center gap-1 mt-0.5 sm:mt-1">
@@ -2041,7 +2050,7 @@
                     <div class="bg-slate-800/90 p-2 rounded-xl border border-slate-700 text-center relative flex flex-col items-center justify-between">
                         <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow">×${count}</span>
                         <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
-                            <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
+                            <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
                         </div>
                         <div class="w-full mt-1">
                             <div class="text-[10px] sm:text-[11px] font-bold text-slate-200 truncate">${escapeHTML(c.name)}</div>
@@ -2078,7 +2087,7 @@
                         <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
                             <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
                                 <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow z-10">擁有 ${count}</span>
-                                <img ${getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
+                                <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
                             </div>
                             <div class="text-center w-full">
                                 <div class="text-[11px] sm:text-xs font-bold text-white truncate">${escapeHTML(c.name)}</div>
@@ -2110,11 +2119,11 @@
             currentUserDoc.cards[cardId]--;
             currentUserDoc.points = (currentUserDoc.points || 0) + price;
 
-            await syncToCloud({
+            await window.syncToCloud({
                 cards: currentUserDoc.cards,
                 points: currentUserDoc.points
             });
-            renderSellInventory();
+            window.renderSellInventory();
         };
 
         window.sellAllDuplicates = async function() {
@@ -2129,12 +2138,12 @@
             });
             if (total === 0) return alert("目前沒有重複卡！");
             currentUserDoc.points += total;
-            await syncToCloud({
+            await window.syncToCloud({
                 cards: currentUserDoc.cards,
                 points: currentUserDoc.points
             });
             if (!document.getElementById('tab-sell').classList.contains('hidden')) {
-                renderSellInventory();
+                window.renderSellInventory();
             }
             alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
         };
@@ -2153,7 +2162,7 @@
                 unluckyBtn.className = "flex-1 py-1.5 rounded-lg font-black text-xs transition flex items-center justify-center gap-1 bg-red-600 text-white shadow";
             }
 
-            fetchGlobalStatsAndLeaderboard();
+            window.fetchGlobalStatsAndLeaderboard();
         };
 
         window.fetchGlobalStatsAndLeaderboard = async function() {
@@ -2261,29 +2270,6 @@
             } catch (err) {
                 if (listEl) listEl.innerHTML = `<div class="text-center py-8 text-red-400">載入排行榜失敗: ${err.message}</div>`;
             }
-        };
-
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition";
-            });
-            document.querySelectorAll('.mob-tab-btn').forEach(btn => {
-                btn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition";
-            });
-
-            const targetTab = document.getElementById(`tab-${tabName}`);
-            if (targetTab) targetTab.classList.remove('hidden');
-
-            const deskBtn = document.getElementById(`nav-${tabName}`);
-            if (deskBtn) deskBtn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition";
-
-            const mobBtn = document.getElementById(`mob-nav-${tabName}`);
-            if (mobBtn) mobBtn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition";
-
-            if (tabName === 'binder') renderBinder();
-            if (tabName === 'sell') renderSellInventory();
-            if (tabName === 'leaderboard') fetchGlobalStatsAndLeaderboard();
         };
 
         window.switchTab('pack');
