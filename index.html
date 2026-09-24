@@ -579,6 +579,36 @@
         </div>
     </div>
 
+    <!-- 在 type="module" 的上方新增一般 <script> 標籤 -->
+    <script>
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    
+            const targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) targetTab.classList.remove('hidden');
+    
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-red-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            const activeNav = document.getElementById('nav-' + tabId);
+            if (activeNav) {
+                activeNav.classList.remove('bg-slate-800', 'text-slate-300');
+                activeNav.classList.add('bg-red-600', 'text-white');
+            }
+    
+            document.querySelectorAll('.mob-tab-btn').forEach(btn => {
+                btn.classList.remove('text-red-500');
+                btn.classList.add('text-slate-400');
+            });
+            const activeMobNav = document.getElementById('mob-nav-' + tabId);
+            if (activeMobNav) {
+                activeMobNav.classList.remove('text-slate-400');
+                activeMobNav.classList.add('text-red-500');
+            }
+        };
+    </script>
+
     <!-- Firebase SDK 與全前端雲端防禦邏輯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
