@@ -1593,6 +1593,8 @@
 
                         if (typeof window.updateUI === 'function') window.updateUI();
                         if (typeof window.checkBanned === 'function') window.checkBanned();
+                        // 🌟 修復 VIP 按鈕無法解鎖的問題：當玩家的 VIP 狀態下載完成後，重新刷新一次卡包列表！
+                        if (typeof window.renderPackList === 'function') window.renderPackList();
                         
                         const binderTab = document.getElementById('tab-binder');
                         if (binderTab && !binderTab.classList.contains('hidden')) {
