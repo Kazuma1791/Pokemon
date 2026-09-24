@@ -2170,10 +2170,11 @@
         window.fetchGlobalStatsAndLeaderboard = async function() {
             const listEl = document.getElementById('leaderboardList');
             if (listEl) {
-                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服排行榜數據中...</div>`;
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算排行榜數據中...</div>`;
             }
 
             try {
+                // 1. 抓取今日爆卡數量 (維持原樣)
                 try {
                     const todayStart = new Date();
                     todayStart.setHours(0, 0, 0, 0);
@@ -2182,29 +2183,34 @@
                         where("timestamp", ">=", todayStart.getTime())
                     );
                     const todaySnap = await getDocs(qToday);
-                    const todayRareCount = todaySnap.size;
-                    
                     const todayRaresEl = document.getElementById('statTodayRares');
-                    if (todayRaresEl) todayRaresEl.innerText = todayRareCount.toLocaleString();
+                    if (todayRaresEl) todayRaresEl.innerText = todaySnap.size.toLocaleString();
                 } catch (rareErr) {}
 
-                const snap = await getDocs(collection(db, "users"));
+                // 🌟 2. 拯救用量的關鍵修改：使用 orderBy 和 limit，只抓前 20 名！
+                let q;
+                if (currentLbSubTab === 'lucky') {
+                    // 幸運榜：分數由高到低，最多抓 20 人
+                    q = query(collection(db, "users"), orderBy("points", "desc"), limit(20));
+                } else {
+                    // 非洲榜：分數由低到高，最多抓 20 人
+                    q = query(collection(db, "users"), orderBy("points", "asc"), limit(20));
+                }
+
+                const snap = await getDocs(q); // 現在每次最多只消耗 20 次讀取！
+                
                 let usersList = [];
-                let totalCurrentPoints = 0;
                 const totalCardsInGame = Object.values(CARD_SETS).flat().length;
 
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
-                    const pts = data.points || 0;
-                    totalCurrentPoints += pts;
-
                     const cardsObj = data.cards || {};
                     const unlockedCount = Object.keys(cardsObj).filter(id => cardsObj[id] > 0).length;
 
                     usersList.push({
                         uid: docSnap.id,
                         name: data.name || "訓練家",
-                        points: pts,
+                        points: data.points || 0,
                         isVip: data.isVip || false,
                         isBanned: data.isBanned || false,
                         unlockedCount: unlockedCount,
@@ -2212,26 +2218,20 @@
                     });
                 });
 
-                const userCount = usersList.length;
-                const totalInitialCapital = userCount * INITIAL_GIFT_POINTS;
-                const netPlayerProfit = totalCurrentPoints - totalInitialCapital;
-                
+                // ⚠️ 注意：因為我們不再抓取「全服所有人」，所以無法在前端計算準確的「全服總淨收益」。
+                // 這裡改為顯示「榜上玩家總積分」作為替代，避免資料庫爆掉。
+                const boardTotalPoints = usersList.reduce((sum, u) => sum + u.points, 0);
                 const profitEl = document.getElementById('statPlayerProfit');
                 if (profitEl) {
-                    profitEl.innerText = (netPlayerProfit >= 0 ? "+" : "") + netPlayerProfit.toLocaleString();
-                    profitEl.className = netPlayerProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
+                    profitEl.innerText = boardTotalPoints.toLocaleString() + " (百大)";
+                    profitEl.className = "text-lg sm:text-2xl font-black text-emerald-400";
                 }
 
+                // 3. 渲染排行榜清單
                 if (listEl) {
                     if (usersList.length === 0) {
                         listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
                         return;
-                    }
-
-                    if (currentLbSubTab === 'lucky') {
-                        usersList.sort((a, b) => b.points - a.points);
-                    } else {
-                        usersList.sort((a, b) => a.points - b.points);
                     }
 
                     listEl.innerHTML = usersList.map((u, idx) => {
