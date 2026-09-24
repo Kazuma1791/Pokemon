@@ -523,30 +523,42 @@
 
     <!-- 在 type="module" 的上方新增一般 <script> 標籤 -->
     <script>
+        // 定義管理員 UID 廣域變數
+        const ADMIN_UID = 'eTYTRQFMmZc5Hj8KiH3HZkF77q62';
+        
         window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    
-            const targetTab = document.getElementById('tab-' + tabId);
-            if (targetTab) targetTab.classList.remove('hidden');
-    
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-red-600', 'text-white');
-                btn.classList.add('bg-slate-800', 'text-slate-300');
-            });
-            const activeNav = document.getElementById('nav-' + tabId);
-            if (activeNav) {
-                activeNav.classList.remove('bg-slate-800', 'text-slate-300');
-                activeNav.classList.add('bg-red-600', 'text-white');
+            const currentUser = firebase.auth().currentUser;
+        
+            // 🛡️ 防禦機制：若企圖進入管理員頁面，但 UID 不符，強行攔截並導回首頁
+            if (tabId === 'admin') {
+                if (!currentUser || currentUser.uid !== ADMIN_UID) {
+                    alert('❌ 權限不足：您不是系統管理員！');
+                    switchTab('home'); // 自動跳回主頁
+                    return;
+                }
             }
-    
-            document.querySelectorAll('.mob-tab-btn').forEach(btn => {
-                btn.classList.remove('text-red-500');
-                btn.classList.add('text-slate-400');
+        
+            // 1. 隱藏所有分頁內容
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
             });
-            const activeMobNav = document.getElementById('mob-nav-' + tabId);
-            if (activeMobNav) {
-                activeMobNav.classList.remove('text-slate-400');
-                activeMobNav.classList.add('text-red-500');
+        
+            // 2. 顯示目標分頁
+            const targetTab = document.getElementById(tabId);
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+            }
+        
+            // 3. 更新底部/頂部導覽列 active 高亮狀態（確保不影響 admin 按鈕的 hidden 狀態）
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-yellow-400', 'active');
+                btn.classList.add('text-gray-400');
+            });
+        
+            const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('text-yellow-400', 'active');
             }
         };
     </script>
