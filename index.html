@@ -78,16 +78,10 @@
 
     <!-- 🚫 帳號被封禁全螢幕警告 Modal -->
     <div id="bannedModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] hidden flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-20 h-20 bg-red-600/20 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500 text-4xl mb-4 animate-bounce">
-            <i class="fa-solid fa-ban"></i>
-        </div>
+        <div class="w-20 h-20 bg-red-600/20 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500 text-4xl mb-4 animate-bounce"><i class="fa-solid fa-ban"></i></div>
         <h2 class="text-2xl sm:text-3xl font-black text-red-500 mb-2">帳號已被禁止遊玩</h2>
-        <p class="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed">
-            系統檢測到您的帳號存在惡意行為或違規操作，管理員已暫停您的遊戲與資料庫存取權限。
-        </p>
-        <button onclick="handleSignOut()" class="mt-6 bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-2.5 rounded-xl border border-slate-600 transition shadow-lg active:scale-95 text-xs sm:text-sm">
-            <i class="fa-solid fa-right-from-bracket mr-1.5"></i>登出帳號
-        </button>
+        <p class="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed">系統檢測到您的帳號存在惡意行為或違規操作，管理員已暫停您的遊戲與資料庫存取權限。</p>
+        <button onclick="handleSignOut()" class="mt-6 bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-2.5 rounded-xl border border-slate-600 transition shadow-lg active:scale-95 text-xs sm:text-sm"><i class="fa-solid fa-right-from-bracket mr-1.5"></i>登出帳號</button>
     </div>
 
     <!-- 👑 頂部全服歐皇即時廣播橫幅 -->
@@ -96,40 +90,28 @@
         <span id="broadcastText" class="truncate"></span>
     </div>
 
-    <!-- 頂部導覽與帳號狀態欄 -->
     <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 shadow-xl">
     <div class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex flex-col lg:flex-row items-center justify-between gap-3">
-        
         <div class="w-full flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 shrink-0">
                 <div class="w-8 h-8 sm:w-10 sm:h-10 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-md">
                     <div class="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full border-2 border-slate-900"></div>
                 </div>
-                <h1 class="text-sm sm:text-xl font-black bg-gradient-to-r from-red-500 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
-                    寶可夢卡牌模擬器
-                </h1>
+                <h1 class="text-sm sm:text-xl font-black bg-gradient-to-r from-red-500 via-yellow-400 to-amber-300 bg-clip-text text-transparent">寶可夢卡牌模擬器</h1>
             </div>
 
-            <!-- 玩家雲端資訊 -->
             <div id="userHeaderInfo" class="hidden flex items-center gap-2 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm shrink-0">
                 <div class="flex items-center gap-1.5">
                     <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
                     
-                    <!-- 🌟 稱號展示與切換按鈕 -->
-                    <button onclick="promptChangeTitle()" title="切換稱號" class="text-[9px] sm:text-[10px] bg-indigo-900/80 hover:bg-indigo-800 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/50 transition truncate max-w-[80px] sm:max-w-[100px]">
+                    <!-- 🌟 稱號按鈕加入了 id="titleBtn" 以便動態改變顏色 -->
+                    <button id="titleBtn" onclick="promptChangeTitle()" title="切換稱號" class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded border transition truncate max-w-[80px] sm:max-w-[100px] hover:opacity-80">
                         <span id="displayTitle">🔰 新手訓練家</span>
                     </button>
 
                     <span id="displayUsername" class="font-bold text-white max-w-[60px] sm:max-w-[100px] truncate">訓練家</span>
-                    
-                    <button onclick="promptChangeUsername()" title="改名 (1,000分)" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:scale-95 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30 transition">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
-
-                    <button onclick="openVipModal()" class="text-[10px] bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-black px-2 py-0.5 rounded shadow flex items-center gap-1 shrink-0">
-                        <i class="fa-solid fa-crown text-[9px]"></i> <span>VIP</span>
-                    </button>
-
+                    <button onclick="promptChangeUsername()" title="改名 (1,000分)" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:scale-95 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button onclick="openVipModal()" class="text-[10px] bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-black px-2 py-0.5 rounded shadow flex items-center gap-1 shrink-0"><i class="fa-solid fa-crown text-[9px]"></i> <span>VIP</span></button>
                     <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded shrink-0">👑 管理員</span>
                 </div>
                 
@@ -141,10 +123,7 @@
                     <span class="text-[10px] text-slate-400">分</span>
                     <span id="debtBadge" class="hidden text-[9px] bg-red-600 text-white font-bold px-1 py-0.2 rounded animate-bounce">負債</span>
                 </div>
-
-                <button onclick="handleSignOut()" class="text-[10px] bg-red-950/80 hover:bg-red-800 text-red-200 px-2 py-1 rounded-lg border border-red-800/50 font-bold">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
+                <button onclick="handleSignOut()" class="text-[10px] bg-red-950/80 hover:bg-red-800 text-red-200 px-2 py-1 rounded-lg border border-red-800/50 font-bold"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
 
@@ -177,9 +156,7 @@
                     <h3 class="text-xs sm:text-sm font-black text-cyan-300 flex items-center gap-2">系統公告<span class="text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 px-1.5 py-0.2 rounded-full font-bold">即時</span></h3>
                     <span class="text-[10px] text-slate-400 font-mono">雲端發布</span>
                 </div>
-                <ul id="systemAnnouncementsList" class="text-[11px] sm:text-xs text-slate-300 space-y-1 pt-1">
-                    <li class="text-slate-500">載入系統公告中...</li>
-                </ul>
+                <ul id="systemAnnouncementsList" class="text-[11px] sm:text-xs text-slate-300 space-y-1 pt-1"><li class="text-slate-500">載入系統公告中...</li></ul>
             </div>
         </section>
 
@@ -213,7 +190,6 @@
             </div>
         </section>
 
-        <!-- TAB 1: 抽卡機 -->
         <section id="tab-pack" class="tab-content space-y-4 sm:space-y-6">
             <div id="pullResultsArea" class="hidden space-y-3 sm:space-y-4 bg-gradient-to-br from-slate-800 via-slate-800 to-amber-950/40 p-4 sm:p-5 rounded-2xl border-2 border-amber-400/60 shadow-2xl transition-all duration-500">
                 <div class="flex justify-between items-center border-b border-amber-500/30 pb-2.5">
@@ -225,7 +201,6 @@
             <div id="packListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
         </section>
 
-        <!-- TAB 2: 集卡冊圖鑑 -->
         <section id="tab-binder" class="tab-content hidden space-y-4 sm:space-y-6">
             <div class="bg-slate-800/90 p-3 sm:p-4 rounded-2xl border border-slate-700 flex justify-between items-center flex-wrap gap-2">
                 <select id="binderSetFilter" onchange="renderBinder()" class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold text-white focus:outline-none">
@@ -238,18 +213,14 @@
             <div id="binderGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-4"></div>
         </section>
 
-        <!-- TAB 3: 出售卡牌 -->
         <section id="tab-sell" class="tab-content hidden space-y-4 sm:space-y-6">
             <div class="bg-slate-800/90 p-3 sm:p-4 rounded-2xl border border-slate-700 flex justify-between items-center gap-2">
-                <div>
-                    <h3 class="text-sm sm:text-lg font-bold text-white"><i class="fa-solid fa-coins text-amber-400 mr-1"></i>卡牌交易所</h3>
-                </div>
+                <div><h3 class="text-sm sm:text-lg font-bold text-white"><i class="fa-solid fa-coins text-amber-400 mr-1"></i>卡牌交易所</h3></div>
                 <button onclick="sellAllDuplicates()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold text-white shadow shrink-0">一鍵賣出重複卡</button>
             </div>
             <div id="sellInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4"></div>
         </section>
 
-        <!-- TAB 4: 🏆 全服排行榜 -->
         <section id="tab-leaderboard" class="tab-content hidden space-y-4 sm:space-y-6">
             <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-amber-500/30 shadow-xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-3 gap-2">
@@ -267,13 +238,10 @@
             </div>
         </section>
 
-        <!-- TAB 5: 💬 全服留言板 -->
         <section id="tab-guestbook" class="tab-content hidden space-y-4 sm:space-y-6">
             <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border border-cyan-500/30 shadow-xl space-y-4">
                 <div class="border-b border-slate-700 pb-3 flex justify-between items-center flex-wrap gap-2">
-                    <div>
-                        <h3 class="text-base sm:text-xl font-bold text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-comments"></i> 全服訓練家留言板</h3>
-                    </div>
+                    <div><h3 class="text-base sm:text-xl font-bold text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-comments"></i> 全服訓練家留言板</h3></div>
                 </div>
                 <div class="bg-slate-900/90 p-3.5 sm:p-4 rounded-xl border border-slate-700 space-y-2.5">
                     <textarea id="guestbookInput" rows="3" placeholder="寫下你想對大家說的話（遵守社群規範）..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500 text-xs sm:text-sm resize-none"></textarea>
@@ -286,7 +254,6 @@
             </div>
         </section>
 
-        <!-- TAB 6: 最高管理員控制台 -->
         <section id="tab-admin" class="tab-content hidden space-y-4 sm:space-y-6">
             <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border-2 border-amber-500/40 shadow-xl space-y-6">
                 <div class="border-b border-slate-700 pb-3 flex justify-between items-center flex-wrap gap-2">
@@ -351,10 +318,9 @@
             <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700 space-y-2">
                 <h4 class="font-bold text-xs sm:text-sm text-amber-300 flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> VIP 專屬福利：</h4>
                 <ul class="text-xs text-slate-300 space-y-1.5">
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <b>VIP 專屬 30 連抽</b>（僅需 600 分，超高性價比！）</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> <b>VIP 專屬 30 連抽</b></li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 名字享有專屬的<b>流光霓虹特效邊框</b>。</li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 排行榜與介面常駐 <b>👑 VIP 皇冠標籤</b>。</li>
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> 永久身分認定，支持模擬器持續營運！</li>
                 </ul>
             </div>
             <div class="space-y-2">
@@ -363,7 +329,6 @@
             </div>
             <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-center space-y-1">
                 <span class="text-[11px] text-slate-400 block">付款後請將 **Email** 或 **PayMe 截圖** 告知管理員。</span>
-                <span class="text-[11px] font-bold text-amber-300 block">確認後將為您開通永久 VIP！</span>
             </div>
             <button onclick="closeVipModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs">關閉視窗</button>
         </div>
@@ -374,17 +339,16 @@
         <div id="animStepChoice" class="flex flex-col items-center space-y-4 sm:space-y-6 text-center max-w-2xl w-full my-auto">
             <div>
                 <h2 class="text-xl sm:text-2xl font-black text-amber-400 animate-pulse">請選擇其中一包卡包進行拆封！</h2>
-                <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">憑直覺選出一包幸運卡包吧！</p>
             </div>
             <div class="grid grid-cols-3 gap-2.5 sm:gap-6 w-full py-2 sm:py-4">
                 <div onclick="choosePackAndTear(1)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-2.5 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-300/60 cursor-pointer hover:scale-105 active:scale-95 transition flex flex-col items-center justify-center h-44 sm:h-64 group">
-                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i><span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #1</span><span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded-full mt-2">點擊選擇</span>
+                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i><span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #1</span>
                 </div>
                 <div onclick="choosePackAndTear(2)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-2.5 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-300/60 cursor-pointer hover:scale-105 active:scale-95 transition flex flex-col items-center justify-center h-44 sm:h-64 group">
-                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i><span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #2</span><span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded-full mt-2">點擊選擇</span>
+                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i><span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #2</span>
                 </div>
                 <div onclick="choosePackAndTear(3)" class="bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl p-2.5 sm:p-4 shadow-2xl border-2 sm:border-4 border-amber-300/60 cursor-pointer hover:scale-105 active:scale-95 transition flex flex-col items-center justify-center h-44 sm:h-64 group">
-                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i><span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #3</span><span class="text-[9px] sm:text-[10px] bg-slate-950/80 text-amber-300 font-bold px-1.5 py-0.5 rounded-full mt-2">點擊選擇</span>
+                    <i class="fa-solid fa-box-open text-3xl sm:text-5xl text-slate-950 mb-1 sm:mb-2 group-hover:rotate-12 transition"></i><span class="pack-choice-title text-slate-950 font-black text-xs sm:text-base leading-tight">卡包 #3</span>
                 </div>
             </div>
         </div>
@@ -394,7 +358,6 @@
             <div id="packVisualBox" class="w-40 sm:w-48 h-60 sm:h-72 bg-gradient-to-tr from-amber-500 via-yellow-300 to-purple-600 rounded-2xl shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center p-4 animate-pack-shake">
                 <i class="fa-solid fa-box-open text-5xl sm:text-6xl text-slate-950 mb-3"></i>
                 <span id="packVisualTitle" class="text-slate-950 font-black text-base sm:text-lg">POKÉMON</span>
-                <span class="text-[10px] text-slate-900 font-bold tracking-widest mt-1">OPENING...</span>
             </div>
         </div>
 
@@ -505,7 +468,24 @@
             return false;
         }
 
-        // 🌟 稱號檢查與解鎖機制 (擴充版)
+        // 🌟🌟🌟 新增：專屬稱號顏色判定系統 🌟🌟🌟
+        window.getTitleStyle = function(title) {
+            if (!title) return "bg-slate-500/20 text-slate-300 border-slate-500/40";
+            // 🟢 綠色：新手、成長
+            if (title.includes("新手") || title.includes("見習")) return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+            // 🔵 藍色：圖鑑收集
+            if (title.includes("圖鑑") || title.includes("菁英")) return "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
+            // 👑 金色發光：最高榮譽、財富自由
+            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) return "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.4)]";
+            // 🔴 紅色：破產、警告
+            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) return "bg-red-500/20 text-red-300 border-red-500/40";
+            // 🟣 紫色：狂熱、賭徒
+            if (title.includes("狂魔") || title.includes("賭徒")) return "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40";
+            
+            // 預設顏色
+            return "bg-indigo-500/20 text-indigo-300 border-indigo-500/40";
+        };
+
         window.checkAchievements = async function() {
             if (!currentUserDoc || !auth.currentUser) return;
             
@@ -513,12 +493,11 @@
             let newTitleUnlocked = false;
             let titleToAnnounce = "";
 
-            // 輔助函數：用來檢查並解鎖稱號
             const checkAndUnlock = (condition, titleName) => {
                 if (condition && !unlockedTitles.includes(titleName)) {
                     unlockedTitles.push(titleName);
                     newTitleUnlocked = true;
-                    titleToAnnounce = titleName; // 如果一次解鎖多個，會廣播最高級的那個
+                    titleToAnnounce = titleName;
                 }
             };
 
@@ -526,26 +505,18 @@
             const totalSpent = currentUserDoc.totalSpent || 0;
             const uniqueCardsCount = Object.keys(currentUserDoc.cards || {}).filter(id => currentUserDoc.cards[id] > 0).length;
 
-            // 📖 圖鑑收集類
             checkAndUnlock(uniqueCardsCount >= 10, "🔍 見習研究員");
             checkAndUnlock(uniqueCardsCount >= 50, "📚 圖鑑收藏家");
             checkAndUnlock(uniqueCardsCount >= 100, "🏅 菁英收集者");
             checkAndUnlock(uniqueCardsCount >= 200, "🏆 寶可夢大師");
-
-            // 💰 財富自由類 (正分)
             checkAndUnlock(points >= 500000, "💎 鑽石大亨");
             checkAndUnlock(points >= 1000000, "🤑 財富自由");
-
-            // 💸 負債破產類 (負分)
             checkAndUnlock(points <= -10000, "📉 韭菜訓練家");
             checkAndUnlock(points <= -100000, "💸 大負翁");
             checkAndUnlock(points <= -500000, "🏦 銀行黑名單");
-
-            // 🎰 抽卡花費類 (總消耗積分)
             checkAndUnlock(totalSpent >= 50000, "🔥 抽卡狂魔");
             checkAndUnlock(totalSpent >= 200000, "🎰 賭徒本色");
 
-            // 如果有解鎖新稱號，寫入資料庫並觸發特效
             if (newTitleUnlocked) {
                 try {
                     await setDoc(doc(db, "users", auth.currentUser.uid), { 
@@ -559,13 +530,10 @@
 
                     alert(`🎉 恭喜！您達成了隱藏條件，解鎖了全新稱號：【${titleToAnnounce}】！\n系統已為您自動裝備！`);
                     confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, zIndex: 1000 });
-                } catch (e) {
-                    console.error("稱號解鎖失敗", e);
-                }
+                } catch (e) {}
             }
         };
 
-        // 🌟 讓玩家手動切換稱號
         window.promptChangeTitle = async function() {
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入！");
             const titles = currentUserDoc.titles || ["🔰 新手訓練家"];
@@ -607,9 +575,7 @@
                     profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
                     profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
                 }
-            }, (err) => {
-                console.error("⚠️ 收益監聽被阻擋", err);
-            });
+            }, (err) => {});
         };
 
         window.recordDailyProfit = async function(changeAmount) {
@@ -619,9 +585,7 @@
                 const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
                 const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
                 await setDoc(statsRef, { profit: increment(changeAmount) }, { merge: true });
-            } catch (e) {
-                console.error("更新全日收益失敗:", e);
-            }
+            } catch (e) {}
         };
 
         window.listenToDailyStats();
@@ -1169,8 +1133,10 @@
                 const safeName = escapeHTML(data.userName || '訓練家');
                 const safeText = escapeHTML(data.text || '');
                 const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
-                // 🌟 新增：印出留言者的稱號
-                const titleBadge = `<span class="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
+                
+                // 🌟 動態套用稱號專屬顏色 (留言板)
+                const titleStyle = window.getTitleStyle(data.title);
+                const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
 
                 html += `
                     <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1.5 shadow">
@@ -1203,7 +1169,7 @@
                 await addDoc(collection(db, "messages"), {
                     uid: auth.currentUser.uid,
                     userName: currentUserDoc.name || '訓練家',
-                    title: currentUserDoc.currentTitle || "🔰 新手訓練家", // 🌟 發送真實稱號
+                    title: currentUserDoc.currentTitle || "🔰 新手訓練家",
                     isVip: currentUserDoc.isVip || false,
                     text: cleanedText,
                     timestamp: Date.now()
@@ -1214,7 +1180,7 @@
         };
 
         window.deleteGuestbookMessage = async function(docId) {
-            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 權限不足！只有最高管理員能刪除留言。");
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 權限不足！");
             if (!confirm("確定要刪除這條留言嗎？")) return;
             try {
                 await deleteDoc(doc(db, "messages", docId));
@@ -1297,8 +1263,10 @@
 
                 const rarityColor = ['FUR', 'UR', 'RGB'].includes(data.rarity) ? 'bg-amber-500 text-slate-950 font-black' : 'bg-emerald-600 text-white font-black';
                 const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-0.5">👑 VIP</span>' : '';
-                // 🌟 新增：印出廣播者的稱號
-                const titleBadge = `<span class="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-1 py-0.2 rounded font-bold mr-1">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
+                
+                // 🌟 動態套用稱號專屬顏色 (歐皇戰報)
+                const titleStyle = window.getTitleStyle(data.title);
+                const titleBadge = `<span class="text-[9px] ${titleStyle} px-1 py-0.2 rounded font-bold mr-1">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
 
                 html += `
                     <div class="flex flex-wrap items-center justify-between bg-slate-900/90 p-1.5 sm:p-2 rounded-lg border border-slate-700/60 gap-1 sm:gap-2">
@@ -1323,7 +1291,10 @@
             const safeName = escapeHTML(playerName);
             const safeCard = escapeHTML(cardName);
             const vipTag = isVip ? ' <span class="bg-slate-950 text-amber-400 text-[10px] px-1 py-0.2 rounded font-black">👑 VIP</span>' : '';
-            const titleBadge = `<span class="bg-indigo-900 text-indigo-300 text-[10px] px-1 py-0.2 rounded font-black mr-1">${escapeHTML(title || "🔰 新手訓練家")}</span>`;
+            
+            // 🌟 動態套用稱號專屬顏色 (頂部飄動橫幅)
+            const titleStyle = window.getTitleStyle(title);
+            const titleBadge = `<span class="text-[10px] ${titleStyle} px-1 py-0.2 rounded font-black mr-1">${escapeHTML(title || "🔰 新手訓練家")}</span>`;
             
             textEl.innerHTML = `恭喜 ${titleBadge}<span class="text-red-700 font-extrabold px-1">${safeName}</span>${vipTag} 抽到 <span class="bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-400 font-mono">[${rarity}] ${safeCard}</span>！`;
             banner.classList.remove('hidden');
@@ -1513,7 +1484,7 @@
                     if (res && res.user) {
                         const initialData = {
                             name: cleanedUsername,
-                            titles: ["🔰 新手訓練家"], // 🌟 新手預設稱號
+                            titles: ["🔰 新手訓練家"],
                             currentTitle: "🔰 新手訓練家",
                             points: INITIAL_GIFT_POINTS,
                             isVip: false,
@@ -1654,15 +1625,21 @@
             if (!currentUserDoc) return;
             const points = currentUserDoc.points || 0;
             const isVip = currentUserDoc.isVip || false;
+            const currentTitle = currentUserDoc.currentTitle || '🔰 新手訓練家';
 
             const headerInfoBox = document.getElementById('userHeaderInfo');
             const nameEl = document.getElementById('displayUsername');
             const titleEl = document.getElementById('displayTitle');
+            const titleBtn = document.getElementById('titleBtn'); // 🌟 抓取稱號按鈕
 
             nameEl.innerText = escapeHTML(currentUserDoc.name || '訓練家');
-            // 🌟 即時更新稱號顯示
+            
             if(titleEl) {
-                titleEl.innerText = escapeHTML(currentUserDoc.currentTitle || '🔰 新手訓練家');
+                titleEl.innerText = escapeHTML(currentTitle);
+                // 🌟 動態替換頂部稱號按鈕的顏色樣式
+                if (titleBtn) {
+                    titleBtn.className = `text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded border transition truncate max-w-[80px] sm:max-w-[100px] hover:opacity-80 ${window.getTitleStyle(currentTitle)}`;
+                }
             }
 
             if (isVip) {
@@ -1767,16 +1744,14 @@
                     for (let rareCard of topCards) {
                         await addDoc(collection(db, "broadcasts"), {
                             playerName: currentUserDoc.name || "訓練家",
-                            title: currentUserDoc.currentTitle || "🔰 新手訓練家", // 🌟 傳送稱號給廣播
+                            title: currentUserDoc.currentTitle || "🔰 新手訓練家",
                             cardName: rareCard.name,
                             rarity: rareCard.rarity,
                             isVip: currentUserDoc.isVip || false,
                             timestamp: Date.now()
                         });
                     }
-                } catch (broadcastErr) {
-                    console.warn("廣播發布異常:", broadcastErr);
-                }
+                } catch (broadcastErr) {}
 
                 currentUserDoc.points = newPoints;
                 currentUserDoc.cards = updatedCards;
@@ -1794,8 +1769,6 @@
                     document.getElementById('animStepTear').classList.add('hidden');
                     document.getElementById('animStepReveal').classList.remove('hidden');
                     window.renderModalFlipCards(currentPulledCards);
-                    
-                    // 🌟 抽完卡後，檢查是否有達成新成就！
                     window.checkAchievements();
                 }, 1000);
 
@@ -1851,9 +1824,7 @@
             currentPulledCards.forEach((_, idx) => {
                 setTimeout(() => {
                     const el = document.getElementById(`cardInner-${idx}`);
-                    if (el && !el.classList.contains('flipped')) {
-                        el.classList.add('flipped');
-                    }
+                    if (el && !el.classList.contains('flipped')) { el.classList.add('flipped'); }
                 }, idx * 60);
             });
         };
@@ -1946,17 +1917,13 @@
                                     <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${price} 分
                                 </div>
                             </div>
-                            <button onclick="sellSingleCard('${c.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 py-1 rounded-lg text-[11px] font-bold text-white shadow transition">
-                                出售 1 張
-                            </button>
+                            <button onclick="sellSingleCard('${c.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 py-1 rounded-lg text-[11px] font-bold text-white shadow transition">出售 1 張</button>
                         </div>
                     `;
                 }
             });
 
-            if (!hasCards) {
-                grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12 font-bold"><i class="fa-solid fa-box-open text-3xl block mb-2 opacity-50"></i>背包裡沒有可出售的卡牌！</div>`;
-            }
+            if (!hasCards) { grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12 font-bold"><i class="fa-solid fa-box-open text-3xl block mb-2 opacity-50"></i>背包裡沒有可出售的卡牌！</div>`; }
         };
 
         window.sellSingleCard = async function(cardId) {
@@ -1969,9 +1936,7 @@
             const price = RARITY[card.rarity].price;
             const newPoints = (currentUserDoc.points || 0) + price;
 
-            if (newPoints > 100000) {
-                return alert(`⚠️ 出售失敗！積分將達 ${newPoints.toLocaleString()} 分，超過 10 萬分安全上限，請先去抽卡消費。`);
-            }
+            if (newPoints > 100000) { return alert(`⚠️ 出售失敗！積分將達 ${newPoints.toLocaleString()} 分，超過 10 萬分安全上限。`); }
 
             try {
                 let newCards = { ...currentUserDoc.cards };
@@ -1984,12 +1949,8 @@
                 window.recordDailyProfit(price); 
                 window.updateUI(); 
                 window.renderSellInventory();
-                
-                // 🌟 賣卡後，檢查是否達成新成就 (大負翁解除等)
                 window.checkAchievements();
-            } catch (err) {
-                alert("出售失敗：" + err.message);
-            }
+            } catch (err) { alert("出售失敗：" + err.message); }
         };
 
         window.sellAllDuplicates = async function() {
@@ -2010,9 +1971,7 @@
             if (total === 0) return alert("目前沒有重複卡！");
             const newPoints = (currentUserDoc.points || 0) + total;
 
-            if (newPoints > 100000) {
-                return alert(`⚠️ 出售失敗！\n出售後積分將高達 ${newPoints.toLocaleString()} 分，超過系統的 100,000 分安全上限！\n請先去抽幾包卡消費一下再來出售。`);
-            }
+            if (newPoints > 100000) { return alert(`⚠️ 出售失敗！\n出售後積分將高達 ${newPoints.toLocaleString()} 分，超過系統的安全上限！`); }
 
             try {
                 await window.syncToCloud({ cards: newCards, points: newPoints });
@@ -2021,16 +1980,10 @@
                 window.recordDailyProfit(total); 
                 window.updateUI(); 
 
-                if (!document.getElementById('tab-sell').classList.contains('hidden')) {
-                    window.renderSellInventory();
-                }
+                if (!document.getElementById('tab-sell').classList.contains('hidden')) { window.renderSellInventory(); }
                 alert(`✅ 已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
-                
-                // 🌟 賣卡後，檢查是否達成新成就
                 window.checkAchievements();
-            } catch (err) {
-                alert("一鍵出售失敗，請稍後再試：" + err.message);
-            }
+            } catch (err) { alert("一鍵出售失敗，請稍後再試：" + err.message); }
         };
 
         window.switchLbSubTab = function(subTab) {
@@ -2054,23 +2007,30 @@
 
             try {
                 try {
+                    const todayDate = new Date();
+                    const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
+                    const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
+                    const statsSnap = await getDoc(statsRef);
+                    const todayProfit = statsSnap.exists() ? statsSnap.data().profit : 0;
+                    const profitEl = document.getElementById('statPlayerProfit');
+                    if (profitEl) {
+                        profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
+                        profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
+                    }
+                } catch (e) {}
+
+                try {
                     const todayStart = new Date();
                     todayStart.setHours(0, 0, 0, 0);
-                    const qToday = query(
-                        collection(db, "broadcasts"),
-                        where("timestamp", ">=", todayStart.getTime())
-                    );
+                    const qToday = query(collection(db, "broadcasts"), where("timestamp", ">=", todayStart.getTime()));
                     const todaySnap = await getDocs(qToday);
                     const todayRaresEl = document.getElementById('statTodayRares');
                     if (todayRaresEl) todayRaresEl.innerText = todaySnap.size.toLocaleString();
                 } catch (rareErr) {}
 
-                let q;
-                if (currentLbSubTab === 'lucky') {
-                    q = query(collection(db, "users"), orderBy("points", "desc"), limit(20));
-                } else {
-                    q = query(collection(db, "users"), orderBy("points", "asc"), limit(20));
-                }
+                let q = currentLbSubTab === 'lucky' 
+                    ? query(collection(db, "users"), orderBy("points", "desc"), limit(20))
+                    : query(collection(db, "users"), orderBy("points", "asc"), limit(20));
 
                 const snap = await getDocs(q);
                 let usersList = [];
@@ -2080,11 +2040,10 @@
                     const data = docSnap.data();
                     const cardsObj = data.cards || {};
                     const unlockedCount = Object.keys(cardsObj).filter(id => cardsObj[id] > 0).length;
-
                     usersList.push({
                         uid: docSnap.id,
                         name: data.name || "訓練家",
-                        title: data.currentTitle || "🔰 新手訓練家", // 🌟 抓取排行榜的稱號
+                        title: data.currentTitle || "🔰 新手訓練家",
                         points: data.points || 0,
                         isVip: data.isVip || false,
                         isBanned: data.isBanned || false,
@@ -2094,16 +2053,11 @@
                 });
 
                 if (listEl) {
-                    if (usersList.length === 0) {
-                        listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
-                        return;
-                    }
-
+                    if (usersList.length === 0) return listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
+                    
                     listEl.innerHTML = usersList.map((u, idx) => {
                         let rankBadge = `<span class="w-6 sm:w-8 text-center text-xs sm:text-sm font-bold text-slate-400">#${idx + 1}</span>`;
-                        let bgStyle = "bg-slate-900 border-slate-700/80";
-
-                        if (u.isVip) bgStyle = "vip-nameplate shadow-lg";
+                        let bgStyle = u.isVip ? "vip-nameplate shadow-lg" : "bg-slate-900 border-slate-700/80";
 
                         if (currentLbSubTab === 'lucky') {
                             if (idx === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
@@ -2114,8 +2068,10 @@
                         const safeName = escapeHTML(u.name);
                         const vipTag = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
                         const banTag = u.isBanned ? '<span class="text-[9px] bg-red-600 text-white font-bold px-1 rounded ml-1">已封禁</span>' : '';
-                        // 🌟 新增：印出排行榜上的稱號
-                        const titleBadge = `<span class="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-1 py-0.2 rounded font-bold mr-1.5">${escapeHTML(u.title)}</span>`;
+                        
+                        // 🌟 動態套用稱號專屬顏色 (排行榜)
+                        const titleStyle = window.getTitleStyle(u.title);
+                        const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(u.title)}</span>`;
 
                         return `
                             <div class="${bgStyle} p-3 rounded-xl border flex items-center justify-between gap-2 shadow">
