@@ -133,73 +133,77 @@
         <span id="broadcastText" class="truncate"></span>
     </div>
 
-    <!-- 頂部導覽與帳號狀態欄 -->
-    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 shadow-xl">
-        <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-            
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-md shrink-0">
+    <!-- 頂部導覽與帳號狀態欄（優化排版，避免電腦版被擠壓換行） -->
+    <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 shadow-xl">
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+        
+        <!-- 第一行：Logo 與玩家雲端資訊 -->
+        <div class="w-full flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-md">
                     <div class="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full border-2 border-slate-900"></div>
                 </div>
-                <h1 class="text-base sm:text-xl font-black bg-gradient-to-r from-red-500 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
+                <h1 class="text-sm sm:text-xl font-black bg-gradient-to-r from-red-500 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
                     寶可夢卡牌模擬器
                 </h1>
             </div>
 
             <!-- 玩家雲端資訊 -->
-            <div id="userHeaderInfo" class="hidden flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm">
+            <div id="userHeaderInfo" class="hidden flex items-center gap-2 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800 text-xs sm:text-sm shrink-0">
                 <div class="flex items-center gap-1.5">
                     <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
-                    <span id="displayUsername" class="font-bold text-white max-w-[90px] sm:max-w-[120px] truncate">訓練家</span>
+                    <span id="displayUsername" class="font-bold text-white max-w-[80px] sm:max-w-[120px] truncate">訓練家</span>
                     
-                    <button onclick="promptChangeUsername()" title="改名 (1,000分)" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:scale-95 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30 transition shadow">
+                    <button onclick="promptChangeUsername()" title="改名 (1,000分)" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:scale-95 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30 transition">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </button>
 
-                    <button onclick="openVipModal()" class="text-[10px] bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 active:scale-95 text-slate-950 font-black px-2 py-0.5 rounded shadow flex items-center gap-1 shrink-0">
+                    <button onclick="openVipModal()" class="text-[10px] bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-black px-2 py-0.5 rounded shadow flex items-center gap-1 shrink-0">
                         <i class="fa-solid fa-crown text-[9px]"></i> <span>VIP</span>
                     </button>
 
                     <span id="adminBadge" class="hidden bg-amber-500 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded shrink-0">👑 管理員</span>
                 </div>
                 
-                <div class="h-3.5 w-[1px] bg-slate-700 hidden sm:block"></div>
+                <div class="h-3.5 w-[1px] bg-slate-700"></div>
 
                 <div class="flex items-center gap-1 shrink-0">
                     <i id="pointIcon" class="fa-solid fa-gem text-cyan-400 animate-pulse text-xs"></i>
-                    <span id="userPoints" class="text-sm sm:text-base font-black text-cyan-300">0</span>
+                    <span id="userPoints" class="text-sm font-black text-cyan-300">0</span>
                     <span class="text-[10px] text-slate-400">分</span>
                     <span id="debtBadge" class="hidden text-[9px] bg-red-600 text-white font-bold px-1 py-0.2 rounded animate-bounce">負債</span>
                 </div>
 
-                <button onclick="handleSignOut()" class="text-[10px] sm:text-xs bg-red-950/80 hover:bg-red-800 active:scale-95 text-red-200 px-2.5 py-1 rounded-lg border border-red-800/50 shrink-0 font-bold ml-auto sm:ml-0">
-                    <i class="fa-solid fa-right-from-bracket mr-1"></i>登出
+                <button onclick="handleSignOut()" class="text-[10px] bg-red-950/80 hover:bg-red-800 text-red-200 px-2 py-1 rounded-lg border border-red-800/50 font-bold">
+                    <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
-
-            <!-- 💻 桌面端導覽選單 -->
-            <nav class="hidden md:flex gap-2 justify-center">
-                <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition">
-                    <i class="fa-solid fa-box-open mr-1"></i> 抽卡機
-                </button>
-                <button onclick="switchTab('binder')" id="nav-binder" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
-                    <i class="fa-solid fa-book-bookmark mr-1"></i> 集卡冊
-                </button>
-                <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
-                    <i class="fa-solid fa-coins mr-1"></i> 出售
-                </button>
-                <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
-                    <i class="fa-solid fa-trophy text-amber-400 mr-1"></i> 排行榜
-                </button>
-                <button onclick="switchTab('guestbook')" id="nav-guestbook" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition">
-                    <i class="fa-solid fa-comments text-cyan-400 mr-1"></i> 留言板
-                </button>
-                <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-sm active:scale-95 transition">
-                    <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員
-                </button>
-            </nav>
         </div>
-    </header>
+
+        <!-- 💻 桌面端導覽選單（獨立一行，確保留言板等所有按鈕清晰可見） -->
+        <nav class="hidden md:flex flex-wrap gap-1.5 justify-center w-full md:w-auto pt-1 md:pt-0 border-t md:border-t-0 border-slate-800">
+            <button onclick="switchTab('pack')" id="nav-pack" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-xs lg:text-sm active:scale-95 transition">
+                <i class="fa-solid fa-box-open mr-1"></i> 抽卡機
+            </button>
+            <button onclick="switchTab('binder')" id="nav-binder" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs lg:text-sm active:scale-95 transition">
+                <i class="fa-solid fa-book-bookmark mr-1"></i> 集卡冊
+            </button>
+            <button onclick="switchTab('sell')" id="nav-sell" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs lg:text-sm active:scale-95 transition">
+                <i class="fa-solid fa-coins mr-1"></i> 出售
+            </button>
+            <button onclick="switchTab('leaderboard')" id="nav-leaderboard" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs lg:text-sm active:scale-95 transition">
+                <i class="fa-solid fa-trophy text-amber-400 mr-1"></i> 排行榜
+            </button>
+            <button onclick="switchTab('guestbook')" id="nav-guestbook" class="tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs lg:text-sm active:scale-95 transition">
+                <i class="fa-solid fa-comments text-cyan-400 mr-1"></i> 留言板
+            </button>
+            <button id="adminTabBtn" onclick="switchTab('admin')" class="hidden tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-xs lg:text-sm active:scale-95 transition">
+                <i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員
+            </button>
+        </nav>
+
+    </div>
+</header>
 
     <!-- 📱 手機專用固定底部導覽列 -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 z-40 flex justify-around py-2 px-1 text-center shadow-2xl pb-[calc(8px+env(safe-area-inset-bottom))]">
