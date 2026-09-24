@@ -1441,35 +1441,72 @@
             }, 5000);
         }
 
-        window.adminAdjustSelectedUser = async function(delta) {
+        // 1. 切換封禁狀態 (對應 HTML 的 adminToggleBanSelectedUser)
+        window.adminToggleBanSelectedUser = async function() {
             if (checkBanned()) return;
-            // 👇 加入這行！防禦 F12 強制呼叫
             if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
-            if (checkBanned()) return;
-            const input = document.getElementById('adminAnnounceInput');
-            const text = input ? input.value.trim() : '';
-            if (!text) return alert("請輸入公告內容！");
-
+            
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+        
+            const newBanStatus = !u.isBanned;
             try {
-                await addDoc(collection(db, "announcements"), {
-                    text: text,
-                    timestamp: Date.now()
-                });
-                input.value = '';
-                alert("📢 成功發布系統公告！");
+                await setDoc(doc(db, "users", targetUid), { isBanned: newBanStatus }, { merge: true });
+                alert(`🚫 已成功將玩家 ${escapeHTML(u.name)} 狀態更新為：${newBanStatus ? '【已封禁】' : '【正常】'}`);
+                fetchAdminUserList();
+                fetchGlobalStatsAndLeaderboard();
             } catch (e) {
-                alert("發布公告失敗: " + e.message);
+                alert("切換封禁狀態失敗: " + e.message);
             }
         };
-
-        window.adminDeleteAnnouncement = async function(docId) {
+        
+        // 2. 切換 VIP 狀態 (對應 HTML 的 adminToggleVipForSelectedUser)
+        window.adminToggleVipForSelectedUser = async function() {
             if (checkBanned()) return;
-            if (!confirm("確定要刪除這條公告嗎？")) return;
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
+            
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+        
+            const newVipStatus = !u.isVip;
             try {
-                await deleteDoc(doc(db, "announcements", docId));
-                alert("🗑️ 公告已成功刪除！");
+                await setDoc(doc(db, "users", targetUid), { isVip: newVipStatus }, { merge: true });
+                alert(`👑 已成功將玩家 ${escapeHTML(u.name)} VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
+                fetchAdminUserList();
+                fetchGlobalStatsAndLeaderboard();
             } catch (e) {
-                alert("刪除失敗: " + e.message);
+                alert("修改 VIP 失敗: " + e.message);
+            }
+        };
+        
+        // 3. 加減分數保留原名 (對應 HTML 的 adminAdjustSelectedUser)
+        window.adminAdjustSelectedUser = async function(delta) {
+            if (checkBanned()) return;
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
+            
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+        
+            const newPoints = (u.points || 0) + delta;
+            try {
+                await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
+                alert(`👑 成功將玩家 ${escapeHTML(u.name)} 分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
+                fetchAdminUserList();
+                fetchGlobalStatsAndLeaderboard();
+            } catch (e) {
+                alert("修改失敗: " + e.message);
             }
         };
 
