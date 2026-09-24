@@ -15,7 +15,7 @@
             }
         });
     
-        // 🚫 無限 Debugger 陷阱 (如果玩家強行打開 F12，瀏覽器會直接卡死在這裡)
+        // 🚫 無限 Debugger 陷阱
         setInterval(() => {
             (function() { return false; }['constructor']('debugger')());
         }, 1000);
@@ -277,7 +277,7 @@
         <section class="grid grid-cols-2 gap-3 sm:gap-4">
             <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-3 sm:p-4 rounded-2xl border border-slate-700/80 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🎉 全服總淨收益</span>
+                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🎉 全日用戶總收益</span>
                     <span id="statPlayerProfit" class="text-lg sm:text-2xl font-black text-emerald-400">--</span>
                     <span class="text-[10px] text-slate-500">分</span>
                 </div>
@@ -369,7 +369,7 @@
                         <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
                             <i class="fa-solid fa-trophy"></i> 雲端訓練家排行榜
                         </h3>
-                        <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">即時比較全伺服器訓練家的財富分數與負債程度！</p>
+                        <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">每日更新！即時比較全伺服器訓練家的財富分數與負債程度。</p>
                     </div>
                     <button onclick="fetchGlobalStatsAndLeaderboard()" class="text-xs bg-slate-700 hover:bg-slate-600 active:scale-95 px-2.5 py-1.5 rounded-lg font-bold text-slate-200 shrink-0">
                         <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
@@ -640,7 +640,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, deleteDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, deleteDoc, query, orderBy, limit, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
@@ -688,6 +688,19 @@
             }
             return false;
         }
+
+        // 🌟 核心：每日全服總收益記錄器 (僅純粹記錄抽卡花費、賣卡收益)
+        window.recordDailyProfit = async function(changeAmount) {
+            if (!changeAmount || isNaN(changeAmount) || changeAmount === 0) return;
+            try {
+                const todayDate = new Date();
+                const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
+                const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
+                await setDoc(statsRef, { profit: increment(changeAmount) }, { merge: true });
+            } catch (e) {
+                console.error("更新全日收益失敗:", e);
+            }
+        };
 
         const RARITY = {
             'C':    { price: 3,    rate: 0.450, color: '#9ca3af' },
@@ -1231,7 +1244,7 @@
             listEl.innerHTML = html;
         });
 
-        // 💬 發布留言 (玩家與管理員均可發布，但不提供修改功能)
+        // 💬 發布留言
         window.postGuestbookMessage = async function() {
             if (checkBanned()) return;
             if (!auth.currentUser || !currentUserDoc) return alert("請先登入帳號後再進行留言！");
@@ -1260,7 +1273,7 @@
             }
         };
 
-        // 🗑️ 刪除留言 (僅管理員可用)
+        // 🗑️ 刪除留言
         window.deleteGuestbookMessage = async function(docId) {
             if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
                 return alert("⚠️ 權限不足！只有最高管理員能刪除留言。");
@@ -1429,7 +1442,7 @@
             }, 5000);
         }
 
-        // 1. 切換封禁狀態 (對應 HTML 的 adminToggleBanSelectedUser)
+        // 1. 切換封禁狀態
         window.adminToggleBanSelectedUser = async function() {
             if (checkBanned()) return;
             if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
@@ -1445,14 +1458,14 @@
             try {
                 await setDoc(doc(db, "users", targetUid), { isBanned: newBanStatus }, { merge: true });
                 alert(`🚫 已成功將玩家 ${escapeHTML(u.name)} 狀態更新為：${newBanStatus ? '【已封禁】' : '【正常】'}`);
-                fetchAdminUserList();
-                fetchGlobalStatsAndLeaderboard();
+                window.fetchAdminUserList();
+                window.fetchGlobalStatsAndLeaderboard();
             } catch (e) {
                 alert("切換封禁狀態失敗: " + e.message);
             }
         };
         
-        // 2. 切換 VIP 狀態 (對應 HTML 的 adminToggleVipForSelectedUser)
+        // 2. 切換 VIP 狀態
         window.adminToggleVipForSelectedUser = async function() {
             if (checkBanned()) return;
             if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
@@ -1468,14 +1481,14 @@
             try {
                 await setDoc(doc(db, "users", targetUid), { isVip: newVipStatus }, { merge: true });
                 alert(`👑 已成功將玩家 ${escapeHTML(u.name)} VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
-                fetchAdminUserList();
-                fetchGlobalStatsAndLeaderboard();
+                window.fetchAdminUserList();
+                window.fetchGlobalStatsAndLeaderboard();
             } catch (e) {
                 alert("修改 VIP 失敗: " + e.message);
             }
         };
         
-        // 3. 加減分數保留原名 (對應 HTML 的 adminAdjustSelectedUser)
+        // 3. 加減分數保留原名
         window.adminAdjustSelectedUser = async function(delta) {
             if (checkBanned()) return;
             if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作，權限不足！");
@@ -1490,9 +1503,10 @@
             const newPoints = (u.points || 0) + delta;
             try {
                 await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
+                // 🛑 移除了 admin 加分的 recordDailyProfit 記錄
                 alert(`👑 成功將玩家 ${escapeHTML(u.name)} 分數調整了 ${delta > 0 ? '+'+delta : delta} 分！`);
-                fetchAdminUserList();
-                fetchGlobalStatsAndLeaderboard();
+                window.fetchAdminUserList();
+                window.fetchGlobalStatsAndLeaderboard();
             } catch (e) {
                 alert("修改失敗: " + e.message);
             }
@@ -1561,9 +1575,9 @@
                     if (adminBtnMob) adminBtnMob.classList.remove('hidden');
                     if (adminBadge) adminBadge.classList.remove('hidden');
                     
-                    if (typeof fetchAdminUserList === 'function') fetchAdminUserList();
+                    if (typeof window.fetchAdminUserList === 'function') window.fetchAdminUserList();
                 } else {
-                    // 物理銷毀管理員節點，防止 switchTab 把隱藏屬性洗掉
+                    // 物理銷毀管理員節點
                     if (adminBtnDesk) adminBtnDesk.remove();
                     if (adminBtnMob) adminBtnMob.remove();
                     if (adminBadge) adminBadge.remove();
@@ -1589,11 +1603,11 @@
                                 points: newPoints,
                                 lastDailyDate: todayStr
                             }, { merge: true }).catch(err => console.error("每日獎勵更新失敗:", err));
+                            // 🛑 移除了登入獎勵的 recordDailyProfit 記錄
                         }
 
                         if (typeof window.updateUI === 'function') window.updateUI();
                         if (typeof window.checkBanned === 'function') window.checkBanned();
-                        // 🌟 修復 VIP 按鈕無法解鎖的問題：當玩家的 VIP 狀態下載完成後，重新刷新一次卡包列表！
                         if (typeof window.renderPackList === 'function') window.renderPackList();
                         
                         const binderTab = document.getElementById('tab-binder');
@@ -1644,6 +1658,13 @@
             
             if (!cleanedUsername) cleanedUsername = "訓練家";
 
+            const forbiddenWords = ['管理員', 'admin', '系統', '官方', '版主', '站長'];
+            const lowerName = cleanedUsername.toLowerCase();
+
+            if (isRegisterMode && forbiddenWords.some(word => lowerName.includes(word))) {
+                return alert("⚠️ 警告：註冊暱稱包含官方保留字眼（如管理員、系統等），請換一個名字！");
+            }
+
             const primaryBtn = document.getElementById('authPrimaryBtn');
 
             if (!email || !password) return alert("請輸入完整的 Email 與密碼！");
@@ -1667,6 +1688,7 @@
                         };
                         await setDoc(doc(db, "users", res.user.uid), initialData, { merge: true });
                         currentUserDoc = initialData;
+                        // 🛑 移除了新手送分的 recordDailyProfit 記錄
                     }
                     alert("🎉 帳號註冊成功！");
                 } else {
@@ -1710,6 +1732,12 @@
             if (!cleanedName) return alert("暱稱不能包含無效 HTML 標籤或網址連結！");
             if (cleanedName.length > 20) return alert("暱稱長度不能超過 20 個字！");
 
+            const forbiddenWords = ['管理員', 'admin', '系統', '官方', '版主', '站長'];
+            const lowerName = cleanedName.toLowerCase();
+            if (forbiddenWords.some(word => lowerName.includes(word)) && auth.currentUser.uid !== ADMIN_UID) {
+                return alert("⚠️ 警告：此暱稱包含官方保留字眼，禁止一般玩家使用！");
+            }
+
             const currentPts = (typeof currentUserDoc.points === 'number') ? currentUserDoc.points : INITIAL_GIFT_POINTS;
             if (currentPts < 1000) {
                 return alert(`⚠️ 分數不足！修改暱稱需要 1,000 分，目前只有 ${currentPts.toLocaleString()} 分。`);
@@ -1728,6 +1756,8 @@
                 currentUserDoc.points = newPoints;
                 window.updateUI();
                 
+                // 🛑 移除了改名花費的 recordDailyProfit 記錄
+
                 alert(`🎉 成功修改暱稱為「${cleanedName}」！`);
                 window.fetchGlobalStatsAndLeaderboard();
             } catch (err) {
@@ -1790,6 +1820,8 @@
 
             try {
                 await setDoc(doc(db, "users", targetUid), { points: newPoints }, { merge: true });
+                // 🛑 移除了管理員設定分數的 recordDailyProfit 記錄
+
                 alert(`👑 已成功將目標分數修改為 ${newPoints} 分！`);
                 window.fetchAdminUserList();
                 window.fetchGlobalStatsAndLeaderboard();
@@ -1911,6 +1943,9 @@
                     totalSpent: newTotalSpent,
                     totalPulledValue: newTotalPulledValue
                 }, { merge: true });
+
+                // 🌟 僅記錄抽卡花費的點數 (負收益)
+                window.recordDailyProfit(-cost); 
 
                 try {
                     const topCards = pulledCards.filter(c => ['SAR', 'UR', 'RGB', 'FUR'].includes(c.rarity));
@@ -2125,6 +2160,7 @@
                 cards: currentUserDoc.cards,
                 points: currentUserDoc.points
             });
+            window.recordDailyProfit(price); // 🌟 賣單張卡計入全日收益
             window.renderSellInventory();
         };
 
@@ -2144,6 +2180,9 @@
                 cards: currentUserDoc.cards,
                 points: currentUserDoc.points
             });
+
+            window.recordDailyProfit(total); // 🌟 賣重複卡計入全日收益
+
             if (!document.getElementById('tab-sell').classList.contains('hidden')) {
                 window.renderSellInventory();
             }
@@ -2170,11 +2209,28 @@
         window.fetchGlobalStatsAndLeaderboard = async function() {
             const listEl = document.getElementById('leaderboardList');
             if (listEl) {
-                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算排行榜數據中...</div>`;
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算全服排行榜數據中...</div>`;
             }
 
             try {
-                // 1. 抓取今日爆卡數量 (維持原樣)
+                // 🌟 第一段：抓取全日用戶總收益 (極省額度，只消耗 1 次讀取！)
+                try {
+                    const todayDate = new Date();
+                    const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
+                    const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
+                    const statsSnap = await getDoc(statsRef);
+                    const todayProfit = statsSnap.exists() ? statsSnap.data().profit : 0;
+                    
+                    const profitEl = document.getElementById('statPlayerProfit');
+                    if (profitEl) {
+                        profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
+                        profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
+                    }
+                } catch (e) {
+                    console.error("讀取全日收益失敗:", e);
+                }
+
+                // 🌟 第二段：抓取今日爆卡數量
                 try {
                     const todayStart = new Date();
                     todayStart.setHours(0, 0, 0, 0);
@@ -2183,34 +2239,35 @@
                         where("timestamp", ">=", todayStart.getTime())
                     );
                     const todaySnap = await getDocs(qToday);
+                    const todayRareCount = todaySnap.size;
+                    
                     const todayRaresEl = document.getElementById('statTodayRares');
-                    if (todayRaresEl) todayRaresEl.innerText = todaySnap.size.toLocaleString();
+                    if (todayRaresEl) todayRaresEl.innerText = todayRareCount.toLocaleString();
                 } catch (rareErr) {}
 
-                // 🌟 2. 拯救用量的關鍵修改：使用 orderBy 和 limit，只抓前 20 名！
+                // 🌟 第三段：抓取前 20 名玩家
                 let q;
                 if (currentLbSubTab === 'lucky') {
-                    // 幸運榜：分數由高到低，最多抓 20 人
                     q = query(collection(db, "users"), orderBy("points", "desc"), limit(20));
                 } else {
-                    // 非洲榜：分數由低到高，最多抓 20 人
                     q = query(collection(db, "users"), orderBy("points", "asc"), limit(20));
                 }
 
-                const snap = await getDocs(q); // 現在每次最多只消耗 20 次讀取！
-                
+                const snap = await getDocs(q);
                 let usersList = [];
                 const totalCardsInGame = Object.values(CARD_SETS).flat().length;
 
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
+                    const pts = data.points || 0;
+
                     const cardsObj = data.cards || {};
                     const unlockedCount = Object.keys(cardsObj).filter(id => cardsObj[id] > 0).length;
 
                     usersList.push({
                         uid: docSnap.id,
                         name: data.name || "訓練家",
-                        points: data.points || 0,
+                        points: pts,
                         isVip: data.isVip || false,
                         isBanned: data.isBanned || false,
                         unlockedCount: unlockedCount,
@@ -2218,16 +2275,6 @@
                     });
                 });
 
-                // ⚠️ 注意：因為我們不再抓取「全服所有人」，所以無法在前端計算準確的「全服總淨收益」。
-                // 這裡改為顯示「榜上玩家總積分」作為替代，避免資料庫爆掉。
-                const boardTotalPoints = usersList.reduce((sum, u) => sum + u.points, 0);
-                const profitEl = document.getElementById('statPlayerProfit');
-                if (profitEl) {
-                    profitEl.innerText = boardTotalPoints.toLocaleString() + " (百大)";
-                    profitEl.className = "text-lg sm:text-2xl font-black text-emerald-400";
-                }
-
-                // 3. 渲染排行榜清單
                 if (listEl) {
                     if (usersList.length === 0) {
                         listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
