@@ -2177,40 +2177,78 @@
             if (!card) return;
 
             const price = RARITY[card.rarity].price;
-            currentUserDoc.cards[cardId]--;
-            currentUserDoc.points = (currentUserDoc.points || 0) + price;
+            const newPoints = (currentUserDoc.points || 0) + price;
 
-            await window.syncToCloud({
-                cards: currentUserDoc.cards,
-                points: currentUserDoc.points
-            });
-            window.recordDailyProfit(price); // 🌟 賣單張卡計入全日收益
-            window.renderSellInventory();
+            // 🛑 防護 1：檢查是否會超過 10 萬分上限
+            if (newPoints > 100000) {
+                return alert(`⚠️ 出售失敗！積分將達 ${newPoints.toLocaleString()} 分，超過 10 萬分安全上限，請先去抽卡消費。`);
+            }
+
+            try {
+                // 🛑 防護 2：使用副本修改，避免寫入失敗時本地資料異常
+                let newCards = { ...currentUserDoc.cards };
+                newCards[cardId]--;
+
+                await window.syncToCloud({
+                    cards: newCards,
+                    points: newPoints
+                });
+                
+                currentUserDoc.cards = newCards;
+                currentUserDoc.points = newPoints;
+                
+                window.recordDailyProfit(price); // 🌟 賣單張卡計入全日收益
+                window.updateUI(); // 即時更新上方積分
+                window.renderSellInventory();
+            } catch (err) {
+                alert("出售失敗：" + err.message);
+            }
         };
 
         window.sellAllDuplicates = async function() {
             if (checkBanned()) return;
+            if (!currentUserDoc || !currentUserDoc.cards) return;
+
             let total = 0;
+            // 🛑 防護 2：使用副本修改，避免寫入失敗時本地資料異常
+            let newCards = { ...currentUserDoc.cards };
+
             Object.values(CARD_SETS).flat().forEach(c => {
-                const count = currentUserDoc.cards?.[c.id] || 0;
+                const count = newCards[c.id] || 0;
                 if (count > 1) {
                     total += (count - 1) * RARITY[c.rarity].price;
-                    currentUserDoc.cards[c.id] = 1;
+                    newCards[c.id] = 1;
                 }
             });
+
             if (total === 0) return alert("目前沒有重複卡！");
-            currentUserDoc.points += total;
-            await window.syncToCloud({
-                cards: currentUserDoc.cards,
-                points: currentUserDoc.points
-            });
 
-            window.recordDailyProfit(total); // 🌟 賣重複卡計入全日收益
+            const newPoints = (currentUserDoc.points || 0) + total;
 
-            if (!document.getElementById('tab-sell').classList.contains('hidden')) {
-                window.renderSellInventory();
+            // 🛑 防護 1：檢查是否會超過 10 萬分上限
+            if (newPoints > 100000) {
+                return alert(`⚠️ 出售失敗！\n出售後積分將高達 ${newPoints.toLocaleString()} 分，超過系統的 100,000 分安全上限！\n請先去抽幾包卡消費一下再來出售。`);
             }
-            alert(`已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
+
+            try {
+                await window.syncToCloud({
+                    cards: newCards,
+                    points: newPoints
+                });
+
+                currentUserDoc.cards = newCards;
+                currentUserDoc.points = newPoints;
+
+                window.recordDailyProfit(total); // 🌟 賣重複卡計入全日收益
+                window.updateUI(); // 即時更新上方積分
+
+                if (!document.getElementById('tab-sell').classList.contains('hidden')) {
+                    window.renderSellInventory();
+                }
+                alert(`✅ 已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
+            } catch (err) {
+                alert("一鍵出售失敗，請稍後再試：" + err.message);
+            }
         };
 
         window.switchLbSubTab = function(subTab) {
