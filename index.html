@@ -204,6 +204,7 @@
 </header>
 
     <!-- 📱 手機專用固定底部導覽列 -->
+    <div id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 z-40 flex justify-around py-2 px-1 text-center shadow-2xl pb-[calc(8px+env(safe-area-inset-bottom))]">
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 z-40 flex justify-around py-2 px-1 text-center shadow-2xl pb-[calc(8px+env(safe-area-inset-bottom))]">
         <button onclick="switchTab('pack')" id="mob-nav-pack" class="mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition">
             <i class="fa-solid fa-box-open text-base"></i>
@@ -520,48 +521,6 @@
             </div>
         </div>
     </div>
-
-    <!-- 在 type="module" 的上方新增一般 <script> 標籤 -->
-    <script>
-        // 定義管理員 UID 廣域變數
-        const ADMIN_UID = 'eTYTRQFMmZc5Hj8KiH3HZkF77q62';
-        
-        window.switchTab = function(tabId) {
-            const currentUser = firebase.auth().currentUser;
-        
-            // 🛡️ 防禦機制：若企圖進入管理員頁面，但 UID 不符，強行攔截並導回首頁
-            if (tabId === 'admin') {
-                if (!currentUser || currentUser.uid !== ADMIN_UID) {
-                    alert('❌ 權限不足：您不是系統管理員！');
-                    switchTab('home'); // 自動跳回主頁
-                    return;
-                }
-            }
-        
-            // 1. 隱藏所有分頁內容
-            document.querySelectorAll('.tab-content').forEach(el => {
-                el.classList.add('hidden');
-            });
-        
-            // 2. 顯示目標分頁
-            const targetTab = document.getElementById(tabId);
-            if (targetTab) {
-                targetTab.classList.remove('hidden');
-            }
-        
-            // 3. 更新底部/頂部導覽列 active 高亮狀態（確保不影響 admin 按鈕的 hidden 狀態）
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-yellow-400', 'active');
-                btn.classList.add('text-gray-400');
-            });
-        
-            const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
-            if (activeBtn) {
-                activeBtn.classList.remove('text-gray-400');
-                activeBtn.classList.add('text-yellow-400', 'active');
-            }
-        };
-    </script>
 
     <!-- Firebase SDK 與全前端雲端防禦邏輯 -->
     <script type="module">
@@ -1404,185 +1363,173 @@
             }
         };
 
-        onAuthStateChanged(auth, async (user) => {
-    // 🧹 每次切換帳號或登出時，先清理舊的管理員介面
-    const existingAdminBtnDesk = document.getElementById('adminTabBtn');
-    if (existingAdminBtnDesk) existingAdminBtnDesk.remove();
-    
-    const existingAdminBtnMob = document.getElementById('mobAdminTabBtn');
-    if (existingAdminBtnMob) existingAdminBtnMob.remove();
-
-    const existingAdminTab = document.getElementById('tab-admin');
-    if (existingAdminTab) existingAdminTab.remove();
-
-    const existingAdminBadge = document.getElementById('adminBadge');
-    if (existingAdminBadge) existingAdminBadge.classList.add('hidden');
-
-    // 1. 先渲染卡包列表（無論登入與否都必須渲染！）
-    try {
-        if (typeof renderPackList === 'function') {
-            renderPackList();
-        }
-    } catch (e) {
-        console.error("渲染卡包列表失敗:", e);
-    }
-
-    if (user) {
-        // --- 已登入狀態 ---
-        const authModal = document.getElementById('authModal');
-        const userHeaderInfo = document.getElementById('userHeaderInfo');
-        if (authModal) authModal.classList.add('hidden');
-        if (userHeaderInfo) userHeaderInfo.classList.remove('hidden');
+        // 👑 Firebase 認證狀態監聽器
+    onAuthStateChanged(auth, async (user) => {
+        // 🧹 1. 每次狀態變更時，先清理舊的管理員按鈕與介面
+        const existingAdminBtnDesk = document.getElementById('nav-admin');
+        if (existingAdminBtnDesk) existingAdminBtnDesk.remove();
         
-        // 👑 嚴格驗證是否為最高管理員 UID
-        if (user.uid === ADMIN_UID) {
-            let badge = document.getElementById('adminBadge');
-            if (badge) badge.classList.remove('hidden');
-
-            // 電腦端管理員按鈕
-            const desktopNav = document.querySelector('header nav');
-            if (desktopNav && !document.getElementById('adminTabBtn')) {
-                const adminDeskBtn = document.createElement('button');
-                adminDeskBtn.id = 'adminTabBtn';
-                adminDeskBtn.onclick = () => switchTab('admin');
-                adminDeskBtn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-xs lg:text-sm active:scale-95 transition";
-                adminDeskBtn.innerHTML = `<i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員`;
-                desktopNav.appendChild(adminDeskBtn);
-            }
-
-            // 手機端管理員按鈕 (改用更安全的 id 或簡單選擇器)
-            const mobileNav = document.getElementById('mobileBottomNav') || document.querySelector('footer') || document.querySelector('nav.fixed.bottom-0');
-            if (mobileNav && !document.getElementById('mobAdminTabBtn')) {
-                const adminMobBtn = document.createElement('button');
-                adminMobBtn.id = 'mobAdminTabBtn';
-                adminMobBtn.onclick = () => switchTab('admin');
-                adminMobBtn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-amber-400 font-bold text-[10px] active:scale-90 transition";
-                adminMobBtn.innerHTML = `<i class="fa-solid fa-crown text-base"></i><span>管理</span>`;
-                mobileNav.appendChild(adminMobBtn);
-            }
-
-            // 管理員控制台面板區塊
-            const mainContainer = document.querySelector('main');
-            if (mainContainer && !document.getElementById('tab-admin')) {
-                const adminSection = document.createElement('section');
-                adminSection.id = 'tab-admin';
-                adminSection.className = "tab-content hidden space-y-4 sm:space-y-6";
-                adminSection.innerHTML = `
-                    <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border-2 border-amber-500/40 shadow-xl space-y-6">
-                        <div class="border-b border-slate-700 pb-3 flex justify-between items-center flex-wrap gap-2">
-                            <div>
-                                <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
-                                    <i class="fa-solid fa-screwdriver-wrench"></i> 最高管理員控制台
-                                </h3>
-                                <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">管理員 UID: eTYTRQFMmZc5Hj8KiH3HZkF77q62</p>
+        const existingAdminBtnMob = document.getElementById('mob-nav-admin');
+        if (existingAdminBtnMob) existingAdminBtnMob.remove();
+    
+        const existingAdminTab = document.getElementById('tab-admin');
+        if (existingAdminTab) existingAdminTab.remove();
+    
+        const existingAdminBadge = document.getElementById('adminBadge');
+        if (existingAdminBadge) existingAdminBadge.classList.add('hidden');
+    
+        // 2. 渲染基礎卡包
+        try {
+            if (typeof renderPackList === 'function') renderPackList();
+        } catch (e) {
+            console.error("渲染卡包列表失敗:", e);
+        }
+    
+        if (user) {
+            // --- 已登入狀態 ---
+            const authModal = document.getElementById('authModal');
+            const userHeaderInfo = document.getElementById('userHeaderInfo');
+            if (authModal) authModal.classList.add('hidden');
+            if (userHeaderInfo) userHeaderInfo.classList.remove('hidden');
+            
+            // 👑 僅最高管理員 UID 才動態建立管理員按鈕與控制台
+            if (user.uid === ADMIN_UID) {
+                let badge = document.getElementById('adminBadge');
+                if (badge) badge.classList.remove('hidden');
+    
+                // 電腦端管理員按鈕
+                const desktopNav = document.querySelector('header nav');
+                if (desktopNav && !document.getElementById('nav-admin')) {
+                    const adminDeskBtn = document.createElement('button');
+                    adminDeskBtn.id = 'nav-admin';
+                    adminDeskBtn.onclick = () => switchTab('admin');
+                    adminDeskBtn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-amber-600/30 text-amber-300 border border-amber-500/50 hover:bg-amber-600/50 text-xs lg:text-sm active:scale-95 transition";
+                    adminDeskBtn.innerHTML = `<i class="fa-solid fa-screwdriver-wrench mr-1"></i> 管理員`;
+                    desktopNav.appendChild(adminDeskBtn);
+                }
+    
+                // 手機端管理員按鈕
+                const mobileNav = document.getElementById('mobileBottomNav');
+                if (mobileNav && !document.getElementById('mob-nav-admin')) {
+                    const adminMobBtn = document.createElement('button');
+                    adminMobBtn.id = 'mob-nav-admin';
+                    adminMobBtn.onclick = () => switchTab('admin');
+                    adminMobBtn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-amber-400 font-bold text-[10px] active:scale-90 transition";
+                    adminMobBtn.innerHTML = `<i class="fa-solid fa-crown text-base"></i><span>管理</span>`;
+                    mobileNav.appendChild(adminMobBtn);
+                }
+    
+                // 動態掛載管理員控制台面板
+                const mainContainer = document.querySelector('main');
+                if (mainContainer && !document.getElementById('tab-admin')) {
+                    const adminSection = document.createElement('section');
+                    adminSection.id = 'tab-admin';
+                    adminSection.className = "tab-content hidden space-y-4 sm:space-y-6";
+                    adminSection.innerHTML = `
+                        <div class="bg-slate-800/90 p-4 sm:p-6 rounded-2xl border-2 border-amber-500/40 shadow-xl space-y-6">
+                            <div class="border-b border-slate-700 pb-3 flex justify-between items-center flex-wrap gap-2">
+                                <div>
+                                    <h3 class="text-base sm:text-xl font-bold text-amber-400 flex items-center gap-2">
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> 最高管理員控制台
+                                    </h3>
+                                    <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">管理員 UID: ${ADMIN_UID}</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                                <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-bullhorn mr-1"></i> 發布系統公告</h4>
-                                <textarea id="adminAnnounceInput" rows="2" placeholder="輸入要發布給全服的公告訊息..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-amber-500 resize-none"></textarea>
-                                <button onclick="adminPublishAnnouncement()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-95 py-2 rounded-lg text-xs font-bold text-slate-950 shadow transition">發布公告</button>
-                                <div id="adminAnnounceList" class="space-y-1.5 max-h-32 overflow-y-auto pt-2"></div>
-                            </div>
-                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                                <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-users-gear mr-1"></i> 玩家帳號特權管理</h4>
-                                <select id="adminUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs font-bold focus:outline-none">
-                                    <option value="">載入全服玩家中...</option>
-                                </select>
-                                <div id="selectedUserCard" class="hidden space-y-2 bg-slate-800/90 p-3 rounded-lg border border-slate-700">
-                                    <div class="flex justify-between items-center text-xs">
-                                        <span id="selectedUserName" class="font-bold text-white">--</span>
-                                        <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono">--</span>
-                                    </div>
-                                    <div class="flex justify-between items-center text-xs">
-                                        <span class="text-slate-400">當前積分：<b id="selectedUserCurrentPoints" class="text-cyan-300">--</b></span>
-                                        <span id="selectedUserBanStatusText" class="text-emerald-400 font-bold">正常</span>
-                                    </div>
-                                    <div class="flex justify-between items-center text-xs">
-                                        <span class="text-slate-400">VIP 狀態：<b id="selectedUserVipStatusText" class="text-amber-300">普通</b></span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2 pt-1">
-                                        <button onclick="adminAdjustSelectedUser(1000)" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">+1,000 分</button>
-                                        <button onclick="adminAdjustSelectedUser(-1000)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">-1,000 分</button>
-                                        <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 rounded text-xs active:scale-95 transition">一鍵升級 VIP</button>
-                                        <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">封禁此玩家</button>
-                                    </div>
-                                    <div class="flex gap-2 pt-1">
-                                        <input type="number" id="adminCustomPointsInput" placeholder="設定目標分數" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs">
-                                        <button onclick="adminSetCustomPoints()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1 rounded text-xs">設定</button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                                    <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-bullhorn mr-1"></i> 發布系統公告</h4>
+                                    <textarea id="adminAnnounceInput" rows="2" placeholder="輸入要發布給全服的公告訊息..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-amber-500 resize-none"></textarea>
+                                    <button onclick="adminPublishAnnouncement()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-95 py-2 rounded-lg text-xs font-bold text-slate-950 shadow transition">發布公告</button>
+                                    <div id="adminAnnounceList" class="space-y-1.5 max-h-32 overflow-y-auto pt-2"></div>
+                                </div>
+                                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                                    <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-users-gear mr-1"></i> 玩家帳號特權管理</h4>
+                                    <select id="adminUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs font-bold focus:outline-none">
+                                        <option value="">載入全服玩家中...</option>
+                                    </select>
+                                    <div id="selectedUserCard" class="hidden space-y-2 bg-slate-800/90 p-3 rounded-lg border border-slate-700">
+                                        <div class="flex justify-between items-center text-xs">
+                                            <span id="selectedUserName" class="font-bold text-white">--</span>
+                                            <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono">--</span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-xs">
+                                            <span class="text-slate-400">當前積分：<b id="selectedUserCurrentPoints" class="text-cyan-300">--</b></span>
+                                            <span id="selectedUserBanStatusText" class="text-emerald-400 font-bold">正常</span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-xs">
+                                            <span class="text-slate-400">VIP 狀態：<b id="selectedUserVipStatusText" class="text-amber-300">普通</b></span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2 pt-1">
+                                            <button onclick="adminAdjustSelectedUser(1000)" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">+1,000 分</button>
+                                            <button onclick="adminAdjustSelectedUser(-1000)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">-1,000 分</button>
+                                            <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 rounded text-xs active:scale-95 transition">一鍵升級 VIP</button>
+                                            <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">封禁此玩家</button>
+                                        </div>
+                                        <div class="flex gap-2 pt-1">
+                                            <input type="number" id="adminCustomPointsInput" placeholder="設定目標分數" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs">
+                                            <button onclick="adminSetCustomPoints()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1 rounded text-xs">設定</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `;
-                mainContainer.appendChild(adminSection);
+                    `;
+                    mainContainer.appendChild(adminSection);
+                }
+    
+                if (typeof fetchAdminUserList === 'function') fetchAdminUserList();
             }
-
-            if (typeof fetchAdminUserList === 'function') fetchAdminUserList();
-        }
-
-        const userRef = doc(db, "users", user.uid);
-        
-        if (unsubscribeUserDoc) unsubscribeUserDoc();
-        
-        unsubscribeUserDoc = onSnapshot(userRef, (snap) => {
-            if (snap.exists()) {
-                currentUserDoc = snap.data();
-                
-                // 檢查每日登入獎勵 (+500 分) - 採用非阻塞方式，避免 onSnapshot 死鎖
-                const todayStr = new Date().toISOString().split('T')[0];
-                if (currentUserDoc.lastDailyDate !== todayStr) {
-                    const newPoints = (currentUserDoc.points || 0) + 500;
-                    currentUserDoc.points = newPoints;
-                    currentUserDoc.lastDailyDate = todayStr;
+    
+            const userRef = doc(db, "users", user.uid);
+            if (unsubscribeUserDoc) unsubscribeUserDoc();
+            
+            unsubscribeUserDoc = onSnapshot(userRef, (snap) => {
+                if (snap.exists()) {
+                    currentUserDoc = snap.data();
                     
-                    setDoc(userRef, {
-                        points: newPoints,
-                        lastDailyDate: todayStr
-                    }, { merge: true }).catch(err => console.error("每日獎勵更新失敗:", err));
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (currentUserDoc.lastDailyDate !== todayStr) {
+                        const newPoints = (currentUserDoc.points || 0) + 500;
+                        currentUserDoc.points = newPoints;
+                        currentUserDoc.lastDailyDate = todayStr;
+                        
+                        setDoc(userRef, { points: newPoints, lastDailyDate: todayStr }, { merge: true }).catch(err => console.error(err));
+                    }
+    
+                    if (typeof updateUI === 'function') updateUI();
+                    if (typeof checkBanned === 'function') checkBanned();
+                    
+                    const binderTab = document.getElementById('tab-binder');
+                    if (binderTab && !binderTab.classList.contains('hidden')) {
+                        if (typeof renderBinder === 'function') renderBinder();
+                    }
+                    
+                    const sellTab = document.getElementById('tab-sell');
+                    if (sellTab && !sellTab.classList.contains('hidden')) {
+                        if (typeof renderSellInventory === 'function') renderSellInventory();
+                    }
                 }
-
-                if (typeof updateUI === 'function') updateUI();
-                if (typeof checkBanned === 'function') checkBanned();
-                
-                const binderTab = document.getElementById('tab-binder');
-                if (binderTab && !binderTab.classList.contains('hidden')) {
-                    if (typeof renderBinder === 'function') renderBinder();
-                }
-                
-                const sellTab = document.getElementById('tab-sell');
-                if (sellTab && !sellTab.classList.contains('hidden')) {
-                    if (typeof renderSellInventory === 'function') renderSellInventory();
-                }
+            });
+    
+            if (typeof fetchGlobalStatsAndLeaderboard === 'function') fetchGlobalStatsAndLeaderboard();
+            
+        } else {
+            // 未登入狀態
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+                unsubscribeUserDoc = null;
             }
-        });
-
-        if (typeof fetchGlobalStatsAndLeaderboard === 'function') fetchGlobalStatsAndLeaderboard();
-        
-    } else {
-        // --- 未登入狀態 ---
-        if (unsubscribeUserDoc) {
-            unsubscribeUserDoc();
-            unsubscribeUserDoc = null;
+            currentUserDoc = null;
+            
+            const authModal = document.getElementById('authModal');
+            const userHeaderInfo = document.getElementById('userHeaderInfo');
+            const bannedModal = document.getElementById('bannedModal');
+            
+            if (authModal) authModal.classList.remove('hidden');
+            if (userHeaderInfo) userHeaderInfo.classList.add('hidden');
+            if (bannedModal) bannedModal.classList.add('hidden');
         }
-        currentUserDoc = null;
-        
-        const authModal = document.getElementById('authModal');
-        const userHeaderInfo = document.getElementById('userHeaderInfo');
-        const bannedModal = document.getElementById('bannedModal');
-        
-        if (authModal) authModal.classList.remove('hidden');
-        if (userHeaderInfo) userHeaderInfo.classList.add('hidden');
-        if (bannedModal) bannedModal.classList.add('hidden');
-    }
-});
-        window.toggleAuthMode = function() {
-            isRegisterMode = !isRegisterMode;
-            document.getElementById('authTitle').innerText = isRegisterMode ? "註冊新訓練家帳號" : "雲端訓練家登入";
-            document.getElementById('authPrimaryBtn').innerText = isRegisterMode ? "註冊並登入" : "登入帳號";
-            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "已有帳號？點此切換至「登入帳號」" : "還沒有帳號？點此切換至「註冊帳號」";
-        };
+    });
 
         window.handleAuthSubmit = async function() {
             const email = document.getElementById('authEmail').value.trim();
@@ -2319,38 +2266,27 @@
             }
         };
 
-        window.switchTab = function(tabName) {
-            // 🛡️ 安全攔截：若非管理員嘗試進入管理員頁面，直接阻斷
+            window.switchTab = function(tabName) {
+            // 1. 安全權限檢查
             if (tabName === 'admin') {
                 if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) {
                     alert("⚠️ 權限不足！只有最高管理員能存取此區域。");
                     return;
                 }
             }
-        
+    
+            // 2. 切換分頁顯示邏輯
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition";
-            });
-            document.querySelectorAll('.mob-tab-btn').forEach(btn => {
-                btn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition";
-            });
-        
+            
+            // 3. 更新按鈕高亮樣式...
             const targetTab = document.getElementById(`tab-${tabName}`);
             if (targetTab) targetTab.classList.remove('hidden');
-        
-            const deskBtn = document.getElementById(`nav-${tabName}`);
-            if (deskBtn) deskBtn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition";
-        
-            const mobBtn = document.getElementById(`mob-nav-${tabName}`);
-            if (mobBtn) mobBtn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition";
-        
+    
+            // 4. 按需載入資料
             if (tabName === 'binder') renderBinder();
             if (tabName === 'sell') renderSellInventory();
             if (tabName === 'leaderboard') fetchGlobalStatsAndLeaderboard();
         };
-
-        window.switchTab('pack');
     </script>
 </body>
 </html>
