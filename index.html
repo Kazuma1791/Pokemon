@@ -1570,24 +1570,6 @@
         }
     });
 
-                fetchGlobalStatsAndLeaderboard();
-            } else {
-                if (unsubscribeUserDoc) {
-                    unsubscribeUserDoc();
-                    unsubscribeUserDoc = null;
-                }
-                currentUserDoc = null;
-                document.getElementById('authModal').classList.remove('hidden');
-                document.getElementById('userHeaderInfo').classList.add('hidden');
-                document.getElementById('adminBadge').classList.add('hidden');
-                document.getElementById('adminTabBtn').classList.add('hidden');
-                document.getElementById('mobAdminTabBtn').classList.add('hidden');
-                document.getElementById('tab-admin').classList.add('hidden');
-                document.getElementById('bannedModal').classList.add('hidden');
-                renderPackList();
-            }
-        });
-
         window.toggleAuthMode = function() {
             isRegisterMode = !isRegisterMode;
             document.getElementById('authTitle').innerText = isRegisterMode ? "註冊新訓練家帳號" : "雲端訓練家登入";
