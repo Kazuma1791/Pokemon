@@ -1510,6 +1510,47 @@
             }
         };
 
+
+        function renderPackList() {
+                    const container = document.getElementById('packListGrid');
+                    if (!container) return;
+        
+                    const isVip = currentUserDoc && currentUserDoc.isVip;
+        
+                    container.innerHTML = PACK_DEFINITIONS.map(pack => `
+                        <div class="bg-gradient-to-br ${pack.bg} p-4 sm:p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-3 sm:space-y-4">
+                            <div class="flex gap-3 sm:gap-4 items-center">
+                                <div class="w-16 h-24 sm:w-20 sm:h-28 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
+                                    <span class="text-[9px] sm:text-[10px] font-black bg-white/20 px-1.5 py-0.2 rounded text-white">${pack.id.toUpperCase()}</span>
+                                    <i class="fa-solid ${pack.icon} text-xl sm:text-2xl text-amber-300 my-1"></i>
+                                    <span class="text-[9px] font-bold text-slate-300">${pack.tag}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded">${pack.badge}</span>
+                                    <h3 class="text-sm sm:text-base font-bold text-white mt-1 leading-tight">${pack.title}</h3>
+                                    <p class="text-[11px] sm:text-xs text-slate-300 mt-1 leading-snug">${pack.desc}</p>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex gap-2">
+                                    <button onclick="startPackChoice('${pack.id}', 1)" class="flex-1 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow transition">單抽 (20分)</button>
+                                    <button onclick="startPackChoice('${pack.id}', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow transition">10連抽 (200分)</button>
+                                </div>
+                                ${isVip ? `
+                                    <button onclick="startPackChoice('${pack.id}', 30)" class="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 active:scale-95 text-slate-950 font-black py-2 rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 animate-pulse transition">
+                                        <i class="fa-solid fa-crown"></i> 👑 VIP 專屬 30 連抽 (600分)
+                                    </button>
+                                ` : `
+                                    <button onclick="openVipModal()" class="w-full bg-slate-900/60 hover:bg-slate-800 active:scale-95 text-amber-300/80 border border-amber-500/30 font-bold py-1.5 rounded-xl text-[11px] flex items-center justify-center gap-1 transition">
+                                        <i class="fa-solid fa-lock text-[10px]"></i> 解鎖 VIP 專屬 30 連抽 (600分)
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+        
         onAuthStateChanged(auth, async (user) => {
             // 1. 先渲染卡包列表
             try {
@@ -1862,44 +1903,6 @@
             await setDoc(userRef, updateData, { merge: true });
         }
 
-        function renderPackList() {
-            const container = document.getElementById('packListGrid');
-            if (!container) return;
-
-            const isVip = currentUserDoc && currentUserDoc.isVip;
-
-            container.innerHTML = PACK_DEFINITIONS.map(pack => `
-                <div class="bg-gradient-to-br ${pack.bg} p-4 sm:p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-3 sm:space-y-4">
-                    <div class="flex gap-3 sm:gap-4 items-center">
-                        <div class="w-16 h-24 sm:w-20 sm:h-28 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[9px] sm:text-[10px] font-black bg-white/20 px-1.5 py-0.2 rounded text-white">${pack.id.toUpperCase()}</span>
-                            <i class="fa-solid ${pack.icon} text-xl sm:text-2xl text-amber-300 my-1"></i>
-                            <span class="text-[9px] font-bold text-slate-300">${pack.tag}</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded">${pack.badge}</span>
-                            <h3 class="text-sm sm:text-base font-bold text-white mt-1 leading-tight">${pack.title}</h3>
-                            <p class="text-[11px] sm:text-xs text-slate-300 mt-1 leading-snug">${pack.desc}</p>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex gap-2">
-                            <button onclick="startPackChoice('${pack.id}', 1)" class="flex-1 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow transition">單抽 (20分)</button>
-                            <button onclick="startPackChoice('${pack.id}', 10)" class="flex-1 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow transition">10連抽 (200分)</button>
-                        </div>
-                        ${isVip ? `
-                            <button onclick="startPackChoice('${pack.id}', 30)" class="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-600 active:scale-95 text-slate-950 font-black py-2 rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 animate-pulse transition">
-                                <i class="fa-solid fa-crown"></i> 👑 VIP 專屬 30 連抽 (600分)
-                            </button>
-                        ` : `
-                            <button onclick="openVipModal()" class="w-full bg-slate-900/60 hover:bg-slate-800 active:scale-95 text-amber-300/80 border border-amber-500/30 font-bold py-1.5 rounded-xl text-[11px] flex items-center justify-center gap-1 transition">
-                                <i class="fa-solid fa-lock text-[10px]"></i> 解鎖 VIP 專屬 30 連抽 (600分)
-                            </button>
-                        `}
-                    </div>
-                </div>
-            `).join('');
-        }
 
         function updateUI() {
             if (!currentUserDoc) return;
