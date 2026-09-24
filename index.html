@@ -505,7 +505,7 @@
             return false;
         }
 
-        // 🌟 稱號檢查與解鎖機制
+        // 🌟 稱號檢查與解鎖機制 (擴充版)
         window.checkAchievements = async function() {
             if (!currentUserDoc || !auth.currentUser) return;
             
@@ -513,21 +513,39 @@
             let newTitleUnlocked = false;
             let titleToAnnounce = "";
 
-            // 條件 1: 收集 50 張不同卡牌 解鎖 📚 圖鑑收藏家
+            // 輔助函數：用來檢查並解鎖稱號
+            const checkAndUnlock = (condition, titleName) => {
+                if (condition && !unlockedTitles.includes(titleName)) {
+                    unlockedTitles.push(titleName);
+                    newTitleUnlocked = true;
+                    titleToAnnounce = titleName; // 如果一次解鎖多個，會廣播最高級的那個
+                }
+            };
+
+            const points = currentUserDoc.points || 0;
+            const totalSpent = currentUserDoc.totalSpent || 0;
             const uniqueCardsCount = Object.keys(currentUserDoc.cards || {}).filter(id => currentUserDoc.cards[id] > 0).length;
-            if (uniqueCardsCount >= 50 && !unlockedTitles.includes("📚 圖鑑收藏家")) {
-                unlockedTitles.push("📚 圖鑑收藏家");
-                newTitleUnlocked = true;
-                titleToAnnounce = "📚 圖鑑收藏家";
-            }
 
-            // 條件 2: 負債超過 100,000 分 解鎖 💸 大負翁
-            if (currentUserDoc.points <= -100000 && !unlockedTitles.includes("💸 大負翁")) {
-                unlockedTitles.push("💸 大負翁");
-                newTitleUnlocked = true;
-                titleToAnnounce = "💸 大負翁";
-            }
+            // 📖 圖鑑收集類
+            checkAndUnlock(uniqueCardsCount >= 10, "🔍 見習研究員");
+            checkAndUnlock(uniqueCardsCount >= 50, "📚 圖鑑收藏家");
+            checkAndUnlock(uniqueCardsCount >= 100, "🏅 菁英收集者");
+            checkAndUnlock(uniqueCardsCount >= 200, "🏆 寶可夢大師");
 
+            // 💰 財富自由類 (正分)
+            checkAndUnlock(points >= 500000, "💎 鑽石大亨");
+            checkAndUnlock(points >= 1000000, "🤑 財富自由");
+
+            // 💸 負債破產類 (負分)
+            checkAndUnlock(points <= -10000, "📉 韭菜訓練家");
+            checkAndUnlock(points <= -100000, "💸 大負翁");
+            checkAndUnlock(points <= -500000, "🏦 銀行黑名單");
+
+            // 🎰 抽卡花費類 (總消耗積分)
+            checkAndUnlock(totalSpent >= 50000, "🔥 抽卡狂魔");
+            checkAndUnlock(totalSpent >= 200000, "🎰 賭徒本色");
+
+            // 如果有解鎖新稱號，寫入資料庫並觸發特效
             if (newTitleUnlocked) {
                 try {
                     await setDoc(doc(db, "users", auth.currentUser.uid), { 
@@ -540,7 +558,7 @@
                     window.updateUI();
 
                     alert(`🎉 恭喜！您達成了隱藏條件，解鎖了全新稱號：【${titleToAnnounce}】！\n系統已為您自動裝備！`);
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 }, zIndex: 1000 });
+                    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, zIndex: 1000 });
                 } catch (e) {
                     console.error("稱號解鎖失敗", e);
                 }
