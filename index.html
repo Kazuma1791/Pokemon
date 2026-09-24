@@ -1644,13 +1644,17 @@
                     if (card) {
                         pulledCards.push(card);
                         batchPulledValue += RARITY[card.rarity].price;
-
-                        if (card.image) {
-                            const preImg = new Image();
-                            preImg.src = card.image;
-                        }
                     }
                 }
+
+                // 🚀 【新增位置】在抽卡完成後，非同步等待所有圖片載入完成，確保 3D 翻牌時不卡頓
+                await Promise.all(pulledCards.map(c => new Promise(resolve => {
+                    if (!c.image) return resolve();
+                    const img = new Image();
+                    img.src = c.image;
+                    img.onload = resolve;
+                    img.onerror = resolve; // 即使圖片載入失敗也繼續執行，避免程式卡死
+                })));
 
                 const updatedCards = { ...(currentUserDoc.cards || {}) };
                 pulledCards.forEach(card => {
