@@ -2189,9 +2189,16 @@
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
+            // 1. 桌面端導覽按鈕樣式重置
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm active:scale-95 transition";
             });
+            
+            // 如果不是管理員，強制保持桌面管理按鈕隱藏
+            const isAdmin = auth.currentUser && auth.currentUser.uid === ADMIN_UID;
+            const adminTabBtn = document.getElementById('adminTabBtn');
+            if (adminTabBtn && !isAdmin) adminTabBtn.classList.add('hidden');
+
             const activeNav = document.getElementById(`nav-${tab}`);
             if (activeNav) {
                 activeNav.className = tab === 'admin' 
@@ -2199,12 +2206,26 @@
                     : "tab-btn px-3 py-1.5 rounded-xl font-bold bg-red-600 text-white shadow text-sm active:scale-95 transition";
             }
 
+            // 2. 手機端導覽按鈕樣式重置 (修復漏洞重點)
             document.querySelectorAll('.mob-tab-btn').forEach(btn => {
                 btn.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] active:scale-90 transition";
             });
+
+            // 🔧 【關鍵修復】：重置樣式後，非管理員必須重新加上 hidden
+            const mobAdminTabBtn = document.getElementById('mobAdminTabBtn');
+            if (mobAdminTabBtn) {
+                if (isAdmin) {
+                    mobAdminTabBtn.classList.remove('hidden');
+                } else {
+                    mobAdminTabBtn.classList.add('hidden');
+                }
+            }
+
             const activeMobNav = document.getElementById(`mob-nav-${tab}`);
             if (activeMobNav) {
-                activeMobNav.className = "mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition";
+                activeMobNav.className = tab === 'admin'
+                    ? "mob-tab-btn flex flex-col items-center gap-0.5 text-amber-400 font-bold text-[10px] active:scale-90 transition"
+                    : "mob-tab-btn flex flex-col items-center gap-0.5 text-red-500 font-bold text-[10px] active:scale-90 transition";
             }
 
             if (tab === 'binder') renderBinder();
