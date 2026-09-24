@@ -689,7 +689,28 @@
             return false;
         }
 
-        // 🌟 核心：每日全服總收益記錄器 (僅純粹記錄抽卡花費、賣卡收益)
+        // 🌟 核心：每日全服總收益記錄器 & 即時連線更新
+        let unsubscribeDailyStats = null;
+        
+        window.listenToDailyStats = function() {
+            if (unsubscribeDailyStats) unsubscribeDailyStats();
+            const todayDate = new Date();
+            const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
+            const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
+            
+            // 讓所有玩家的畫面「即時」連動全服的收益變化
+            unsubscribeDailyStats = onSnapshot(statsRef, (snap) => {
+                const todayProfit = snap.exists() ? (snap.data().profit || 0) : 0;
+                const profitEl = document.getElementById('statPlayerProfit');
+                if (profitEl) {
+                    profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
+                    profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
+                }
+            }, (err) => {
+                console.error("⚠️ 收益監聽被阻擋，請確認 Firebase Rules 是否有加入 /system 權限！", err);
+            });
+        };
+
         window.recordDailyProfit = async function(changeAmount) {
             if (!changeAmount || isNaN(changeAmount) || changeAmount === 0) return;
             try {
@@ -701,6 +722,9 @@
                 console.error("更新全日收益失敗:", e);
             }
         };
+
+        // 網頁載入時立刻啟動全服收益監聽！
+        window.listenToDailyStats();
 
         const RARITY = {
             'C':    { price: 3,    rate: 0.450, color: '#9ca3af' },
