@@ -1997,7 +1997,11 @@
                 alert("刪除帳號資料失敗: " + e.message);
             }
         };
-        window.switchTab('pack');
+
+        // 🌟 初始化頁面：一進來預設切換到抽卡頁面
+        window.onload = () => {
+            window.switchTab('pack');
+        };
     </script>
 </body>
 </html>
