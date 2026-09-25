@@ -179,7 +179,7 @@
 
             <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-3 sm:p-4 rounded-2xl border border-amber-500/30 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🔥 本日 SAR / RGB / FUR 爆卡</span>
+                    <span class="text-[10px] sm:text-xs text-slate-400 font-bold block">🔥 本日終極大獎 (UR/RGB/FUR) 爆卡</span>
                     <span id="statTodayRares" class="text-lg sm:text-2xl font-black text-amber-400">0</span>
                     <span class="text-[10px] text-slate-500">張</span>
                 </div>
@@ -546,14 +546,32 @@
             return false;
         }
 
-        window.getTitleStyle = function(title) {
-            if (!title) return "bg-slate-500/20 text-slate-300 border-slate-500/40";
-            if (title.includes("新手") || title.includes("見習")) return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
-            if (title.includes("圖鑑") || title.includes("菁英")) return "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
-            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) return "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.4)]";
-            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) return "bg-red-500/20 text-red-300 border-red-500/40";
-            if (title.includes("狂魔") || title.includes("賭徒")) return "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40";
-            return "bg-indigo-500/20 text-indigo-300 border-indigo-500/40";
+        // 🌟 新增：根據稱號或 VIP 狀態，決定玩家名字的超炫特效！
+        window.getNameStyle = function(title, isVip) {
+            // 👑 VIP 絕對優先：流光溢彩的黃金漸層 + 呼吸燈發光特效
+            if (isVip) return "bg-gradient-to-r from-amber-300 via-yellow-100 to-amber-400 bg-clip-text text-transparent font-black drop-shadow-[0_0_4px_rgba(251,191,36,0.8)] animate-pulse";
+            
+            if (!title) return "text-white font-bold";
+            
+            // 🏆 頂級富豪 / 大師：實體漸層金，尊爵不凡
+            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) {
+                return "bg-gradient-to-b from-yellow-200 to-amber-500 bg-clip-text text-transparent font-black";
+            }
+            // 😈 狂熱系列：霓虹紫發光
+            if (title.includes("狂魔") || title.includes("賭徒")) {
+                return "text-fuchsia-400 font-black drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]";
+            }
+            // 📉 破產系列：黯淡的暗紅色，帶有一點透明度
+            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) {
+                return "text-red-400/80 font-bold";
+            }
+            // 📘 圖鑑高手：科技亮藍色
+            if (title.includes("圖鑑") || title.includes("菁英")) {
+                return "text-cyan-300 font-bold";
+            }
+            
+            // 🔰 預設新手：純白色
+            return "text-white font-bold";
         };
 
         // 🌟 稱號資料庫與解鎖說明
@@ -779,11 +797,18 @@
                 const titleStyle = window.getTitleStyle(data.title);
                 const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
 
+                // 取得對應的名字特效
+                const nameStyle = window.getNameStyle(data.title, data.isVip);
+
                 html += `
                     <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-1.5 shadow">
                         <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-1.5">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-xs sm:text-sm text-cyan-300 flex items-center gap-1">${titleBadge}${safeName}${vipTag}</span>
+                                <span class="flex items-center gap-1">
+                                    ${titleBadge}
+                                    <span class="text-xs sm:text-sm ${nameStyle}">${safeName}</span>
+                                    ${vipTag}
+                                </span>
                                 <span class="text-[10px] text-slate-500 font-mono">[${dateStr}]</span>
                             </div>
                             ${isAdmin ? `<button onclick="deleteGuestbookMessage('${docId}')" class="text-[10px] bg-red-950/80 hover:bg-red-800 active:scale-95 text-red-200 px-2 py-0.5 rounded border border-red-800/60 font-bold transition"><i class="fa-solid fa-trash-can mr-0.5"></i>刪除</button>` : ''}
@@ -1281,6 +1306,8 @@
             const titleBtn = document.getElementById('titleBtn'); 
 
             nameEl.innerText = escapeHTML(currentUserDoc.name || '訓練家');
+            // 🌟 讓頂部的名字套用特效
+            nameEl.className = `max-w-[60px] sm:max-w-[100px] truncate ${window.getNameStyle(currentTitle, isVip)}`;
             
             if(titleEl) {
                 titleEl.innerText = escapeHTML(currentTitle);
@@ -1397,7 +1424,8 @@
                 window.recordDailyProfit(-cost); 
 
                 try {
-                    const topCards = pulledCards.filter(c => ['SAR', 'UR', 'RGB', 'FUR'].includes(c.rarity));
+                    // 🌟 嚴格限制：現在只有低於 2% 機率的最頂級神卡才會觸發全服廣播！
+                    const topCards = pulledCards.filter(c => ['UR', 'RGB', 'FUR'].includes(c.rarity));
                     for (let rareCard of topCards) {
                         addDoc(collection(db, "broadcasts"), {
                             playerName: currentUserDoc.name || "訓練家",
@@ -1448,28 +1476,27 @@
             let htmlStr = '';
             for(let i=0; i<cards.length; i++) {
                 const c = cards[i];
-                htmlStr += `
-                    <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${i})">
-                        <div id="cardInner-${i}" class="card-inner">
-                            <div class="card-front bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center p-2 shadow-2xl">
-                                <i class="fa-solid fa-shield-cat text-3xl sm:text-4xl text-amber-400 mb-1 sm:mb-2"></i>
-                                <span class="text-[10px] sm:text-xs font-black text-amber-300">POKÉMON</span>
-                            </div>
-                            <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
-                                <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-900">
-                                    <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
+                const nameStyle = window.getNameStyle(u.title, u.isVip);
+
+                        htmlStr += `
+                            <div class="${bgStyle} p-3 rounded-xl border flex items-center justify-between gap-2 shadow">
+                                <div class="flex items-center gap-2.5 overflow-hidden">
+                                    ${rankBadge}
+                                    <div class="truncate">
+                                        <div class="flex items-center truncate">
+                                            ${titleBadge}
+                                            <span class="text-xs sm:text-sm ${nameStyle} truncate">${safeName}</span>
+                                            ${vipTag}${banTag}
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 mt-0.5">圖鑑解鎖：${u.progressPct}% (${u.unlockedCount}張)</div>
+                                    </div>
                                 </div>
-                                <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
-                                <div class="flex items-center gap-1 mt-0.5">
-                                    <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
-                                    <span class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
-                                        <i class="fa-solid fa-gem text-cyan-400 text-[8px]"></i>${RARITY[c.rarity].price}分
-                                    </span>
+                                <div class="text-right shrink-0">
+                                    <span class="text-xs sm:text-sm font-black text-cyan-300">${u.points.toLocaleString()}</span>
+                                    <span class="text-[10px] text-slate-400">分</span>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                `;
+                        `;
             }
             grid.innerHTML = htmlStr;
 
