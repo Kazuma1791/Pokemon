@@ -1,4 +1,4 @@
-const CARD_SETS = {
+window.CARD_SETS = {
     'm6a': [
                 { id: 'm6a-001', name: '蛋蛋 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-001-103-Exeggcute-standard.webp' },
                 { id: 'm6a-002', name: '阿羅拉椰蛋樹 (Main Set)', rarity: 'MAIN', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/09/M6a-002-103-Alolan-Exeggutor-standard-v2.webp' },
