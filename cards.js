@@ -168,7 +168,7 @@ window.CARD_SETS = {
                 { id: 'm6a-fur1', name: '超夢 ex (FUR)', rarity: 'FUR', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/07/M6a-134.webp' },
                 { id: 'm6a-fur2', name: '夢幻 ex (FUR)', rarity: 'FUR', image: 'https://www.fujicardshop.com/wp-content/uploads/2026/07/M6a-135.webp' }
             ],
-            's12a': [
+    's12a': [
                 { id: 's12a-001', name: '派拉斯', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/4rushpS12a001172-1.jpg' },
                 { id: 's12a-002', name: '派拉斯特', rarity: 'U', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/5rushpS12a002172-1.jpg' },
                 { id: 's12a-003', name: '洗翠 霹靂電球', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/6rushpS12a003172-1.jpg' },
@@ -432,7 +432,7 @@ window.CARD_SETS = {
                 { id: 's12a-261', name: '騎拉帝納VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_1-1.jpg' },
                 { id: 's12a-262', name: '阿爾宙斯VSTAR', rarity: 'UR', image: 'https://www.fujicardshop.com/wp-content/uploads/2022/12/CR_S12a_0-1.jpg' }
             ],
-            'sv2a': [
+    'sv2a': [
 	            // --- C (Common / 普卡) ---
 	            { id: 'sv2a-001', name: '妙蛙種子', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2024/06/SV2a_Pokemon-Card-151_001_165_Bulbasaur_C.webp' },
 	            { id: 'sv2a-004', name: '小火龍', rarity: 'C', image: 'https://www.fujicardshop.com/wp-content/uploads/2024/06/SV2a_Pokemon-Card-151_004_165_Charmander_C.webp' },
