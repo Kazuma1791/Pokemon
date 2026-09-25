@@ -14,7 +14,6 @@
                 alert("⚠️ 系統安全防護已啟動，禁止開啟開發者工具！");
             }
         });
-        // 🗑️ 已移除無限 Debugger 陷阱，釋放手機記憶體與運算效能！
     </script>
     
     <meta charset="UTF-8">
@@ -105,8 +104,8 @@
                 <div class="flex items-center gap-1.5">
                     <i class="fa-solid fa-user text-cyan-400 text-xs"></i>
                     
-                    <!-- 🌟 稱號按鈕加入了 id="titleBtn" 以便動態改變顏色 -->
-                    <button id="titleBtn" onclick="promptChangeTitle()" title="切換稱號" class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded border transition truncate max-w-[80px] sm:max-w-[100px] hover:opacity-80">
+                    <!-- 🌟 稱號按鈕，點擊開啟全新的成就Modal -->
+                    <button id="titleBtn" onclick="openTitleModal()" title="查看與切換稱號" class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded border transition truncate max-w-[80px] sm:max-w-[100px] hover:opacity-80 shadow">
                         <span id="displayTitle">🔰 新手訓練家</span>
                     </button>
 
@@ -335,6 +334,35 @@
         </div>
     </div>
 
+    <!-- 🌟 新增：稱號成就與取得說明 Modal 🌟 -->
+    <div id="titleModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 p-5 sm:p-6 rounded-2xl border-2 border-indigo-500 max-w-md w-full space-y-4 shadow-2xl relative max-h-[85vh] flex flex-col">
+            <button onclick="closeTitleModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            <div class="text-center">
+                <h2 class="text-xl sm:text-2xl font-black text-indigo-400 flex justify-center items-center gap-2"><i class="fa-solid fa-medal"></i> 稱號系統</h2>
+                <p class="text-xs text-slate-400 mt-1">點擊可裝備已解鎖的稱號</p>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-1 space-y-4 custom-scrollbar">
+                <!-- 玩家已擁有稱號區域 -->
+                <div>
+                    <h3 class="text-xs font-bold text-slate-300 border-b border-slate-700 pb-1 mb-2">✨ 我的稱號 (點擊裝備)</h3>
+                    <div id="myTitlesList" class="flex flex-wrap gap-2">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+                
+                <!-- 所有稱號取得條件 -->
+                <div>
+                    <h3 class="text-xs font-bold text-slate-300 border-b border-slate-700 pb-1 mb-2">📖 稱號取得說明</h3>
+                    <div id="allTitlesGuideList" class="space-y-2">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 🎴 3D 拆卡包動畫 Modal -->
     <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-sm md:backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-3 sm:p-4" style="transform: translateZ(0); will-change: transform, opacity;">
         <div id="animStepChoice" class="flex flex-col items-center space-y-4 sm:space-y-6 text-center max-w-2xl w-full my-auto">
@@ -423,7 +451,6 @@
         };
     </script>
 
-    <!-- Firebase SDK 與核心邏輯 -->
     <!-- Firebase SDK 與核心邏輯 (終極流暢優化版) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -457,7 +484,7 @@
         let lastBroadcastTimestamp = Date.now();
         let currentLbSubTab = 'lucky';
 
-        // 🌟 終極防卡死機制：給所有按鍵鎖一個「保底逾時自動解開」的功能，最長卡住 4 秒自動復活
+        // 🌟 終極防卡死機制
         let processingTimeout = null;
         window.isProcessing = false;
         
@@ -467,7 +494,7 @@
             processingTimeout = setTimeout(() => {
                 window.isProcessing = false;
                 console.warn("⚠️ 操作逾時，已強制解除按鍵鎖！");
-            }, 4000); // 4 秒後強制作廢鎖定
+            }, 4000); 
         }
 
         function unlockUI() {
@@ -501,7 +528,22 @@
             return "bg-indigo-500/20 text-indigo-300 border-indigo-500/40";
         };
 
-        // 🌟 效能優化：把成就檢查丟到背景執行，不要卡住主畫面
+        // 🌟 稱號資料庫與解鎖說明
+        const TITLE_REQUIREMENTS = [
+            { title: "🔰 新手訓練家", desc: "創建帳號即可獲得", condition: "預設稱號" },
+            { title: "🔍 見習研究員", desc: "收集滿 10 張不同卡牌", condition: "圖鑑進度" },
+            { title: "📚 圖鑑收藏家", desc: "收集滿 50 張不同卡牌", condition: "圖鑑進度" },
+            { title: "🏅 菁英收集者", desc: "收集滿 100 張不同卡牌", condition: "圖鑑進度" },
+            { title: "🏆 寶可夢大師", desc: "收集滿 200 張不同卡牌", condition: "圖鑑進度" },
+            { title: "💎 鑽石大亨", desc: "身上積分達到 500,000 分", condition: "財富累積" },
+            { title: "🤑 財富自由", desc: "身上積分達到 1,000,000 分", condition: "財富累積" },
+            { title: "📉 韭菜訓練家", desc: "身上積分跌破 -10,000 分", condition: "負債破產" },
+            { title: "💸 大負翁", desc: "身上積分跌破 -100,000 分", condition: "負債破產" },
+            { title: "🏦 銀行黑名單", desc: "身上積分跌破 -500,000 分", condition: "負債破產" },
+            { title: "🔥 抽卡狂魔", desc: "累計花費超過 50,000 積分", condition: "消費成就" },
+            { title: "🎰 賭徒本色", desc: "累計花費超過 200,000 積分", condition: "消費成就" }
+        ];
+
         window.checkAchievements = function() {
             setTimeout(async () => {
                 if (!currentUserDoc || !auth.currentUser) return;
@@ -549,33 +591,72 @@
                         confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, zIndex: 1000 });
                     } catch (e) { console.warn("背景成就解鎖延遲", e); }
                 }
-            }, 500); // 延遲半秒檢查，讓出手機效能給動畫
+            }, 500); 
         };
 
-        window.promptChangeTitle = async function() {
+        // 🌟 新增：打開全新的稱號系統視窗
+        window.openTitleModal = function() {
+            if (checkBanned()) return;
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入！");
-            const titles = currentUserDoc.titles || ["🔰 新手訓練家"];
-            if (titles.length <= 1) return alert("您目前只有一個稱號，繼續努力解鎖更多吧！");
 
-            let msg = "🏆 請選擇您要裝備的稱號 (輸入數字)：\n";
-            titles.forEach((t, i) => msg += `${i + 1}. ${t}\n`);
+            const myTitlesList = document.getElementById('myTitlesList');
+            const guideList = document.getElementById('allTitlesGuideList');
+            const unlockedTitles = currentUserDoc.titles || ["🔰 新手訓練家"];
+            const currentTitle = currentUserDoc.currentTitle || "🔰 新手訓練家";
+
+            // 渲染：玩家已經擁有的稱號按鈕
+            myTitlesList.innerHTML = unlockedTitles.map(t => {
+                const isEquipped = t === currentTitle;
+                const style = window.getTitleStyle(t);
+                const borderClass = isEquipped ? 'ring-2 ring-white scale-105 opacity-100' : 'opacity-80 hover:opacity-100 hover:scale-105';
+                return `
+                    <button onclick="equipTitle('${t}')" class="text-[10px] sm:text-xs ${style} px-2.5 py-1.5 rounded transition shadow-md ${borderClass} cursor-pointer">
+                        ${t} ${isEquipped ? ' <i class="fa-solid fa-circle-check ml-1 text-white"></i>' : ''}
+                    </button>
+                `;
+            }).join('');
+
+            // 渲染：所有稱號的取得說明清單
+            guideList.innerHTML = TITLE_REQUIREMENTS.map(req => {
+                const isUnlocked = unlockedTitles.includes(req.title);
+                const style = window.getTitleStyle(req.title);
+                const statusHtml = isUnlocked 
+                    ? `<span class="text-[9px] sm:text-[10px] text-emerald-400 font-bold bg-emerald-900/30 px-1.5 py-0.5 rounded"><i class="fa-solid fa-unlock mr-1"></i>已解鎖</span>` 
+                    : `<span class="text-[9px] sm:text-[10px] text-slate-500 font-bold bg-slate-800 px-1.5 py-0.5 rounded"><i class="fa-solid fa-lock mr-1"></i>未解鎖</span>`;
+                
+                return `
+                    <div class="bg-slate-800/60 p-2 sm:p-2.5 rounded-xl border ${isUnlocked ? 'border-slate-500' : 'border-slate-700/50 opacity-60'} flex items-center justify-between shadow-sm">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] sm:text-[11px] ${style} px-1.5 py-0.5 rounded w-max inline-block">${req.title}</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400">${req.desc}</span>
+                        </div>
+                        <div class="shrink-0 ml-2">
+                            ${statusHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('titleModal').classList.remove('hidden');
+        };
+
+        window.closeTitleModal = function() {
+            document.getElementById('titleModal').classList.add('hidden');
+        };
+
+        // 🌟 新增：實際裝備稱號的功能
+        window.equipTitle = async function(targetTitle) {
+            if (!currentUserDoc || !auth.currentUser) return;
+            if (targetTitle === currentUserDoc.currentTitle) return;
             
-            const choice = prompt(msg, "1");
-            if (!choice) return;
-
-            const idx = parseInt(choice) - 1;
-            if (!isNaN(idx) && titles[idx]) {
-                if (titles[idx] === currentUserDoc.currentTitle) return alert("您已經裝備這個稱號囉！");
-                try {
-                    await setDoc(doc(db, "users", auth.currentUser.uid), { currentTitle: titles[idx] }, { merge: true });
-                    currentUserDoc.currentTitle = titles[idx];
-                    window.updateUI();
-                    alert(`✅ 稱號已成功切換為：${titles[idx]}`);
-                } catch(e) {
-                    alert("更換稱號失敗: " + e.message);
-                }
-            } else {
-                alert("⚠️ 錯誤的選項。");
+            try {
+                await setDoc(doc(db, "users", auth.currentUser.uid), { currentTitle: targetTitle }, { merge: true });
+                currentUserDoc.currentTitle = targetTitle;
+                window.updateUI();
+                alert(`✅ 裝備成功！目前稱號為：${targetTitle}`);
+                closeTitleModal();
+            } catch(e) {
+                alert("更換稱號失敗: " + e.message);
             }
         };
 
@@ -596,13 +677,12 @@
             }, (err) => {});
         };
 
-        // 🌟 效能優化：把寫入全日收益這種不急的事，通通不阻擋主程式
         window.recordDailyProfit = function(changeAmount) {
             if (!changeAmount || isNaN(changeAmount) || changeAmount === 0) return;
             const todayDate = new Date();
             const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
             const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
-            setDoc(statsRef, { profit: increment(changeAmount) }, { merge: true }).catch(e => console.warn(e));
+            setDoc(statsRef, { profit: increment(changeAmount) }, { merge: true }).catch(e => {});
         };
 
         window.listenToDailyStats();
@@ -1631,7 +1711,6 @@
             if (checkBanned()) return;
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
-            // 🌟 效能優化：設定短暫逾時，避免雲端卡死主程式
             await Promise.race([
                 setDoc(userRef, updateData, { merge: true }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error("網路連線逾時，請稍後再試")), 2500))
@@ -1654,7 +1733,7 @@
             if(titleEl) {
                 titleEl.innerText = escapeHTML(currentTitle);
                 if (titleBtn) {
-                    titleBtn.className = `text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded border transition truncate max-w-[80px] sm:max-w-[100px] hover:opacity-80 ${window.getTitleStyle(currentTitle)}`;
+                    titleBtn.className = `text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded border transition truncate max-w-[80px] sm:max-w-[100px] hover:opacity-80 shadow ${window.getTitleStyle(currentTitle)}`;
                 }
             }
 
@@ -1713,7 +1792,7 @@
             const choiceBox = document.getElementById('animStepChoice');
             if (choiceBox) choiceBox.classList.add('pointer-events-none', 'opacity-50');
 
-            lockUI(); // 🌟 使用保底鎖定機制
+            lockUI(); 
 
             try {
                 let pulledCards = [];
@@ -1727,15 +1806,13 @@
                     }
                 }
 
-                // 🌟 DOM 渲染優化：不要真的下載完圖片，給瀏覽器排程就好
                 const preloadPromises = pulledCards.map(c => new Promise(resolve => {
                     if (!c.image) return resolve();
                     const img = new Image();
                     img.src = c.image;
                     img.onload = resolve;
-                    img.onerror = resolve; // 失敗也放行，反正有 fallback 圖片
+                    img.onerror = resolve; 
                 }));
-                // 為了絕對的流暢，圖片預載只等 800ms
                 await Promise.race([
                     Promise.all(preloadPromises),
                     new Promise(res => setTimeout(res, 800))
@@ -1753,7 +1830,6 @@
 
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 
-                // 🌟 Firebase 網路超時保護：如果網路不穩，最多等 1.5 秒，先讓動畫跑
                 const updatePromise = setDoc(userRef, {
                     points: newPoints,
                     cards: updatedCards,
@@ -1771,7 +1847,6 @@
                 try {
                     const topCards = pulledCards.filter(c => ['SAR', 'UR', 'RGB', 'FUR'].includes(c.rarity));
                     for (let rareCard of topCards) {
-                        // 廣播不阻擋主程式
                         addDoc(collection(db, "broadcasts"), {
                             playerName: currentUserDoc.name || "訓練家",
                             title: currentUserDoc.currentTitle || "🔰 新手訓練家",
@@ -1799,7 +1874,7 @@
                     document.getElementById('animStepTear').classList.add('hidden');
                     document.getElementById('animStepReveal').classList.remove('hidden');
                     window.renderModalFlipCards(currentPulledCards);
-                    window.checkAchievements(); // 這個已經改成了非同步，不會卡死
+                    window.checkAchievements(); 
                 }, 800);
 
             } catch (err) {
@@ -1807,19 +1882,17 @@
                 document.getElementById('packModal').classList.add('hidden');
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
-                unlockUI(); // 🌟 安全解鎖
+                unlockUI(); 
             }
         };
 
         window.getImgSrcWithFallback = function(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
-            // 🌟 加入 decoding="async" 與 fetchpriority="low" 降低手機負擔
             return `src="${card.image}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='${fallback}';"`;
         }
 
         window.renderModalFlipCards = function(cards) {
             const grid = document.getElementById('modalCardsGrid');
-            // 🌟 減少不必要的 HTML 標籤嵌套，提升 DOM 渲染效能
             let htmlStr = '';
             for(let i=0; i<cards.length; i++) {
                 const c = cards[i];
@@ -1850,7 +1923,7 @@
 
             if (cards.some(c => ['SAR', 'UR', 'RGB', 'FUR'].includes(c.rarity))) {
                 setTimeout(() => { 
-                    const pCount = window.innerWidth < 768 ? 40 : 80; // 🌟 再度降低特效粒子數，確保手機絕對不卡
+                    const pCount = window.innerWidth < 768 ? 40 : 80; 
                     confetti({ particleCount: pCount, spread: 70, origin: { y: 0.6 } }); 
                 }, 150);
             }
@@ -1870,7 +1943,7 @@
                         const el = document.getElementById(`cardInner-${idx}`);
                         if (el && !el.classList.contains('flipped')) { el.classList.add('flipped'); }
                     });
-                }, idx * 60); // 🌟 稍微調快翻開速度，讓體驗更俐落
+                }, idx * 60); 
             });
         };
 
@@ -1889,7 +1962,6 @@
             if (!area || !grid || cards.length === 0) return;
             area.classList.remove('hidden');
             
-            // 🌟 效能優化：使用字串拼接一次塞入，避免 DOM 多次重繪
             let htmlStr = '';
             for(let i=0; i<cards.length; i++) {
                 const c = cards[i];
@@ -1911,7 +1983,6 @@
             grid.innerHTML = htmlStr;
         }
 
-        // 🌟 效能優化：為渲染圖鑑加入延遲與批次處理，避免卡包過大時切換分頁當機
         window.renderBinder = function() {
             const setId = document.getElementById('binderSetFilter').value;
             const grid = document.getElementById('binderGrid');
@@ -1956,10 +2027,9 @@
                 grid.innerHTML = htmlStr;
                 const pct = cards.length > 0 ? Math.round((unlocked / cards.length) * 100) : 0;
                 document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${pct}%)`;
-            }, 10); // 讓出主執行緒，顯示 Loading 後再渲染
+            }, 10); 
         };
 
-        // 🌟 效能優化：賣卡介面批次渲染
         window.renderSellInventory = function() {
             const grid = document.getElementById('sellInventoryGrid');
             if (!grid || !currentUserDoc) return;
@@ -2012,7 +2082,7 @@
             const price = RARITY[card.rarity].price;
             const newPoints = (currentUserDoc.points || 0) + price;
 
-            lockUI(); // 🌟 保底鎖
+            lockUI(); 
             try {
                 let newCards = { ...currentUserDoc.cards };
                 newCards[cardId]--;
@@ -2028,7 +2098,7 @@
             } catch (err) {
                 alert("出售失敗：" + err.message);
             } finally {
-                unlockUI(); // 🌟 解鎖
+                unlockUI(); 
             }
         };
 
@@ -2051,7 +2121,7 @@
             if (total === 0) return alert("目前沒有重複卡！");
             const newPoints = (currentUserDoc.points || 0) + total;
 
-            lockUI(); // 🌟 保底鎖
+            lockUI(); 
             try {
                 await window.syncToCloud({ cards: newCards, points: newPoints });
                 currentUserDoc.cards = newCards;
@@ -2067,7 +2137,7 @@
             } catch (err) {
                 alert("一鍵出售失敗，請稍後再試：" + err.message);
             } finally {
-                unlockUI(); // 🌟 解鎖
+                unlockUI(); 
             }
         };
 
@@ -2091,7 +2161,6 @@
             if (listEl) { listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算排行榜數據中...</div>`; }
 
             try {
-                // 背景抓取全日數據，不阻擋排行榜本身
                 try {
                     const todayDate = new Date();
                     const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
