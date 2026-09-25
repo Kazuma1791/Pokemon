@@ -297,7 +297,7 @@
                                 <div class="flex justify-between items-center text-xs">
                                     <span class="text-slate-400">VIP 狀態：<b id="selectedUserVipStatusText" class="text-amber-300">普通</b></span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2 pt-1">
+                               <div class="grid grid-cols-2 gap-2 pt-1">
                                     <button onclick="adminAdjustSelectedUser(1000)" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">+1,000 分</button>
                                     <button onclick="adminAdjustSelectedUser(-1000)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">-1,000 分</button>
                                     <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 rounded text-xs active:scale-95 transition">一鍵升級 VIP</button>
@@ -307,6 +307,11 @@
                                     <input type="number" id="adminCustomPointsInput" placeholder="設定目標分數" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs">
                                     <button onclick="adminSetCustomPoints()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1 rounded text-xs">設定</button>
                                 </div>
+                                
+                                <!-- 👇 新增：終極抹除帳號按鈕 -->
+                                <button onclick="adminDeleteUserAccount()" class="w-full mt-3 bg-red-950 hover:bg-red-900 border-2 border-red-700/80 active:scale-95 text-red-300 py-1.5 rounded text-xs font-black shadow-lg transition flex justify-center items-center gap-1.5">
+                                    <i class="fa-solid fa-skull-crossbones"></i> 徹底抹除該玩家遊戲資料
+                                </button>
                                 <!-- 👇 新增：強制清空卡冊按鈕 -->
                                 <button onclick="adminClearUserCards()" class="w-full mt-1.5 bg-orange-700/80 hover:bg-orange-600 border border-orange-500/50 active:scale-95 text-white py-1.5 rounded text-xs font-bold shadow transition flex justify-center items-center gap-1.5">
                                     <i class="fa-solid fa-dumpster-fire"></i> 強制沒收所有卡牌 (清空卡冊)
@@ -1919,6 +1924,45 @@
                 window.fetchGlobalStatsAndLeaderboard();
             } catch (e) {
                 alert("清空卡冊失敗: " + e.message);
+            }
+        };
+        // 🌟 新增：徹底刪除玩家 Firestore 遊戲資料
+        window.adminDeleteUserAccount = async function() {
+            if (checkBanned()) return;
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作！");
+            
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            // 防護：禁止管理員刪除自己的帳號，以免導致整個網站無人管理
+            if (targetUid === ADMIN_UID) return alert("⚠️ 系統保護機制：您不能刪除最高管理員自己的帳號！");
+
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+
+            // 雙重防呆確認 1：第一次警告
+            const confirm1 = confirm(`🚨 【極度危險操作】🚨\n\n確定要徹底刪除玩家「${u.name}」的遊戲資料嗎？\n這將會清除他的所有積分、卡牌與稱號，且會從全服排行榜與資料庫中完全消失！\n(此操作無法復原)`);
+            if (!confirm1) return;
+            
+            // 雙重防呆確認 2：要求手動輸入玩家暱稱才能刪除
+            const confirm2 = prompt(`為了防止誤刪，請輸入該玩家的暱稱「${u.name}」以確認執行：`);
+            if (confirm2 !== u.name) {
+                return alert("輸入的暱稱不符，已安全取消刪除操作。");
+            }
+
+            try {
+                // 從 Firestore 直接刪除該玩家的 Document
+                await deleteDoc(doc(db, "users", targetUid));
+                alert(`💀 執行完畢！玩家 ${escapeHTML(u.name)} 的遊戲存在已從世界中徹底抹除。`);
+                
+                // 隱藏管理員卡片面板，重新讀取名單
+                document.getElementById('selectedUserCard').classList.add('hidden');
+                selectEl.value = "";
+                window.fetchAdminUserList();
+                window.fetchGlobalStatsAndLeaderboard();
+            } catch (e) {
+                alert("刪除帳號資料失敗: " + e.message);
             }
         };
         window.switchTab('pack');
