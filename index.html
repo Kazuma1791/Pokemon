@@ -2,7 +2,10 @@
 <html lang="zh-TW" class="dark">
 <head>
     <script>
+        // 🚫 禁用右鍵選單
         document.addEventListener('contextmenu', event => event.preventDefault());
+    
+        // 🚫 禁用 F12, Ctrl+Shift+I, Ctrl+U 等開發者快捷鍵
         document.addEventListener('keydown', event => {
             if (event.key === 'F12' || 
                (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'J' || event.key === 'C')) ||
@@ -11,9 +14,7 @@
                 alert("⚠️ 系統安全防護已啟動，禁止開啟開發者工具！");
             }
         });
-        setInterval(() => {
-            (function() { return false; }['constructor']('debugger')());
-        }, 1000);
+        // 🗑️ 已移除無限 Debugger 陷阱，釋放手機記憶體與運算效能！
     </script>
     
     <meta charset="UTF-8">
@@ -1685,7 +1686,11 @@
             modal.classList.remove('hidden');
         };
 
+        window.isProcessing = false; // 🌟 設立全域防連點鎖！
+
         window.choosePackAndTear = async function(packNumber) {
+            // 🛡️ 防連點：如果系統正在處理中，無視玩家瘋狂連點
+            if (window.isProcessing) return; 
             if (checkBanned()) return;
             if (!pendingPackConfig || !currentUserDoc || !auth.currentUser) return;
             const { setId, cardCount, cost } = pendingPackConfig;
@@ -1695,6 +1700,8 @@
 
             const choiceBox = document.getElementById('animStepChoice');
             if (choiceBox) choiceBox.classList.add('pointer-events-none', 'opacity-50');
+
+            window.isProcessing = true; // 🔒 鎖上按鍵！
 
             try {
                 let pulledCards = [];
@@ -1708,19 +1715,13 @@
                     }
                 }
 
-                // 🚀 流暢度優化 1：設定 1.5 秒的「強制超時放行」。
-                // 不要傻傻等所有圖片下載完，最多等 1.5 秒，時間到就先讓動畫跑，圖片邊跑邊載入！
-                const preloadPromises = pulledCards.map(c => new Promise(resolve => {
+                await Promise.all(pulledCards.map(c => new Promise(resolve => {
                     if (!c.image) return resolve();
                     const img = new Image();
                     img.src = c.image;
                     img.onload = resolve;
                     img.onerror = resolve;
-                }));
-                await Promise.race([
-                    Promise.all(preloadPromises),
-                    new Promise(res => setTimeout(res, 1500)) 
-                ]);
+                })));
 
                 const updatedCards = { ...(currentUserDoc.cards || {}) };
                 pulledCards.forEach(card => {
@@ -1734,28 +1735,33 @@
 
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 
-                await setDoc(userRef, {
-                    name: currentUserDoc.name || "訓練家",
-                    isVip: currentUserDoc.isVip || false,
+                // 🌟 Firebase 網路超時保護：最多等 1.5 秒，若網路不穩則放行畫面，讓資料背景慢慢存！
+                const updatePromise = setDoc(userRef, {
                     points: newPoints,
                     cards: updatedCards,
                     totalSpent: newTotalSpent,
                     totalPulledValue: newTotalPulledValue
                 }, { merge: true });
 
+                await Promise.race([
+                    updatePromise,
+                    new Promise(res => setTimeout(res, 1500))
+                ]);
+
                 window.recordDailyProfit(-cost); 
 
                 try {
                     const topCards = pulledCards.filter(c => ['SAR', 'UR', 'RGB', 'FUR'].includes(c.rarity));
                     for (let rareCard of topCards) {
-                        await addDoc(collection(db, "broadcasts"), {
+                        // 廣播不阻擋主程式
+                        addDoc(collection(db, "broadcasts"), {
                             playerName: currentUserDoc.name || "訓練家",
                             title: currentUserDoc.currentTitle || "🔰 新手訓練家",
                             cardName: rareCard.name,
                             rarity: rareCard.rarity,
                             isVip: currentUserDoc.isVip || false,
                             timestamp: Date.now()
-                        });
+                        }).catch(e=>console.warn(e));
                     }
                 } catch (broadcastErr) {}
 
@@ -1780,8 +1786,11 @@
 
             } catch (err) {
                 alert("抽卡失敗: " + err.message);
+                // 錯誤時強制關閉 Modal 避免卡死
+                document.getElementById('packModal').classList.add('hidden');
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
+                window.isProcessing = false; // 🔓 無論成功失敗，最後一定解開按鍵鎖！
             }
         };
 
@@ -1944,6 +1953,7 @@
         };
 
         window.sellSingleCard = async function(cardId) {
+            if (window.isProcessing) return; // 🛡️ 防連點
             if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
@@ -1953,8 +1963,11 @@
             const price = RARITY[card.rarity].price;
             const newPoints = (currentUserDoc.points || 0) + price;
 
-            if (newPoints > 100000) { return alert(`⚠️ 出售失敗！積分將達 ${newPoints.toLocaleString()} 分，超過 10 萬分安全上限。`); }
+            if (newPoints > 100000) {
+                return alert(`⚠️ 出售失敗！積分將達 ${newPoints.toLocaleString()} 分，超過 10 萬分安全上限，請先去抽卡消費。`);
+            }
 
+            window.isProcessing = true; // 🔒 鎖上
             try {
                 let newCards = { ...currentUserDoc.cards };
                 newCards[cardId]--;
@@ -1967,10 +1980,15 @@
                 window.updateUI(); 
                 window.renderSellInventory();
                 window.checkAchievements();
-            } catch (err) { alert("出售失敗：" + err.message); }
+            } catch (err) {
+                alert("出售失敗：" + err.message);
+            } finally {
+                window.isProcessing = false; // 🔓 解開
+            }
         };
 
         window.sellAllDuplicates = async function() {
+            if (window.isProcessing) return; // 🛡️ 防連點
             if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards) return;
 
@@ -1984,6 +2002,33 @@
                     newCards[c.id] = 1;
                 }
             });
+
+            if (total === 0) return alert("目前沒有重複卡！");
+            const newPoints = (currentUserDoc.points || 0) + total;
+
+            if (newPoints > 100000) {
+                return alert(`⚠️ 出售失敗！\n出售後積分將高達 ${newPoints.toLocaleString()} 分，超過系統的安全上限！`);
+            }
+
+            window.isProcessing = true; // 🔒 鎖上
+            try {
+                await window.syncToCloud({ cards: newCards, points: newPoints });
+                currentUserDoc.cards = newCards;
+                currentUserDoc.points = newPoints;
+                window.recordDailyProfit(total); 
+                window.updateUI(); 
+
+                if (!document.getElementById('tab-sell').classList.contains('hidden')) {
+                    window.renderSellInventory();
+                }
+                alert(`✅ 已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
+                window.checkAchievements();
+            } catch (err) {
+                alert("一鍵出售失敗，請稍後再試：" + err.message);
+            } finally {
+                window.isProcessing = false; // 🔓 解開
+            }
+        };
 
             if (total === 0) return alert("目前沒有重複卡！");
             const newPoints = (currentUserDoc.points || 0) + total;
