@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-TW" class="dark">
 <head>
-    <!-- 前面保留你原本的防護腳本、CSS 等設定... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>寶可夢卡牌模擬器</title>
+
+    <!-- 1. 載入外部套件庫 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- 👇 在這裡加上這一行，把卡牌資料庫拉進來 -->
+    <!-- 2. 載入卡牌資料庫 (超級重要) -->
     <script src="./cards.js"></script>
     
+    <!-- 3. 防護腳本 -->
     <script>
         // 🚫 禁用右鍵選單
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -23,14 +28,8 @@
             }
         });
     </script>
-    
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>寶可夢卡牌模擬器</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+    <!-- 4. 網站樣式 -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
