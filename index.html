@@ -1728,9 +1728,8 @@
 
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 
+                // 🌟 核心修正：抽卡時「只上傳真正改變的數據」，不要帶上名字和 VIP 標籤去觸發防火牆！
                 await setDoc(userRef, {
-                    name: currentUserDoc.name || "訓練家",
-                    isVip: currentUserDoc.isVip || false,
                     points: newPoints,
                     cards: updatedCards,
                     totalSpent: newTotalSpent,
