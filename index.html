@@ -1981,12 +1981,17 @@
                 window.renderSellInventory();
                 window.checkAchievements();
             } catch (err) {
-                alert("出售失敗：" + err.message);
+                alert("一鍵出售失敗，請稍後再試：" + err.message);
             } finally {
                 window.isProcessing = false; // 🔓 解開
             }
         };
 
+        window.switchLbSubTab = function(subTab) {
+            currentLbSubTab = subTab;
+            const luckyBtn = document.getElementById('lbBtnLucky');
+            const unluckyBtn = document.getElementById('lbBtnUnlucky');
+            
         window.sellAllDuplicates = async function() {
             if (window.isProcessing) return; // 🛡️ 防連點
             if (checkBanned()) return;
