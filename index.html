@@ -2030,6 +2030,9 @@
             }
         };
 
+        // 🌟 下一個函數應該直接是 switchLbSubTab，中間不能有其他殘留的碎片！
+        window.switchLbSubTab = function(subTab) {
+
             if (total === 0) return alert("目前沒有重複卡！");
             const newPoints = (currentUserDoc.points || 0) + total;
 
