@@ -1981,17 +1981,12 @@
                 window.renderSellInventory();
                 window.checkAchievements();
             } catch (err) {
-                alert("一鍵出售失敗，請稍後再試：" + err.message);
+                alert("出售單張失敗：" + err.message);
             } finally {
                 window.isProcessing = false; // 🔓 解開
             }
         };
 
-        window.switchLbSubTab = function(subTab) {
-            currentLbSubTab = subTab;
-            const luckyBtn = document.getElementById('lbBtnLucky');
-            const unluckyBtn = document.getElementById('lbBtnUnlucky');
-            
         window.sellAllDuplicates = async function() {
             if (window.isProcessing) return; // 🛡️ 防連點
             if (checkBanned()) return;
@@ -2033,27 +2028,6 @@
             } finally {
                 window.isProcessing = false; // 🔓 解開
             }
-        };
-
-        // 🌟 下一個函數應該直接是 switchLbSubTab，中間不能有其他殘留的碎片！
-        window.switchLbSubTab = function(subTab) {
-
-            if (total === 0) return alert("目前沒有重複卡！");
-            const newPoints = (currentUserDoc.points || 0) + total;
-
-            if (newPoints > 100000) { return alert(`⚠️ 出售失敗！\n出售後積分將高達 ${newPoints.toLocaleString()} 分，超過系統的安全上限！`); }
-
-            try {
-                await window.syncToCloud({ cards: newCards, points: newPoints });
-                currentUserDoc.cards = newCards;
-                currentUserDoc.points = newPoints;
-                window.recordDailyProfit(total); 
-                window.updateUI(); 
-
-                if (!document.getElementById('tab-sell').classList.contains('hidden')) { window.renderSellInventory(); }
-                alert(`✅ 已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
-                window.checkAchievements();
-            } catch (err) { alert("一鍵出售失敗，請稍後再試：" + err.message); }
         };
 
         window.switchLbSubTab = function(subTab) {
@@ -2139,7 +2113,6 @@
                         const vipTag = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
                         const banTag = u.isBanned ? '<span class="text-[9px] bg-red-600 text-white font-bold px-1 rounded ml-1">已封禁</span>' : '';
                         
-                        // 🌟 動態套用稱號專屬顏色 (排行榜)
                         const titleStyle = window.getTitleStyle(u.title);
                         const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(u.title)}</span>`;
 
