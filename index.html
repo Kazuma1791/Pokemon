@@ -273,39 +273,51 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                        <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-bullhorn mr-1"></i> 發布系統公告</h4>
-                        <textarea id="adminAnnounceInput" rows="2" placeholder="輸入要發布給全服的公告訊息..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-amber-500 resize-none"></textarea>
-                        <button onclick="adminPublishAnnouncement()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-95 py-2 rounded-lg text-xs font-bold text-slate-950 shadow transition">發布公告</button>
-                        <div id="adminAnnounceList" class="space-y-1.5 max-h-32 overflow-y-auto pt-2"></div>
-                    </div>
-
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                        <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-users-gear mr-1"></i> 玩家帳號特權管理</h4>
-                        <select id="adminUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs font-bold focus:outline-none"><option value="">載入全服玩家中...</option></select>
-                        <div id="selectedUserCard" class="hidden space-y-2 bg-slate-800/90 p-3 rounded-lg border border-slate-700">
-                            <div class="flex justify-between items-center text-xs">
-                                <span id="selectedUserName" class="font-bold text-white">--</span>
-                                <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono">--</span>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <!-- 左：發布系統公告 -->
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                            <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-bullhorn mr-1"></i> 發布系統公告</h4>
+                            <textarea id="adminAnnounceInput" rows="2" placeholder="輸入要發布給全服的公告訊息..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-amber-500 resize-none"></textarea>
+                            <button onclick="adminPublishAnnouncement()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-95 py-2 rounded-lg text-xs font-bold text-slate-950 shadow transition">發布公告</button>
+                            <div id="adminAnnounceList" class="space-y-1.5 max-h-32 overflow-y-auto pt-2"></div>
+                        </div>
+    
+                        <!-- 中：玩家帳號特權管理 -->
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                            <h4 class="text-xs sm:text-sm font-bold text-amber-300"><i class="fa-solid fa-users-gear mr-1"></i> 玩家帳號特權管理</h4>
+                            <select id="adminUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs font-bold focus:outline-none"><option value="">載入全服玩家中...</option></select>
+                            <div id="selectedUserCard" class="hidden space-y-2 bg-slate-800/90 p-3 rounded-lg border border-slate-700">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span id="selectedUserName" class="font-bold text-white">--</span>
+                                    <span id="selectedUserUidText" class="text-[10px] text-slate-400 font-mono">--</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-slate-400">當前積分：<b id="selectedUserCurrentPoints" class="text-cyan-300">--</b></span>
+                                    <span id="selectedUserBanStatusText" class="text-emerald-400 font-bold">正常</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-slate-400">VIP 狀態：<b id="selectedUserVipStatusText" class="text-amber-300">普通</b></span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1">
+                                    <button onclick="adminAdjustSelectedUser(1000)" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">+1,000 分</button>
+                                    <button onclick="adminAdjustSelectedUser(-1000)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">-1,000 分</button>
+                                    <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 rounded text-xs active:scale-95 transition">一鍵升級 VIP</button>
+                                    <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">封禁此玩家</button>
+                                </div>
+                                <div class="flex gap-2 pt-1">
+                                    <input type="number" id="adminCustomPointsInput" placeholder="設定目標分數" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs">
+                                    <button onclick="adminSetCustomPoints()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1 rounded text-xs">設定</button>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="text-slate-400">當前積分：<b id="selectedUserCurrentPoints" class="text-cyan-300">--</b></span>
-                                <span id="selectedUserBanStatusText" class="text-emerald-400 font-bold">正常</span>
-                            </div>
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="text-slate-400">VIP 狀態：<b id="selectedUserVipStatusText" class="text-amber-300">普通</b></span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="adminAdjustSelectedUser(1000)" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">+1,000 分</button>
-                                <button onclick="adminAdjustSelectedUser(-1000)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">-1,000 分</button>
-                                <button id="adminToggleVipBtn" onclick="adminToggleVipForSelectedUser()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 rounded text-xs active:scale-95 transition">一鍵升級 VIP</button>
-                                <button id="adminToggleBanBtn" onclick="adminToggleBanSelectedUser()" class="bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 rounded text-xs active:scale-95 transition">封禁此玩家</button>
-                            </div>
-                            <div class="flex gap-2 pt-1">
-                                <input type="number" id="adminCustomPointsInput" placeholder="設定目標分數" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs">
-                                <button onclick="adminSetCustomPoints()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1 rounded text-xs">設定</button>
-                            </div>
+                        </div>
+    
+                        <!-- 🌟 右：全新！防作弊雷達系統 -->
+                        <div class="bg-slate-900 p-4 rounded-xl border border-red-500/50 space-y-3 relative overflow-hidden shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+                            <div class="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg">NEW</div>
+                            <h4 class="text-xs sm:text-sm font-bold text-red-400"><i class="fa-solid fa-shield-halved mr-1"></i> 系統防作弊雷達</h4>
+                            <p class="text-[10px] text-slate-400 leading-relaxed">系統將透過數學邏輯 (消費積分 vs 總卡牌數量比對)，自動揪出使用不當手段修改數據的外掛玩家。</p>
+                            <button onclick="runAntiCheatScan()" class="w-full bg-red-700 hover:bg-red-600 active:scale-95 py-2.5 rounded-lg text-xs font-bold text-white shadow transition"><i class="fa-solid fa-radar mr-1"></i> 掃描全服異常帳號</button>
+                            <div id="antiCheatResults" class="max-h-40 overflow-y-auto pt-2 space-y-2 custom-scrollbar"></div>
                         </div>
                     </div>
                 </div>
@@ -1782,6 +1794,89 @@
             }
         };
 
+        // 🌟 防作弊雷達系統：用嚴格的數學邏輯揪出修改數據的玩家
+        window.runAntiCheatScan = async function() {
+            const resultDiv = document.getElementById('antiCheatResults');
+            resultDiv.innerHTML = '<div class="text-center py-4 text-slate-400"><i class="fa-solid fa-spinner animate-spin"></i> 全服資料比對掃描中...</div>';
+            
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                let cheaters = [];
+                
+                snap.forEach(docSnap => {
+                    const u = docSnap.data();
+                    if (u.isAdmin || u.isBanned) return; // 忽略管理員與已被封禁的玩家
+                    
+                    let totalCards = 0;
+                    let maxSingleCard = 0;
+                    
+                    if (u.cards) {
+                        Object.keys(u.cards).forEach(id => {
+                            totalCards += u.cards[id];
+                            if (u.cards[id] > maxSingleCard) maxSingleCard = u.cards[id];
+                        });
+                    }
+                    
+                    let reasons = [];
+                    
+                    // 🚨 邏輯 1：憑空變出卡片 (總持有卡片 大於 總花費能抽的極限)
+                    if (u.totalSpent !== undefined) {
+                        const maxPossible = Math.floor(u.totalSpent / 20);
+                        // 加上 15 張的容錯空間，避免網路延遲時的小誤差
+                        if (totalCards > maxPossible + 15) {
+                            reasons.push(`卡牌總數溢出 (持有 ${totalCards} 張，但消費紀錄最多僅能抽 ${maxPossible} 張)`);
+                        }
+                    }
+
+                    // 🚨 邏輯 2：單卡修改過於誇張 (如果他針對某一張卡修改到破百張)
+                    if (maxSingleCard >= 99) {
+                        reasons.push(`單卡數量異常複製 (單一卡牌持有 ${maxSingleCard} 張)`);
+                    }
+
+                    // 🚨 邏輯 3：憑空變出積分 (沒抽過幾包卡，身上卻有一大堆錢)
+                    if ((u.totalSpent === undefined || u.totalSpent < 1000) && u.points > 80000) {
+                        reasons.push(`積分來源異常 (歷史消費極少，卻持有 ${u.points.toLocaleString()} 分)`);
+                    }
+                    
+                    if (reasons.length > 0) {
+                        cheaters.push({ uid: docSnap.id, name: u.name, reasons: reasons });
+                    }
+                });
+                
+                if (cheaters.length === 0) {
+                    resultDiv.innerHTML = '<div class="text-[11px] text-emerald-400 font-bold py-2 text-center bg-emerald-900/20 rounded border border-emerald-800/50">✅ 伺服器目前安全，未發現作弊玩家。</div>';
+                } else {
+                    resultDiv.innerHTML = cheaters.map(c => `
+                        <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-800 text-xs">
+                            <div class="font-bold text-red-400 flex items-center justify-between">
+                                <span>${escapeHTML(c.name)}</span>
+                                <span class="text-[9px] text-slate-500 font-mono">UID: ${c.uid.substring(0,6)}...</span>
+                            </div>
+                            <ul class="text-red-200 list-disc list-inside text-[10px] my-1.5 space-y-0.5 opacity-80">
+                                ${c.reasons.map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                            <button onclick="adminToggleBanSelectedUserById('${c.uid}')" class="w-full bg-red-700 hover:bg-red-600 active:scale-95 text-white py-1.5 rounded-md text-[10px] font-bold shadow transition flex justify-center items-center gap-1">
+                                <i class="fa-solid fa-gavel"></i> 立即封禁此帳號
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="text-[11px] text-red-500">掃描失敗: ${e.message}</div>`;
+            }
+        };
+        
+        // 🌟 讓管理員可以從雷達面板直接一鍵封鎖
+        window.adminToggleBanSelectedUserById = async function(uid) {
+            if (!confirm("確定要將此作弊玩家永久封禁嗎？\n封禁後他將無法登入與進行任何操作。")) return;
+            try {
+                await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true });
+                alert("🚫 執法成功！已將該帳號永久封鎖。");
+                window.runAntiCheatScan(); // 重新整理雷達名單
+            } catch (e) {
+                alert("封禁失敗: " + e.message);
+            }
+        };
         window.switchTab('pack');
     </script>
 </body>
