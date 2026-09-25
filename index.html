@@ -1205,6 +1205,12 @@
                 allUsersCache = [];
                 snap.forEach(d => { allUsersCache.push({ uid: d.id, ...d.data() }); });
 
+                // 🌟 貼心排序：將被封鎖的玩家排到名單最下面，避免妨礙管理正常玩家
+                allUsersCache.sort((a, b) => {
+                    if (a.isBanned === b.isBanned) return 0;
+                    return a.isBanned ? 1 : -1;
+                });
+
                 selectEl.innerHTML = `<option value="">-- 請選擇要管理的訓練家 --</option>` +
                     allUsersCache.map(u => {
                         const safeName = escapeHTML(u.name || '訓練家');
@@ -1726,9 +1732,10 @@
                     }).catch(e=>{});
                 } catch (rareErr) {}
 
+                // 🌟 改為抓取 50 筆資料，避免過濾掉黑名單後人數不足 20 人
                 let q = currentLbSubTab === 'lucky' 
-                    ? query(collection(db, "users"), orderBy("points", "desc"), limit(20))
-                    : query(collection(db, "users"), orderBy("points", "asc"), limit(20));
+                    ? query(collection(db, "users"), orderBy("points", "desc"), limit(50))
+                    : query(collection(db, "users"), orderBy("points", "asc"), limit(50));
 
                 const snap = await getDocs(q);
                 let usersList = [];
@@ -1736,6 +1743,10 @@
 
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
+                    
+                    // 🌟 核心過濾機制：如果玩家被封鎖，或者是最高管理員，直接無視，不排入榜單！
+                    if (data.isBanned || docSnap.id === ADMIN_UID) return; 
+
                     const cardsObj = data.cards || {};
                     const unlockedCount = Object.keys(cardsObj).filter(id => cardsObj[id] > 0).length;
                     usersList.push({
@@ -1749,6 +1760,9 @@
                         progressPct: totalCardsInGame > 0 ? Math.round((unlockedCount / totalCardsInGame) * 100) : 0
                     });
                 });
+
+                // 🌟 切割出最精華的 20 名正常玩家
+                usersList = usersList.slice(0, 20);
 
                 if (listEl) {
                     if (usersList.length === 0) return listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
@@ -1767,7 +1781,7 @@
 
                         const safeName = escapeHTML(u.name);
                         const vipTag = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
-                        const banTag = u.isBanned ? '<span class="text-[9px] bg-red-600 text-white font-bold px-1 rounded ml-1">已封禁</span>' : '';
+                        // 因為榜單上不再有作弊者，所以封鎖標籤可以移除了
                         
                         const titleStyle = window.getTitleStyle(u.title);
                         const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(u.title)}</span>`;
@@ -1778,7 +1792,7 @@
                                     ${rankBadge}
                                     <div class="truncate">
                                         <div class="font-bold text-xs sm:text-sm text-white truncate flex items-center">
-                                            ${titleBadge}${safeName}${vipTag}${banTag}
+                                            ${titleBadge}${safeName}${vipTag}
                                         </div>
                                         <div class="text-[10px] text-slate-400 mt-0.5">圖鑑解鎖：${u.progressPct}% (${u.unlockedCount}張)</div>
                                     </div>
