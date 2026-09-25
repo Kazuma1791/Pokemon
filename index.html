@@ -560,6 +560,32 @@
             if (title.includes("狂魔") || title.includes("賭徒")) return "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40";
             return "bg-indigo-500/20 text-indigo-300 border-indigo-500/40";
         };
+        
+        window.getNameStyle = function(title, isVip) {
+            // 👑 VIP 絕對優先：流光溢彩的黃金漸層 + 呼吸燈發光特效
+            if (isVip) return "bg-gradient-to-r from-amber-300 via-yellow-100 to-amber-400 bg-clip-text text-transparent font-black drop-shadow-[0_0_4px_rgba(251,191,36,0.8)] animate-pulse";
+            
+            if (!title) return "text-white font-bold";
+            
+            // 🏆 頂級富豪 / 大師：實體漸層金，尊爵不凡
+            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) {
+                return "bg-gradient-to-b from-yellow-200 to-amber-500 bg-clip-text text-transparent font-black";
+            }
+            // 😈 狂熱系列：霓虹紫發光
+            if (title.includes("狂魔") || title.includes("賭徒")) {
+                return "text-fuchsia-400 font-black drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]";
+            }
+            // 📉 破產系列：黯淡的暗紅色
+            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) {
+                return "text-red-400/80 font-bold";
+            }
+            // 📘 圖鑑高手：科技亮藍色
+            if (title.includes("圖鑑") || title.includes("菁英")) {
+                return "text-cyan-300 font-bold";
+            }
+            
+            return "text-white font-bold";
+        };
 
         // 🌟 2. 卡池資料從外部讀取 (這行能確保不會報 CARD_SETS 錯誤)
         const CARD_SETS = window.CARD_SETS || {};
