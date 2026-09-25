@@ -546,35 +546,25 @@
             return false;
         }
 
-        // 🌟 新增：根據稱號或 VIP 狀態，決定玩家名字的超炫特效！
-        window.getNameStyle = function(title, isVip) {
-            // 👑 VIP 絕對優先：流光溢彩的黃金漸層 + 呼吸燈發光特效
-            if (isVip) return "bg-gradient-to-r from-amber-300 via-yellow-100 to-amber-400 bg-clip-text text-transparent font-black drop-shadow-[0_0_4px_rgba(251,191,36,0.8)] animate-pulse";
-            
-            if (!title) return "text-white font-bold";
-            
-            // 🏆 頂級富豪 / 大師：實體漸層金，尊爵不凡
-            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) {
-                return "bg-gradient-to-b from-yellow-200 to-amber-500 bg-clip-text text-transparent font-black";
-            }
-            // 😈 狂熱系列：霓虹紫發光
-            if (title.includes("狂魔") || title.includes("賭徒")) {
-                return "text-fuchsia-400 font-black drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]";
-            }
-            // 📉 破產系列：黯淡的暗紅色，帶有一點透明度
-            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) {
-                return "text-red-400/80 font-bold";
-            }
-            // 📘 圖鑑高手：科技亮藍色
-            if (title.includes("圖鑑") || title.includes("菁英")) {
-                return "text-cyan-300 font-bold";
-            }
-            
-            // 🔰 預設新手：純白色
-            return "text-white font-bold";
+        // ==========================================
+        // 👇👇👇 請從這裡開始貼上（這段是你遺失的） 👇👇👇
+        // ==========================================
+
+        // 🌟 1. 定義稱號的邊框與文字顏色 (排行榜崩潰的元凶就是少了它)
+        window.getTitleStyle = function(title) {
+            if (!title) return "bg-slate-500/20 text-slate-300 border-slate-500/40";
+            if (title.includes("新手") || title.includes("見習")) return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+            if (title.includes("圖鑑") || title.includes("菁英")) return "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
+            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) return "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.4)]";
+            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) return "bg-red-500/20 text-red-300 border-red-500/40";
+            if (title.includes("狂魔") || title.includes("賭徒")) return "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40";
+            return "bg-indigo-500/20 text-indigo-300 border-indigo-500/40";
         };
 
-        // 🌟 稱號資料庫與解鎖說明
+        // 🌟 2. 卡池資料從外部讀取 (這行能確保不會報 CARD_SETS 錯誤)
+        const CARD_SETS = window.CARD_SETS || {};
+
+        // 🌟 3. 定義所有稱號的解鎖條件與說明文字
         const TITLE_REQUIREMENTS = [
             { title: "🔰 新手訓練家", desc: "創建帳號即可獲得", condition: "預設稱號" },
             { title: "🔍 見習研究員", desc: "收集滿 10 張不同卡牌", condition: "圖鑑進度" },
