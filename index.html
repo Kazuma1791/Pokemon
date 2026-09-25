@@ -424,6 +424,7 @@
     </script>
 
     <!-- Firebase SDK 與核心邏輯 -->
+    <!-- Firebase SDK 與核心邏輯 (終極流暢優化版) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -456,6 +457,27 @@
         let lastBroadcastTimestamp = Date.now();
         let currentLbSubTab = 'lucky';
 
+        // 🌟 終極防卡死機制：給所有按鍵鎖一個「保底逾時自動解開」的功能，最長卡住 4 秒自動復活
+        let processingTimeout = null;
+        window.isProcessing = false;
+        
+        function lockUI() {
+            window.isProcessing = true;
+            if (processingTimeout) clearTimeout(processingTimeout);
+            processingTimeout = setTimeout(() => {
+                window.isProcessing = false;
+                console.warn("⚠️ 操作逾時，已強制解除按鍵鎖！");
+            }, 4000); // 4 秒後強制作廢鎖定
+        }
+
+        function unlockUI() {
+            window.isProcessing = false;
+            if (processingTimeout) {
+                clearTimeout(processingTimeout);
+                processingTimeout = null;
+            }
+        }
+
         window.escapeHTML = function(str) {
             if (!str) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -469,70 +491,65 @@
             return false;
         }
 
-        // 🌟🌟🌟 新增：專屬稱號顏色判定系統 🌟🌟🌟
         window.getTitleStyle = function(title) {
             if (!title) return "bg-slate-500/20 text-slate-300 border-slate-500/40";
-            // 🟢 綠色：新手、成長
             if (title.includes("新手") || title.includes("見習")) return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
-            // 🔵 藍色：圖鑑收集
             if (title.includes("圖鑑") || title.includes("菁英")) return "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
-            // 👑 金色發光：最高榮譽、財富自由
             if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) return "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.4)]";
-            // 🔴 紅色：破產、警告
             if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) return "bg-red-500/20 text-red-300 border-red-500/40";
-            // 🟣 紫色：狂熱、賭徒
             if (title.includes("狂魔") || title.includes("賭徒")) return "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40";
-            
-            // 預設顏色
             return "bg-indigo-500/20 text-indigo-300 border-indigo-500/40";
         };
 
-        window.checkAchievements = async function() {
-            if (!currentUserDoc || !auth.currentUser) return;
-            
-            let unlockedTitles = currentUserDoc.titles || ["🔰 新手訓練家"];
-            let newTitleUnlocked = false;
-            let titleToAnnounce = "";
+        // 🌟 效能優化：把成就檢查丟到背景執行，不要卡住主畫面
+        window.checkAchievements = function() {
+            setTimeout(async () => {
+                if (!currentUserDoc || !auth.currentUser) return;
+                
+                let unlockedTitles = currentUserDoc.titles || ["🔰 新手訓練家"];
+                let newTitleUnlocked = false;
+                let titleToAnnounce = "";
 
-            const checkAndUnlock = (condition, titleName) => {
-                if (condition && !unlockedTitles.includes(titleName)) {
-                    unlockedTitles.push(titleName);
-                    newTitleUnlocked = true;
-                    titleToAnnounce = titleName;
+                const checkAndUnlock = (condition, titleName) => {
+                    if (condition && !unlockedTitles.includes(titleName)) {
+                        unlockedTitles.push(titleName);
+                        newTitleUnlocked = true;
+                        titleToAnnounce = titleName;
+                    }
+                };
+
+                const points = currentUserDoc.points || 0;
+                const totalSpent = currentUserDoc.totalSpent || 0;
+                const uniqueCardsCount = Object.keys(currentUserDoc.cards || {}).filter(id => currentUserDoc.cards[id] > 0).length;
+
+                checkAndUnlock(uniqueCardsCount >= 10, "🔍 見習研究員");
+                checkAndUnlock(uniqueCardsCount >= 50, "📚 圖鑑收藏家");
+                checkAndUnlock(uniqueCardsCount >= 100, "🏅 菁英收集者");
+                checkAndUnlock(uniqueCardsCount >= 200, "🏆 寶可夢大師");
+                checkAndUnlock(points >= 500000, "💎 鑽石大亨");
+                checkAndUnlock(points >= 1000000, "🤑 財富自由");
+                checkAndUnlock(points <= -10000, "📉 韭菜訓練家");
+                checkAndUnlock(points <= -100000, "💸 大負翁");
+                checkAndUnlock(points <= -500000, "🏦 銀行黑名單");
+                checkAndUnlock(totalSpent >= 50000, "🔥 抽卡狂魔");
+                checkAndUnlock(totalSpent >= 200000, "🎰 賭徒本色");
+
+                if (newTitleUnlocked) {
+                    try {
+                        await setDoc(doc(db, "users", auth.currentUser.uid), { 
+                            titles: unlockedTitles,
+                            currentTitle: titleToAnnounce 
+                        }, { merge: true });
+                        
+                        currentUserDoc.titles = unlockedTitles;
+                        currentUserDoc.currentTitle = titleToAnnounce;
+                        window.updateUI();
+
+                        alert(`🎉 恭喜！您達成了隱藏條件，解鎖了全新稱號：【${titleToAnnounce}】！\n系統已為您自動裝備！`);
+                        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, zIndex: 1000 });
+                    } catch (e) { console.warn("背景成就解鎖延遲", e); }
                 }
-            };
-
-            const points = currentUserDoc.points || 0;
-            const totalSpent = currentUserDoc.totalSpent || 0;
-            const uniqueCardsCount = Object.keys(currentUserDoc.cards || {}).filter(id => currentUserDoc.cards[id] > 0).length;
-
-            checkAndUnlock(uniqueCardsCount >= 10, "🔍 見習研究員");
-            checkAndUnlock(uniqueCardsCount >= 50, "📚 圖鑑收藏家");
-            checkAndUnlock(uniqueCardsCount >= 100, "🏅 菁英收集者");
-            checkAndUnlock(uniqueCardsCount >= 200, "🏆 寶可夢大師");
-            checkAndUnlock(points >= 500000, "💎 鑽石大亨");
-            checkAndUnlock(points >= 1000000, "🤑 財富自由");
-            checkAndUnlock(points <= -10000, "📉 韭菜訓練家");
-            checkAndUnlock(points <= -100000, "💸 大負翁");
-            checkAndUnlock(points <= -500000, "🏦 銀行黑名單");
-            checkAndUnlock(totalSpent >= 50000, "🔥 抽卡狂魔");
-            checkAndUnlock(totalSpent >= 200000, "🎰 賭徒本色");
-
-            if (newTitleUnlocked) {
-                try {
-                    await setDoc(doc(db, "users", auth.currentUser.uid), { 
-                        titles: unlockedTitles,
-                        currentTitle: titleToAnnounce 
-                    }, { merge: true });
-                    
-                    currentUserDoc.titles = unlockedTitles;
-                    currentUserDoc.currentTitle = titleToAnnounce;
-                    window.updateUI();
-
-                    alert(`🎉 恭喜！您達成了隱藏條件，解鎖了全新稱號：【${titleToAnnounce}】！\n系統已為您自動裝備！`);
-                    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, zIndex: 1000 });
-                } catch (e) {}
-            }
+            }, 500); // 延遲半秒檢查，讓出手機效能給動畫
         };
 
         window.promptChangeTitle = async function() {
@@ -579,14 +596,13 @@
             }, (err) => {});
         };
 
-        window.recordDailyProfit = async function(changeAmount) {
+        // 🌟 效能優化：把寫入全日收益這種不急的事，通通不阻擋主程式
+        window.recordDailyProfit = function(changeAmount) {
             if (!changeAmount || isNaN(changeAmount) || changeAmount === 0) return;
-            try {
-                const todayDate = new Date();
-                const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
-                const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
-                await setDoc(statsRef, { profit: increment(changeAmount) }, { merge: true });
-            } catch (e) {}
+            const todayDate = new Date();
+            const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
+            const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
+            setDoc(statsRef, { profit: increment(changeAmount) }, { merge: true }).catch(e => console.warn(e));
         };
 
         window.listenToDailyStats();
@@ -1101,7 +1117,6 @@
             if (!setCards || setCards.length === 0) return null;
             const availableRarities = Array.from(new Set(setCards.map(c => c.rarity)));
             const totalRate = availableRarities.reduce((sum, r) => sum + (RARITY[r] ? RARITY[r].rate : 0.01), 0);
-
             const rand = Math.random() * totalRate;
             let cum = 0, rarity = availableRarities[0];
 
@@ -1135,7 +1150,6 @@
                 const safeText = escapeHTML(data.text || '');
                 const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
                 
-                // 🌟 動態套用稱號專屬顏色 (留言板)
                 const titleStyle = window.getTitleStyle(data.title);
                 const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
 
@@ -1265,7 +1279,6 @@
                 const rarityColor = ['FUR', 'UR', 'RGB'].includes(data.rarity) ? 'bg-amber-500 text-slate-950 font-black' : 'bg-emerald-600 text-white font-black';
                 const vipTag = data.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-0.5">👑 VIP</span>' : '';
                 
-                // 🌟 動態套用稱號專屬顏色 (歐皇戰報)
                 const titleStyle = window.getTitleStyle(data.title);
                 const titleBadge = `<span class="text-[9px] ${titleStyle} px-1 py-0.2 rounded font-bold mr-1">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
 
@@ -1293,7 +1306,6 @@
             const safeCard = escapeHTML(cardName);
             const vipTag = isVip ? ' <span class="bg-slate-950 text-amber-400 text-[10px] px-1 py-0.2 rounded font-black">👑 VIP</span>' : '';
             
-            // 🌟 動態套用稱號專屬顏色 (頂部飄動橫幅)
             const titleStyle = window.getTitleStyle(title);
             const titleBadge = `<span class="text-[10px] ${titleStyle} px-1 py-0.2 rounded font-black mr-1">${escapeHTML(title || "🔰 新手訓練家")}</span>`;
             
@@ -1421,7 +1433,7 @@
                             const newPoints = (currentUserDoc.points || 0) + 500;
                             currentUserDoc.points = newPoints;
                             currentUserDoc.lastDailyDate = todayStr;
-                            setDoc(userRef, { points: newPoints, lastDailyDate: todayStr }, { merge: true }).catch(err => console.error("每日獎勵更新失敗:", err));
+                            setDoc(userRef, { points: newPoints, lastDailyDate: todayStr }, { merge: true }).catch(err => console.warn("每日獎勵更新延遲"));
                         }
 
                         if (typeof window.updateUI === 'function') window.updateUI();
@@ -1619,7 +1631,11 @@
             if (checkBanned()) return;
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
-            await setDoc(userRef, updateData, { merge: true });
+            // 🌟 效能優化：設定短暫逾時，避免雲端卡死主程式
+            await Promise.race([
+                setDoc(userRef, updateData, { merge: true }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("網路連線逾時，請稍後再試")), 2500))
+            ]);
         }
 
         window.updateUI = function() {
@@ -1631,13 +1647,12 @@
             const headerInfoBox = document.getElementById('userHeaderInfo');
             const nameEl = document.getElementById('displayUsername');
             const titleEl = document.getElementById('displayTitle');
-            const titleBtn = document.getElementById('titleBtn'); // 🌟 抓取稱號按鈕
+            const titleBtn = document.getElementById('titleBtn'); 
 
             nameEl.innerText = escapeHTML(currentUserDoc.name || '訓練家');
             
             if(titleEl) {
                 titleEl.innerText = escapeHTML(currentTitle);
-                // 🌟 動態替換頂部稱號按鈕的顏色樣式
                 if (titleBtn) {
                     titleBtn.className = `text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded border transition truncate max-w-[80px] sm:max-w-[100px] hover:opacity-80 ${window.getTitleStyle(currentTitle)}`;
                 }
@@ -1686,10 +1701,7 @@
             modal.classList.remove('hidden');
         };
 
-        window.isProcessing = false; // 🌟 設立全域防連點鎖！
-
         window.choosePackAndTear = async function(packNumber) {
-            // 🛡️ 防連點：如果系統正在處理中，無視玩家瘋狂連點
             if (window.isProcessing) return; 
             if (checkBanned()) return;
             if (!pendingPackConfig || !currentUserDoc || !auth.currentUser) return;
@@ -1701,7 +1713,7 @@
             const choiceBox = document.getElementById('animStepChoice');
             if (choiceBox) choiceBox.classList.add('pointer-events-none', 'opacity-50');
 
-            window.isProcessing = true; // 🔒 鎖上按鍵！
+            lockUI(); // 🌟 使用保底鎖定機制
 
             try {
                 let pulledCards = [];
@@ -1715,13 +1727,19 @@
                     }
                 }
 
-                await Promise.all(pulledCards.map(c => new Promise(resolve => {
+                // 🌟 DOM 渲染優化：不要真的下載完圖片，給瀏覽器排程就好
+                const preloadPromises = pulledCards.map(c => new Promise(resolve => {
                     if (!c.image) return resolve();
                     const img = new Image();
                     img.src = c.image;
                     img.onload = resolve;
-                    img.onerror = resolve;
-                })));
+                    img.onerror = resolve; // 失敗也放行，反正有 fallback 圖片
+                }));
+                // 為了絕對的流暢，圖片預載只等 800ms
+                await Promise.race([
+                    Promise.all(preloadPromises),
+                    new Promise(res => setTimeout(res, 800))
+                ]);
 
                 const updatedCards = { ...(currentUserDoc.cards || {}) };
                 pulledCards.forEach(card => {
@@ -1735,7 +1753,7 @@
 
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 
-                // 🌟 Firebase 網路超時保護：最多等 1.5 秒，若網路不穩則放行畫面，讓資料背景慢慢存！
+                // 🌟 Firebase 網路超時保護：如果網路不穩，最多等 1.5 秒，先讓動畫跑
                 const updatePromise = setDoc(userRef, {
                     points: newPoints,
                     cards: updatedCards,
@@ -1761,7 +1779,7 @@
                             rarity: rareCard.rarity,
                             isVip: currentUserDoc.isVip || false,
                             timestamp: Date.now()
-                        }).catch(e=>console.warn(e));
+                        }).catch(e=>console.warn("廣播背景延遲", e));
                     }
                 } catch (broadcastErr) {}
 
@@ -1781,62 +1799,64 @@
                     document.getElementById('animStepTear').classList.add('hidden');
                     document.getElementById('animStepReveal').classList.remove('hidden');
                     window.renderModalFlipCards(currentPulledCards);
-                    window.checkAchievements();
-                }, 1000);
+                    window.checkAchievements(); // 這個已經改成了非同步，不會卡死
+                }, 800);
 
             } catch (err) {
-                alert("抽卡失敗: " + err.message);
-                // 錯誤時強制關閉 Modal 避免卡死
+                alert("抽卡失敗，請檢查網路連線: " + err.message);
                 document.getElementById('packModal').classList.add('hidden');
             } finally {
                 if (choiceBox) choiceBox.classList.remove('pointer-events-none', 'opacity-50');
-                window.isProcessing = false; // 🔓 無論成功失敗，最後一定解開按鍵鎖！
+                unlockUI(); // 🌟 安全解鎖
             }
         };
 
         window.getImgSrcWithFallback = function(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
-            // 🚀 流暢度優化 2：加入 decoding="async" 讓圖片解析不會卡死手機主執行緒
-            return `src="${card.image}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}';"`;
+            // 🌟 加入 decoding="async" 與 fetchpriority="low" 降低手機負擔
+            return `src="${card.image}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='${fallback}';"`;
         }
 
         window.renderModalFlipCards = function(cards) {
             const grid = document.getElementById('modalCardsGrid');
-            grid.innerHTML = cards.map((c, idx) => `
-                <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${idx})">
-                    <div id="cardInner-${idx}" class="card-inner">
-                        <div class="card-front bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center p-2 shadow-2xl">
-                            <i class="fa-solid fa-shield-cat text-3xl sm:text-4xl text-amber-400 mb-1 sm:mb-2 animate-bounce"></i>
-                            <span class="text-[10px] sm:text-xs font-black text-amber-300">POKÉMON</span>
-                            <span class="text-[9px] text-slate-500 mt-0.5">點擊翻牌</span>
-                        </div>
-                        <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
-                            <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-900">
-                                <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
+            // 🌟 減少不必要的 HTML 標籤嵌套，提升 DOM 渲染效能
+            let htmlStr = '';
+            for(let i=0; i<cards.length; i++) {
+                const c = cards[i];
+                htmlStr += `
+                    <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${i})">
+                        <div id="cardInner-${i}" class="card-inner">
+                            <div class="card-front bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center p-2 shadow-2xl">
+                                <i class="fa-solid fa-shield-cat text-3xl sm:text-4xl text-amber-400 mb-1 sm:mb-2"></i>
+                                <span class="text-[10px] sm:text-xs font-black text-amber-300">POKÉMON</span>
                             </div>
-                            <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
-                            <div class="flex items-center gap-1 mt-0.5">
-                                <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
-                                <span class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
-                                    <i class="fa-solid fa-gem text-cyan-400 text-[8px]"></i>${RARITY[c.rarity].price}分
-                                </span>
+                            <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
+                                <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-900">
+                                    <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
+                                </div>
+                                <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
+                                <div class="flex items-center gap-1 mt-0.5">
+                                    <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
+                                    <span class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
+                                        <i class="fa-solid fa-gem text-cyan-400 text-[8px]"></i>${RARITY[c.rarity].price}分
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }
+            grid.innerHTML = htmlStr;
 
             if (cards.some(c => ['SAR', 'UR', 'RGB', 'FUR'].includes(c.rarity))) {
                 setTimeout(() => { 
-                    // 🚀 流暢度優化 3：手機版減少彩帶數量，避免瞬間掉幀
-                    const pCount = window.innerWidth < 768 ? 50 : 120;
-                    confetti({ particleCount: pCount, spread: 80, origin: { y: 0.6 } }); 
+                    const pCount = window.innerWidth < 768 ? 40 : 80; // 🌟 再度降低特效粒子數，確保手機絕對不卡
+                    confetti({ particleCount: pCount, spread: 70, origin: { y: 0.6 } }); 
                 }, 150);
             }
         }
 
         window.flipCard = function(idx) {
-            // 🚀 流暢度優化 4：使用 requestAnimationFrame 讓翻牌動畫與螢幕更新率同步
             requestAnimationFrame(() => {
                 const el = document.getElementById(`cardInner-${idx}`);
                 if (el) el.classList.toggle('flipped');
@@ -1845,13 +1865,12 @@
 
         window.flipAllCards = function() {
             currentPulledCards.forEach((_, idx) => {
-                // 🚀 流暢度優化 5：拉長 30 連抽翻開的間隔（從 60ms 提升到 80ms），讓手機 GPU 有喘息空間
                 setTimeout(() => {
                     requestAnimationFrame(() => {
                         const el = document.getElementById(`cardInner-${idx}`);
                         if (el && !el.classList.contains('flipped')) { el.classList.add('flipped'); }
                     });
-                }, idx * 80);
+                }, idx * 60); // 🌟 稍微調快翻開速度，讓體驗更俐落
             });
         };
 
@@ -1869,91 +1888,121 @@
             const grid = document.getElementById('cardsGrid');
             if (!area || !grid || cards.length === 0) return;
             area.classList.remove('hidden');
-            grid.innerHTML = cards.map(c => `
-                <div class="bg-slate-900/90 p-2 sm:p-2.5 rounded-xl border border-slate-700/80 flex flex-col items-center hover:scale-105 transition shadow-lg">
-                    <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
-                        <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg shadow-md">
+            
+            // 🌟 效能優化：使用字串拼接一次塞入，避免 DOM 多次重繪
+            let htmlStr = '';
+            for(let i=0; i<cards.length; i++) {
+                const c = cards[i];
+                htmlStr += `
+                    <div class="bg-slate-900/90 p-2 sm:p-2.5 rounded-xl border border-slate-700/80 flex flex-col items-center shadow-lg">
+                        <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
+                            <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
+                        <div class="flex items-center gap-1 mt-0.5 sm:mt-1">
+                            <span class="text-[9px] sm:text-[10px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
+                            <span class="text-[10px] sm:text-[11px] font-black text-cyan-300 bg-slate-950 px-1.5 py-0.2 rounded border border-cyan-500/30">
+                                <i class="fa-solid fa-gem text-cyan-400 mr-0.5 text-[8px]"></i>${RARITY[c.rarity].price} 分
+                            </span>
+                        </div>
                     </div>
-                    <span class="text-[11px] sm:text-xs font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
-                    <div class="flex items-center gap-1 mt-0.5 sm:mt-1">
-                        <span class="text-[9px] sm:text-[10px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
-                        <span class="text-[10px] sm:text-[11px] font-black text-cyan-300 bg-slate-950 px-1.5 py-0.2 rounded border border-cyan-500/30">
-                            <i class="fa-solid fa-gem text-cyan-400 mr-0.5 text-[8px]"></i>${RARITY[c.rarity].price} 分
-                        </span>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }
+            grid.innerHTML = htmlStr;
         }
 
+        // 🌟 效能優化：為渲染圖鑑加入延遲與批次處理，避免卡包過大時切換分頁當機
         window.renderBinder = function() {
             const setId = document.getElementById('binderSetFilter').value;
             const grid = document.getElementById('binderGrid');
             const cards = CARD_SETS[setId] || [];
-            let unlocked = 0;
-
-            grid.innerHTML = cards.map(c => {
-                const count = currentUserDoc?.cards?.[c.id] || 0;
-                if (count > 0) unlocked++;
-                return count > 0 ? `
-                    <div class="bg-slate-800/90 p-2 rounded-xl border border-slate-700 text-center relative flex flex-col items-center justify-between">
-                        <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow">×${count}</span>
-                        <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
-                            <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
-                        </div>
-                        <div class="w-full mt-1">
-                            <div class="text-[10px] sm:text-[11px] font-bold text-slate-200 truncate">${escapeHTML(c.name)}</div>
-                            <div class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/80 px-1 py-0.2 rounded border border-slate-700 mt-0.5 inline-block">
-                                <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${RARITY[c.rarity].price} 分
+            
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500"><i class="fa-solid fa-spinner animate-spin mr-2"></i>正在整理圖鑑中...</div>';
+            
+            setTimeout(() => {
+                let unlocked = 0;
+                let htmlStr = '';
+                
+                for(let i=0; i<cards.length; i++) {
+                    const c = cards[i];
+                    const count = currentUserDoc?.cards?.[c.id] || 0;
+                    if (count > 0) unlocked++;
+                    
+                    if(count > 0) {
+                        htmlStr += `
+                            <div class="bg-slate-800/90 p-2 rounded-xl border border-slate-700 text-center relative flex flex-col items-center justify-between">
+                                <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow">×${count}</span>
+                                <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
+                                    <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
+                                </div>
+                                <div class="w-full mt-1">
+                                    <div class="text-[10px] sm:text-[11px] font-bold text-slate-200 truncate">${escapeHTML(c.name)}</div>
+                                    <div class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/80 px-1 py-0.2 rounded border border-slate-700 mt-0.5 inline-block">
+                                        <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${RARITY[c.rarity].price} 分
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                ` : `
-                    <div class="bg-slate-900/90 aspect-[2/3] rounded-xl flex flex-col items-center justify-center card-locked border border-slate-800/80">
-                        <i class="fa-solid fa-lock text-lg text-slate-600 mb-1"></i>
-                        <span class="text-[9px] text-slate-500 font-bold">${c.id}</span>
-                    </div>
-                `;
-            }).join('');
-
-            const pct = cards.length > 0 ? Math.round((unlocked / cards.length) * 100) : 0;
-            document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${pct}%)`;
+                        `;
+                    } else {
+                        htmlStr += `
+                            <div class="bg-slate-900/90 aspect-[2/3] rounded-xl flex flex-col items-center justify-center card-locked border border-slate-800/80">
+                                <i class="fa-solid fa-lock text-lg text-slate-600 mb-1"></i>
+                                <span class="text-[9px] text-slate-500 font-bold">${c.id}</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                grid.innerHTML = htmlStr;
+                const pct = cards.length > 0 ? Math.round((unlocked / cards.length) * 100) : 0;
+                document.getElementById('binderProgressText').innerText = `${unlocked} / ${cards.length} (${pct}%)`;
+            }, 10); // 讓出主執行緒，顯示 Loading 後再渲染
         };
 
+        // 🌟 效能優化：賣卡介面批次渲染
         window.renderSellInventory = function() {
             const grid = document.getElementById('sellInventoryGrid');
             if (!grid || !currentUserDoc) return;
             
-            let hasCards = false;
-            grid.innerHTML = '';
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500"><i class="fa-solid fa-spinner animate-spin mr-2"></i>尋找卡片中...</div>';
+            
+            setTimeout(() => {
+                let hasCards = false;
+                let htmlStr = '';
 
-            Object.values(CARD_SETS).flat().forEach(c => {
-                const count = currentUserDoc.cards?.[c.id] || 0;
-                if (count > 0) {
-                    hasCards = true;
-                    const price = RARITY[c.rarity].price;
-                    grid.innerHTML += `
-                        <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
-                            <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
-                                <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow z-10">擁有 ${count}</span>
-                                <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
-                            </div>
-                            <div class="text-center w-full">
-                                <div class="text-[11px] sm:text-xs font-bold text-white truncate">${escapeHTML(c.name)}</div>
-                                <div class="text-[10px] font-black text-cyan-300 mt-0.5">
-                                    <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${price} 分
+                Object.values(CARD_SETS).flat().forEach(c => {
+                    const count = currentUserDoc.cards?.[c.id] || 0;
+                    if (count > 0) {
+                        hasCards = true;
+                        const price = RARITY[c.rarity].price;
+                        htmlStr += `
+                            <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
+                                <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
+                                    <span class="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full shadow z-10">擁有 ${count}</span>
+                                    <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
                                 </div>
+                                <div class="text-center w-full">
+                                    <div class="text-[11px] sm:text-xs font-bold text-white truncate">${escapeHTML(c.name)}</div>
+                                    <div class="text-[10px] font-black text-cyan-300 mt-0.5">
+                                        <i class="fa-solid fa-gem text-cyan-400 mr-0.5"></i>${price} 分
+                                    </div>
+                                </div>
+                                <button onclick="sellSingleCard('${c.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 py-1 rounded-lg text-[11px] font-bold text-white shadow transition">出售 1 張</button>
                             </div>
-                            <button onclick="sellSingleCard('${c.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 py-1 rounded-lg text-[11px] font-bold text-white shadow transition">出售 1 張</button>
-                        </div>
-                    `;
-                }
-            });
+                        `;
+                    }
+                });
 
-            if (!hasCards) { grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12 font-bold"><i class="fa-solid fa-box-open text-3xl block mb-2 opacity-50"></i>背包裡沒有可出售的卡牌！</div>`; }
+                if (!hasCards) { 
+                    grid.innerHTML = `<div class="col-span-full text-center text-slate-500 py-12 font-bold"><i class="fa-solid fa-box-open text-3xl block mb-2 opacity-50"></i>背包裡沒有可出售的卡牌！</div>`; 
+                } else {
+                    grid.innerHTML = htmlStr;
+                }
+            }, 10);
         };
 
         window.sellSingleCard = async function(cardId) {
-            if (window.isProcessing) return; // 🛡️ 防連點
+            if (window.isProcessing) return; 
             if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
@@ -1963,11 +2012,7 @@
             const price = RARITY[card.rarity].price;
             const newPoints = (currentUserDoc.points || 0) + price;
 
-            if (newPoints > 100000) {
-                return alert(`⚠️ 出售失敗！積分將達 ${newPoints.toLocaleString()} 分，超過 10 萬分安全上限，請先去抽卡消費。`);
-            }
-
-            window.isProcessing = true; // 🔒 鎖上
+            lockUI(); // 🌟 保底鎖
             try {
                 let newCards = { ...currentUserDoc.cards };
                 newCards[cardId]--;
@@ -1981,14 +2026,14 @@
                 window.renderSellInventory();
                 window.checkAchievements();
             } catch (err) {
-                alert("出售單張失敗：" + err.message);
+                alert("出售失敗：" + err.message);
             } finally {
-                window.isProcessing = false; // 🔓 解開
+                unlockUI(); // 🌟 解鎖
             }
         };
 
         window.sellAllDuplicates = async function() {
-            if (window.isProcessing) return; // 🛡️ 防連點
+            if (window.isProcessing) return; 
             if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards) return;
 
@@ -2006,11 +2051,7 @@
             if (total === 0) return alert("目前沒有重複卡！");
             const newPoints = (currentUserDoc.points || 0) + total;
 
-            if (newPoints > 100000) {
-                return alert(`⚠️ 出售失敗！\n出售後積分將高達 ${newPoints.toLocaleString()} 分，超過系統的安全上限！`);
-            }
-
-            window.isProcessing = true; // 🔒 鎖上
+            lockUI(); // 🌟 保底鎖
             try {
                 await window.syncToCloud({ cards: newCards, points: newPoints });
                 currentUserDoc.cards = newCards;
@@ -2026,7 +2067,7 @@
             } catch (err) {
                 alert("一鍵出售失敗，請稍後再試：" + err.message);
             } finally {
-                window.isProcessing = false; // 🔓 解開
+                unlockUI(); // 🌟 解鎖
             }
         };
 
@@ -2050,26 +2091,29 @@
             if (listEl) { listEl.innerHTML = `<div class="text-center py-8 text-slate-400 font-bold"><i class="fa-solid fa-spinner animate-spin mr-2"></i>即時計算排行榜數據中...</div>`; }
 
             try {
+                // 背景抓取全日數據，不阻擋排行榜本身
                 try {
                     const todayDate = new Date();
                     const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
                     const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
-                    const statsSnap = await getDoc(statsRef);
-                    const todayProfit = statsSnap.exists() ? statsSnap.data().profit : 0;
-                    const profitEl = document.getElementById('statPlayerProfit');
-                    if (profitEl) {
-                        profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
-                        profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
-                    }
+                    getDoc(statsRef).then(statsSnap => {
+                        const todayProfit = statsSnap.exists() ? statsSnap.data().profit : 0;
+                        const profitEl = document.getElementById('statPlayerProfit');
+                        if (profitEl) {
+                            profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
+                            profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
+                        }
+                    }).catch(e=>{});
                 } catch (e) {}
 
                 try {
                     const todayStart = new Date();
                     todayStart.setHours(0, 0, 0, 0);
                     const qToday = query(collection(db, "broadcasts"), where("timestamp", ">=", todayStart.getTime()));
-                    const todaySnap = await getDocs(qToday);
-                    const todayRaresEl = document.getElementById('statTodayRares');
-                    if (todayRaresEl) todayRaresEl.innerText = todaySnap.size.toLocaleString();
+                    getDocs(qToday).then(todaySnap => {
+                        const todayRaresEl = document.getElementById('statTodayRares');
+                        if (todayRaresEl) todayRaresEl.innerText = todaySnap.size.toLocaleString();
+                    }).catch(e=>{});
                 } catch (rareErr) {}
 
                 let q = currentLbSubTab === 'lucky' 
@@ -2099,14 +2143,16 @@
                 if (listEl) {
                     if (usersList.length === 0) return listEl.innerHTML = `<div class="text-center py-8 text-slate-500">尚無玩家數據</div>`;
                     
-                    listEl.innerHTML = usersList.map((u, idx) => {
-                        let rankBadge = `<span class="w-6 sm:w-8 text-center text-xs sm:text-sm font-bold text-slate-400">#${idx + 1}</span>`;
+                    let htmlStr = '';
+                    for(let i=0; i<usersList.length; i++) {
+                        const u = usersList[i];
+                        let rankBadge = `<span class="w-6 sm:w-8 text-center text-xs sm:text-sm font-bold text-slate-400">#${i + 1}</span>`;
                         let bgStyle = u.isVip ? "vip-nameplate shadow-lg" : "bg-slate-900 border-slate-700/80";
 
                         if (currentLbSubTab === 'lucky') {
-                            if (idx === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
-                            else if (idx === 1) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
-                            else if (idx === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-medal"></i></span>`;
+                            if (i === 0) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-400"><i class="fa-solid fa-crown"></i></span>`;
+                            else if (i === 1) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-slate-300"><i class="fa-solid fa-medal"></i></span>`;
+                            else if (i === 2) rankBadge = `<span class="w-6 sm:w-8 text-center text-base sm:text-lg text-amber-600"><i class="fa-solid fa-medal"></i></span>`;
                         }
 
                         const safeName = escapeHTML(u.name);
@@ -2116,7 +2162,7 @@
                         const titleStyle = window.getTitleStyle(u.title);
                         const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(u.title)}</span>`;
 
-                        return `
+                        htmlStr += `
                             <div class="${bgStyle} p-3 rounded-xl border flex items-center justify-between gap-2 shadow">
                                 <div class="flex items-center gap-2.5 overflow-hidden">
                                     ${rankBadge}
@@ -2133,7 +2179,8 @@
                                 </div>
                             </div>
                         `;
-                    }).join('');
+                    }
+                    listEl.innerHTML = htmlStr;
                 }
             } catch (err) {
                 if (listEl) listEl.innerHTML = `<div class="text-center py-8 text-red-400">載入排行榜失敗: ${err.message}</div>`;
