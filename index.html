@@ -335,7 +335,7 @@
     </div>
 
     <!-- 🎴 3D 拆卡包動畫 Modal -->
-    <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center p-3 sm:p-4">
+    <div id="packModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-sm md:backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-3 sm:p-4" style="transform: translateZ(0); will-change: transform, opacity;">
         <div id="animStepChoice" class="flex flex-col items-center space-y-4 sm:space-y-6 text-center max-w-2xl w-full my-auto">
             <div>
                 <h2 class="text-xl sm:text-2xl font-black text-amber-400 animate-pulse">請選擇其中一包卡包進行拆封！</h2>
@@ -1708,13 +1708,19 @@
                     }
                 }
 
-                await Promise.all(pulledCards.map(c => new Promise(resolve => {
+                // 🚀 流暢度優化 1：設定 1.5 秒的「強制超時放行」。
+                // 不要傻傻等所有圖片下載完，最多等 1.5 秒，時間到就先讓動畫跑，圖片邊跑邊載入！
+                const preloadPromises = pulledCards.map(c => new Promise(resolve => {
                     if (!c.image) return resolve();
                     const img = new Image();
                     img.src = c.image;
                     img.onload = resolve;
                     img.onerror = resolve;
-                })));
+                }));
+                await Promise.race([
+                    Promise.all(preloadPromises),
+                    new Promise(res => setTimeout(res, 1500)) 
+                ]);
 
                 const updatedCards = { ...(currentUserDoc.cards || {}) };
                 pulledCards.forEach(card => {
@@ -1728,8 +1734,9 @@
 
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 
-                // 🌟 核心修正：抽卡時「只上傳真正改變的數據」，不要帶上名字和 VIP 標籤去觸發防火牆！
                 await setDoc(userRef, {
+                    name: currentUserDoc.name || "訓練家",
+                    isVip: currentUserDoc.isVip || false,
                     points: newPoints,
                     cards: updatedCards,
                     totalSpent: newTotalSpent,
@@ -1780,6 +1787,7 @@
 
         window.getImgSrcWithFallback = function(card) {
             const fallback = DEFAULT_FALLBACK_IMG;
+            // 🚀 流暢度優化 2：加入 decoding="async" 讓圖片解析不會卡死手機主執行緒
             return `src="${card.image}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}';"`;
         }
 
@@ -1810,21 +1818,31 @@
             `).join('');
 
             if (cards.some(c => ['SAR', 'UR', 'RGB', 'FUR'].includes(c.rarity))) {
-                setTimeout(() => { confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } }); }, 150);
+                setTimeout(() => { 
+                    // 🚀 流暢度優化 3：手機版減少彩帶數量，避免瞬間掉幀
+                    const pCount = window.innerWidth < 768 ? 50 : 120;
+                    confetti({ particleCount: pCount, spread: 80, origin: { y: 0.6 } }); 
+                }, 150);
             }
         }
 
         window.flipCard = function(idx) {
-            const el = document.getElementById(`cardInner-${idx}`);
-            if (el) el.classList.toggle('flipped');
+            // 🚀 流暢度優化 4：使用 requestAnimationFrame 讓翻牌動畫與螢幕更新率同步
+            requestAnimationFrame(() => {
+                const el = document.getElementById(`cardInner-${idx}`);
+                if (el) el.classList.toggle('flipped');
+            });
         };
 
         window.flipAllCards = function() {
             currentPulledCards.forEach((_, idx) => {
+                // 🚀 流暢度優化 5：拉長 30 連抽翻開的間隔（從 60ms 提升到 80ms），讓手機 GPU 有喘息空間
                 setTimeout(() => {
-                    const el = document.getElementById(`cardInner-${idx}`);
-                    if (el && !el.classList.contains('flipped')) { el.classList.add('flipped'); }
-                }, idx * 60);
+                    requestAnimationFrame(() => {
+                        const el = document.getElementById(`cardInner-${idx}`);
+                        if (el && !el.classList.contains('flipped')) { el.classList.add('flipped'); }
+                    });
+                }, idx * 80);
             });
         };
 
