@@ -1813,18 +1813,23 @@
 
                         const safeName = escapeHTML(u.name);
                         const vipTag = u.isVip ? '<span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1 rounded ml-1">👑 VIP</span>' : '';
-                        // 因為榜單上不再有作弊者，所以封鎖標籤可以移除了
                         
+                        // 🌟 修正：這裡的稱號變數是 u.title，而且它絕對存在
                         const titleStyle = window.getTitleStyle(u.title);
                         const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(u.title)}</span>`;
+
+                        // 🌟 修正：名字特效也是吃 u.title
+                        const nameStyle = window.getNameStyle(u.title, u.isVip);
 
                         htmlStr += `
                             <div class="${bgStyle} p-3 rounded-xl border flex items-center justify-between gap-2 shadow">
                                 <div class="flex items-center gap-2.5 overflow-hidden">
                                     ${rankBadge}
                                     <div class="truncate">
-                                        <div class="font-bold text-xs sm:text-sm text-white truncate flex items-center">
-                                            ${titleBadge}${safeName}${vipTag}
+                                        <div class="flex items-center truncate">
+                                            ${titleBadge}
+                                            <span class="text-xs sm:text-sm ${nameStyle} truncate">${safeName}</span>
+                                            ${vipTag}
                                         </div>
                                         <div class="text-[10px] text-slate-400 mt-0.5">圖鑑解鎖：${u.progressPct}% (${u.unlockedCount}張)</div>
                                     </div>
