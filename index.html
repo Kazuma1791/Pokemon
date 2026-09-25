@@ -307,6 +307,10 @@
                                     <input type="number" id="adminCustomPointsInput" placeholder="設定目標分數" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs">
                                     <button onclick="adminSetCustomPoints()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1 rounded text-xs">設定</button>
                                 </div>
+                                <!-- 👇 新增：強制清空卡冊按鈕 -->
+                                <button onclick="adminClearUserCards()" class="w-full mt-1.5 bg-orange-700/80 hover:bg-orange-600 border border-orange-500/50 active:scale-95 text-white py-1.5 rounded text-xs font-bold shadow transition flex justify-center items-center gap-1.5">
+                                    <i class="fa-solid fa-dumpster-fire"></i> 強制沒收所有卡牌 (清空卡冊)
+                                </button>
                             </div>
                         </div>
     
@@ -1874,6 +1878,33 @@
                 window.runAntiCheatScan(); // 重新整理雷達名單
             } catch (e) {
                 alert("封禁失敗: " + e.message);
+            }
+        };
+        // 🌟 新增：管理員強制清空玩家卡冊功能
+        window.adminClearUserCards = async function() {
+            if (checkBanned()) return;
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作！");
+            
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+
+            // 雙重確認，避免管理員手滑點錯
+            if (!confirm(`🚨 終極警告：\n你確定要強制沒收玩家「${u.name}」的所有卡牌嗎？\n這將會把他的卡冊全部歸零，且此操作無法復原！`)) return;
+
+            try {
+                // 將該玩家的 cards 物件直接覆蓋為空集合 {}
+                await setDoc(doc(db, "users", targetUid), { cards: {} }, { merge: true });
+                alert(`🔥 執行完畢！已成功沒收玩家 ${escapeHTML(u.name)} 的所有卡牌。`);
+                
+                // 重新整理管理介面與排行榜數據
+                window.fetchAdminUserList();
+                window.fetchGlobalStatsAndLeaderboard();
+            } catch (e) {
+                alert("清空卡冊失敗: " + e.message);
             }
         };
         window.switchTab('pack');
