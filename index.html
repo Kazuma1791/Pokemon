@@ -1496,6 +1496,8 @@
             let htmlStr = '';
             for(let i=0; i<cards.length; i++) {
                 const c = cards[i];
+                
+                // 🌟 這是正確的 3D 卡片翻牌 HTML，沒有任何未定義的變數
                 htmlStr += `
                     <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${i})">
                         <div id="cardInner-${i}" class="card-inner">
