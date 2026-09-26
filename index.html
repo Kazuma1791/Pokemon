@@ -1498,27 +1498,28 @@
             let htmlStr = '';
             for(let i=0; i<cards.length; i++) {
                 const c = cards[i];
-                const nameStyle = window.getNameStyle(u.title, u.isVip);
-
-                        htmlStr += `
-                            <div class="${bgStyle} p-3 rounded-xl border flex items-center justify-between gap-2 shadow">
-                                <div class="flex items-center gap-2.5 overflow-hidden">
-                                    ${rankBadge}
-                                    <div class="truncate">
-                                        <div class="flex items-center truncate">
-                                            ${titleBadge}
-                                            <span class="text-xs sm:text-sm ${nameStyle} truncate">${safeName}</span>
-                                            ${vipTag}${banTag}
-                                        </div>
-                                        <div class="text-[10px] text-slate-400 mt-0.5">圖鑑解鎖：${u.progressPct}% (${u.unlockedCount}張)</div>
-                                    </div>
+                htmlStr += `
+                    <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${i})">
+                        <div id="cardInner-${i}" class="card-inner">
+                            <div class="card-front bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center p-2 shadow-2xl">
+                                <i class="fa-solid fa-shield-cat text-3xl sm:text-4xl text-amber-400 mb-1 sm:mb-2"></i>
+                                <span class="text-[10px] sm:text-xs font-black text-amber-300">POKÉMON</span>
+                            </div>
+                            <div class="card-back bg-slate-800 p-2 rounded-xl border border-slate-700 flex flex-col items-center justify-between shadow-2xl">
+                                <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-900">
+                                    <img ${window.getImgSrcWithFallback(c)} class="w-full h-full object-contain rounded-lg">
                                 </div>
-                                <div class="text-right shrink-0">
-                                    <span class="text-xs sm:text-sm font-black text-cyan-300">${u.points.toLocaleString()}</span>
-                                    <span class="text-[10px] text-slate-400">分</span>
+                                <span class="text-[10px] sm:text-[11px] font-bold mt-1 text-slate-200 text-center truncate w-full">${escapeHTML(c.name)}</span>
+                                <div class="flex items-center gap-1 mt-0.5">
+                                    <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
+                                    <span class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
+                                        <i class="fa-solid fa-gem text-cyan-400 text-[8px]"></i>${RARITY[c.rarity].price}分
+                                    </span>
                                 </div>
                             </div>
-                        `;
+                        </div>
+                    </div>
+                `;
             }
             grid.innerHTML = htmlStr;
 
@@ -1528,7 +1529,7 @@
                     confetti({ particleCount: pCount, spread: 70, origin: { y: 0.6 } }); 
                 }, 150);
             }
-        }
+        };
 
         window.flipCard = function(idx) {
             requestAnimationFrame(() => {
