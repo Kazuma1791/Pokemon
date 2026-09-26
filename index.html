@@ -1007,19 +1007,49 @@
             } catch (e) { alert("修改失敗: " + e.message); }
         };
 
+        // 🌟 新增：顯示掉落機率的函數
+        window.showDropRates = function(setId, packTitle) {
+            // 這個卡包有的卡片總數和各種稀有度機率
+            const setCards = CARD_SETS[setId] || [];
+            if (setCards.length === 0) return alert("機率載入中...");
+            
+            // 找出這個卡包有哪些稀有度
+            const availableRarities = Array.from(new Set(setCards.map(c => c.rarity)));
+            const totalRate = availableRarities.reduce((sum, r) => sum + (RARITY[r] ? RARITY[r].rate : 0), 0);
+            
+            let rateText = `📊 【${packTitle}】官方機率公示：\n\n`;
+            
+            // 將有的稀有度依機率小到大排序 (大獎在上面)
+            availableRarities.sort((a, b) => (RARITY[a]?.rate || 1) - (RARITY[b]?.rate || 1));
+            
+            availableRarities.forEach(r => {
+                const config = RARITY[r];
+                if (config) {
+                    const pct = ((config.rate / totalRate) * 100).toFixed(3);
+                    const count = setCards.filter(c => c.rarity === r).length;
+                    rateText += `[${r}] 抽中機率: ${pct}% (共 ${count} 張)\n`;
+                }
+            });
+            rateText += `\n* 註：機率為單張卡片獨立計算`;
+            alert(rateText);
+        };
+
         window.renderPackList = function() {
             const container = document.getElementById('packListGrid');
             if (!container) return;
             const isVip = currentUserDoc && currentUserDoc.isVip;
             container.innerHTML = PACK_DEFINITIONS.map(pack => `
-                <div class="bg-gradient-to-br ${pack.bg} p-4 sm:p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-3 sm:space-y-4">
-                    <div class="flex gap-3 sm:gap-4 items-center">
+                <div class="bg-gradient-to-br ${pack.bg} p-4 sm:p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-3 sm:space-y-4 relative">
+                    <!-- 🌟 新增：查閱掉落率按鈕 -->
+                    <button onclick="showDropRates('${pack.id}', '${pack.title}')" class="absolute top-3 right-3 text-[10px] sm:text-xs text-slate-400 hover:text-cyan-300 border border-slate-600/50 hover:border-cyan-500/50 bg-slate-900/60 px-2 py-1 rounded transition"><i class="fa-solid fa-scale-unbalanced"></i> 機率</button>
+
+                    <div class="flex gap-3 sm:gap-4 items-center pt-2">
                         <div class="w-16 h-24 sm:w-20 sm:h-28 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
                             <span class="text-[9px] sm:text-[10px] font-black bg-white/20 px-1.5 py-0.2 rounded text-white">${pack.id.toUpperCase()}</span>
                             <i class="fa-solid ${pack.icon} text-xl sm:text-2xl text-amber-300 my-1"></i>
                             <span class="text-[9px] font-bold text-slate-300">${pack.tag}</span>
                         </div>
-                        <div>
+                        <div class="pr-6">
                             <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded">${pack.badge}</span>
                             <h3 class="text-sm sm:text-base font-bold text-white mt-1 leading-tight">${pack.title}</h3>
                             <p class="text-[11px] sm:text-xs text-slate-300 mt-1 leading-snug">${pack.desc}</p>
@@ -1069,14 +1099,6 @@
                     if (snap.exists()) {
                         currentUserDoc = snap.data();
                         
-                        const todayStr = new Date().toISOString().split('T')[0];
-                        if (currentUserDoc.lastDailyDate !== todayStr) {
-                            const newPoints = (currentUserDoc.points || 0) + 500;
-                            currentUserDoc.points = newPoints;
-                            currentUserDoc.lastDailyDate = todayStr;
-                            setDoc(userRef, { points: newPoints, lastDailyDate: todayStr }, { merge: true }).catch(err => console.warn("每日獎勵更新延遲"));
-                        }
-
                         if (typeof window.updateUI === 'function') window.updateUI();
                         if (typeof window.checkBanned === 'function') window.checkBanned();
                         if (typeof window.renderPackList === 'function') window.renderPackList();
@@ -1134,16 +1156,23 @@
 
             try {
                 if (isRegisterMode) {
+                    // 🌟 新增：註冊時去資料庫比對是否已經有人使用這個暱稱！
+                    const qName = query(collection(db, "users"), where("name", "==", cleanedUsername));
+                    const nameSnap = await getDocs(qName);
+                    if (!nameSnap.empty && cleanedUsername !== "訓練家") {
+                        if (primaryBtn) primaryBtn.disabled = false;
+                        return alert(`⚠️ 抱歉，名稱「${cleanedUsername}」已經被其他玩家搶先註冊了，請換一個更響亮的名字吧！`);
+                    }
+
                     const res = await createUserWithEmailAndPassword(auth, email, password);
                     if (res && res.user) {
                         const initialData = {
                             name: cleanedUsername,
                             titles: ["🔰 新手訓練家"],
                             currentTitle: "🔰 新手訓練家",
-                            points: INITIAL_GIFT_POINTS,
+                            points: INITIAL_GIFT_POINTS, // 新手初始資金
                             isVip: false,
                             isBanned: false,
-                            lastDailyDate: new Date().toISOString().split('T')[0],
                             cards: {},
                             totalSpent: 0,
                             totalPulledValue: 0
@@ -1181,7 +1210,7 @@
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入帳號！");
             
             const currentName = currentUserDoc.name || '訓練家';
-            const newName = prompt(`✏️ 修改暱稱需花費 1,000 積分\n當前暱稱：${currentName}\n\n請輸入新暱稱：`, currentName);
+            const newName = prompt(`✏️ 修改暱稱需花費 1,000 積分\n當前暱稱：${currentName}\n\n請輸入新暱稱 (不可與他人重複)：`, currentName);
 
             if (!newName || newName.trim() === '' || newName.trim() === currentName) return;
 
@@ -1201,7 +1230,16 @@
                 return alert(`⚠️ 分數不足！修改暱稱需要 1,000 分，目前只有 ${currentPts.toLocaleString()} 分。`);
             }
 
+            // 🌟 新增：改名時比對是否與別人撞名
+            lockUI();
             try {
+                const qName = query(collection(db, "users"), where("name", "==", cleanedName));
+                const nameSnap = await getDocs(qName);
+                if (!nameSnap.empty && cleanedName !== "訓練家") {
+                    unlockUI();
+                    return alert(`⚠️ 抱歉，名稱「${cleanedName}」已經被其他人使用了，請換一個名字！`);
+                }
+
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 const newPoints = currentPts - 1000;
                 await setDoc(userRef, { name: cleanedName, points: newPoints }, { merge: true });
@@ -1212,6 +1250,8 @@
                 window.fetchGlobalStatsAndLeaderboard();
             } catch (err) {
                 alert("修改暱稱失敗: " + err.message);
+            } finally {
+                unlockUI();
             }
         };
 
