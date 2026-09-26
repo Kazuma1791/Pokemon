@@ -485,10 +485,10 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, deleteDoc, query, orderBy, limit, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 🌟 雙重保險：強制確保卡池資料正確讀取外部的 cards.js
+        // 🌟 1. 確保卡池資料正確讀取外部的 cards.js
         const CARD_SETS = window.CARD_SETS || {};
 
-        // 👇 確保這裡的變數每一種只出現一次！
+        // 🌟 2. 系統核心設定 (確保絕無重複宣告)
         const ADMIN_UID = "eTYTRQFMmZc5Hj8KiH3HZkF77q62";
         const DEFAULT_FALLBACK_IMG = "https://images.pokemontcg.io/sv3pt5/25_hires.png";
         const INITIAL_GIFT_POINTS = 1000;
@@ -516,7 +516,7 @@
         let lastBroadcastTimestamp = Date.now();
         let currentLbSubTab = 'lucky';
 
-        // 🌟 終極防卡死機制
+        // 🌟 3. 終極防卡死機制
         let processingTimeout = null;
         window.isProcessing = false;
         
@@ -550,11 +550,7 @@
             return false;
         }
 
-        // ==========================================
-        // 👇👇👇 請從這裡開始貼上（這段是你遺失的） 👇👇👇
-        // ==========================================
-
-        // 🌟 1. 定義稱號的邊框與文字顏色 (排行榜崩潰的元凶就是少了它)
+        // 🌟 4. 稱號樣式與名字特效工具
         window.getTitleStyle = function(title) {
             if (!title) return "bg-slate-500/20 text-slate-300 border-slate-500/40";
             if (title.includes("新手") || title.includes("見習")) return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
@@ -566,35 +562,16 @@
         };
         
         window.getNameStyle = function(title, isVip) {
-            // 👑 VIP 絕對優先：流光溢彩的黃金漸層 + 呼吸燈發光特效
             if (isVip) return "bg-gradient-to-r from-amber-300 via-yellow-100 to-amber-400 bg-clip-text text-transparent font-black drop-shadow-[0_0_4px_rgba(251,191,36,0.8)] animate-pulse";
-            
             if (!title) return "text-white font-bold";
-            
-            // 🏆 頂級富豪 / 大師：實體漸層金，尊爵不凡
-            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) {
-                return "bg-gradient-to-b from-yellow-200 to-amber-500 bg-clip-text text-transparent font-black";
-            }
-            // 😈 狂熱系列：霓虹紫發光
-            if (title.includes("狂魔") || title.includes("賭徒")) {
-                return "text-fuchsia-400 font-black drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]";
-            }
-            // 📉 破產系列：黯淡的暗紅色
-            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) {
-                return "text-red-400/80 font-bold";
-            }
-            // 📘 圖鑑高手：科技亮藍色
-            if (title.includes("圖鑑") || title.includes("菁英")) {
-                return "text-cyan-300 font-bold";
-            }
-            
+            if (title.includes("寶可夢大師") || title.includes("鑽石") || title.includes("財富")) return "bg-gradient-to-b from-yellow-200 to-amber-500 bg-clip-text text-transparent font-black";
+            if (title.includes("狂魔") || title.includes("賭徒")) return "text-fuchsia-400 font-black drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]";
+            if (title.includes("韭菜") || title.includes("負翁") || title.includes("銀行")) return "text-red-400/80 font-bold";
+            if (title.includes("圖鑑") || title.includes("菁英")) return "text-cyan-300 font-bold";
             return "text-white font-bold";
         };
 
-        // 🌟 2. 卡池資料從外部讀取 (這行能確保不會報 CARD_SETS 錯誤)
-        const CARD_SETS = window.CARD_SETS || {};
-
-        // 🌟 3. 定義所有稱號的解鎖條件與說明文字
+        // 🌟 5. 定義所有稱號的解鎖條件與說明文字
         const TITLE_REQUIREMENTS = [
             { title: "🔰 新手訓練家", desc: "創建帳號即可獲得", condition: "預設稱號" },
             { title: "🔍 見習研究員", desc: "收集滿 10 張不同卡牌", condition: "圖鑑進度" },
@@ -660,7 +637,6 @@
             }, 500); 
         };
 
-        // 🌟 新增：打開全新的稱號系統視窗
         window.openTitleModal = function() {
             if (checkBanned()) return;
             if (!currentUserDoc || !auth.currentUser) return alert("請先登入！");
@@ -670,7 +646,6 @@
             const unlockedTitles = currentUserDoc.titles || ["🔰 新手訓練家"];
             const currentTitle = currentUserDoc.currentTitle || "🔰 新手訓練家";
 
-            // 渲染：玩家已經擁有的稱號按鈕
             myTitlesList.innerHTML = unlockedTitles.map(t => {
                 const isEquipped = t === currentTitle;
                 const style = window.getTitleStyle(t);
@@ -682,7 +657,6 @@
                 `;
             }).join('');
 
-            // 渲染：所有稱號的取得說明清單
             guideList.innerHTML = TITLE_REQUIREMENTS.map(req => {
                 const isUnlocked = unlockedTitles.includes(req.title);
                 const style = window.getTitleStyle(req.title);
@@ -710,7 +684,6 @@
             document.getElementById('titleModal').classList.add('hidden');
         };
 
-        // 🌟 新增：實際裝備稱號的功能
         window.equipTitle = async function(targetTitle) {
             if (!currentUserDoc || !auth.currentUser) return;
             if (targetTitle === currentUserDoc.currentTitle) return;
@@ -753,6 +726,7 @@
 
         window.listenToDailyStats();
 
+        // 🌟 6. 機率與卡包設定
         const RARITY = {
             'C':    { price: 3,    rate: 0.450, color: '#9ca3af' },
             'U':    { price: 6,    rate: 0.280, color: '#60a5fa' },
@@ -774,8 +748,6 @@
             { id: 's12a', title: '高級包「VSTAR 宇宙」S12a', tag: 'VSTAR', desc: '收錄 262 張大圖鑑！神級繪圖阿爾宙斯、騎拉帝納 UR 登場！', bg: 'from-slate-800 to-indigo-950', border: 'border-purple-500/50', icon: 'fa-shuttle-space', badge: '262張全陣容' },
             { id: 'sv2a', title: '強化擴充包「寶可夢 151」', tag: '151', desc: '收錄經典 151 陣容！噴火龍 ex SAR 與超夢！', bg: 'from-slate-800 to-indigo-950', border: 'border-indigo-500/30', icon: 'fa-dragon', badge: '熱門擴充包' }
         ];
-
-
 
         function drawCardFromSet(setCards) {
             if (!setCards || setCards.length === 0) return null;
@@ -816,8 +788,6 @@
                 
                 const titleStyle = window.getTitleStyle(data.title);
                 const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(data.title || "🔰 新手訓練家")}</span>`;
-
-                // 取得對應的名字特效
                 const nameStyle = window.getNameStyle(data.title, data.isVip);
 
                 html += `
@@ -1255,7 +1225,6 @@
                 allUsersCache = [];
                 snap.forEach(d => { allUsersCache.push({ uid: d.id, ...d.data() }); });
 
-                // 🌟 貼心排序：將被封鎖的玩家排到名單最下面，避免妨礙管理正常玩家
                 allUsersCache.sort((a, b) => {
                     if (a.isBanned === b.isBanned) return 0;
                     return a.isBanned ? 1 : -1;
@@ -1326,7 +1295,6 @@
             const titleBtn = document.getElementById('titleBtn'); 
 
             nameEl.innerText = escapeHTML(currentUserDoc.name || '訓練家');
-            // 🌟 讓頂部的名字套用特效
             nameEl.className = `max-w-[60px] sm:max-w-[100px] truncate ${window.getNameStyle(currentTitle, isVip)}`;
             
             if(titleEl) {
@@ -1444,7 +1412,6 @@
                 window.recordDailyProfit(-cost); 
 
                 try {
-                    // 🌟 嚴格限制：現在只有低於 2% 機率的最頂級神卡才會觸發全服廣播！
                     const topCards = pulledCards.filter(c => ['UR', 'RGB', 'FUR'].includes(c.rarity));
                     for (let rareCard of topCards) {
                         addDoc(collection(db, "broadcasts"), {
@@ -1496,8 +1463,6 @@
             let htmlStr = '';
             for(let i=0; i<cards.length; i++) {
                 const c = cards[i];
-                
-                // 🌟 這是正確的 3D 卡片翻牌 HTML，沒有任何未定義的變數
                 htmlStr += `
                     <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${i})">
                         <div id="cardInner-${i}" class="card-inner">
