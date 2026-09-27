@@ -1798,17 +1798,25 @@
                 }
                 if (totalCardsInGame === 0) totalCardsInGame = 1; 
 
+                // 🌟 新增：提取官方定義的「合法稱號」白名單
+                const validTitles = TITLE_REQUIREMENTS.map(t => t.title);
+
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
                     
                     if (data.isBanned || docSnap.id === ADMIN_UID) return; 
+
+                    // 🚨 防護攔截：檢查稱號是否合法
+                    let rawTitle = data.currentTitle || data.title || "🔰 新手訓練家";
+                    // 如果稱號不在官方名單內，強制顯示為「🤡 竄改外掛」，公開處刑！
+                    let safeTitle = validTitles.includes(rawTitle) ? rawTitle : "🤡 竄改外掛";
 
                     const cardsObj = data.cards || {};
                     const unlockedCount = Object.keys(cardsObj).filter(id => cardsObj[id] > 0).length;
                     usersList.push({
                         uid: docSnap.id,
                         name: data.name || "訓練家",
-                        title: data.currentTitle || "🔰 新手訓練家",
+                        title: safeTitle, // 替換為安全稱號
                         points: data.points || 0,
                         isVip: data.isVip || false,
                         isBanned: data.isBanned || false,
