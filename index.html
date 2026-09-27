@@ -1930,6 +1930,11 @@
                 const snap = await getDocs(collection(db, "users"));
                 let cheaters = [];
                 
+                // 取出官方核可的 12 個合法稱號名單
+                const validTitles = TITLE_REQUIREMENTS.map(t => t.title);
+                // 官方禁用字眼
+                const forbiddenWords = ['管理員', 'admin', '系統', '官方', '版主', '站長'];
+                
                 for (const docSnap of snap.docs) {
                     const u = docSnap.data();
                     if (u.isAdmin || u.isBanned) continue; 
@@ -1946,23 +1951,50 @@
                     
                     let reasons = [];
                     
-                    // 🌟 放寬條件 1：總卡數容錯拉高到 100 張 (照顧早期沒有記錄歷史消費的玩家)
+                    // ==========================================
+                    // 🚨 偵測 1：文字與稱號非法篡改
+                    // ==========================================
+                    // 1a. 裝備了不存在於官方列表的假稱號
+                    if (u.currentTitle && !validTitles.includes(u.currentTitle)) {
+                        reasons.push(`非法篡改稱號 (裝備未經授權的自訂字串: ${escapeHTML(u.currentTitle)})`);
+                    }
+                    
+                    // 1b. 偷偷把假稱號塞進自己擁有的稱號庫裡面
+                    if (u.titles && Array.isArray(u.titles)) {
+                        const hasHackedTitles = u.titles.some(t => !validTitles.includes(t));
+                        if (hasHackedTitles) {
+                            reasons.push(`稱號庫異常 (解鎖了非官方存在的異常稱號)`);
+                        }
+                    }
+
+                    // 1c. 繞過前端限制，把名字改成官方禁用字眼，或注入 HTML 惡意代碼
+                    const lowerName = (u.name || "").toLowerCase();
+                    if (forbiddenWords.some(w => lowerName.includes(w))) {
+                        reasons.push(`身分偽造 (強制使用官方保留暱稱)`);
+                    }
+                    if (/[<>]/.test(u.name)) {
+                        reasons.push(`惡意代碼注入 (暱稱包含非法 HTML 標籤)`);
+                    }
+
+                    // ==========================================
+                    // 🚨 偵測 2：數字與經濟系統異常
+                    // ==========================================
+                    // 2a. 卡片印鈔機檢查 (持有卡數遠大於歷史總抽卡數，容錯100張)
                     if (u.totalSpent !== undefined) {
                         const maxPossible = Math.floor(u.totalSpent / 20);
                         if (totalCards > maxPossible + 100) reasons.push(`卡牌總數溢出 (持有 ${totalCards} 張，理論上限 ${maxPossible} 張)`);
                     }
 
-                    // 🌟 放寬條件 2：單卡複製容錯拉高到 300 張才示警
+                    // 2b. 複製卡片檢查
                     if (maxSingleCard >= 300) reasons.push(`單卡數量異常複製 (單卡最高持有 ${maxSingleCard} 張)`);
 
-                    // 🌟 放寬條件 3：考慮到管理員會送分，容錯金錢提高到 50 萬分
+                    // 2c. 積分異常檢查 (容錯50萬分)
                     const maxWealth = (u.totalPulledValue || 0) + INITIAL_GIFT_POINTS;
                     if (u.points > maxWealth + 500000) {
                         reasons.push(`積分異常 (持有 ${u.points.toLocaleString()} 分，遠超抽卡總值)`);
                     }
                     
                     if (reasons.length > 0) {
-                        // 只列入可疑名單，🚨 移除了全自動 setDoc(isBanned) 🚨
                         cheaters.push({ uid: docSnap.id, name: u.name, reasons: reasons, ip: u.lastIP });
                     }
                 }
@@ -1970,7 +2002,6 @@
                 if (cheaters.length === 0) {
                     resultDiv.innerHTML = '<div class="text-[11px] text-emerald-400 font-bold py-2 text-center bg-emerald-900/20 rounded border border-emerald-800/50">✅ 伺服器目前安全，未發現作弊玩家。</div>';
                 } else {
-                    // 讓管理員自己決定要不要按下「立即封禁」
                     resultDiv.innerHTML = `<div class="text-[11px] text-amber-400 font-bold py-1 mb-2">⚠️ 掃描完畢！發現以下可疑帳號，請管理員人工審核：</div>` + 
                     cheaters.map(c => `
                         <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-800 text-xs mb-2">
