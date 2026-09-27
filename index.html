@@ -2039,6 +2039,26 @@
                 resultDiv.innerHTML = `<div class="text-[11px] text-red-500">掃描失敗: ${e.message}</div>`;
             }
         };
+        // 🌟 讓管理員可以從雷達面板直接一鍵封鎖
+        window.adminToggleBanSelectedUserById = async function(uid) {
+            if (!confirm("確定要將此作弊玩家永久封禁嗎？\n封禁後他將無法登入與進行任何操作。")) return;
+            try {
+                // 直接寫死為 true (封鎖)
+                await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true });
+                
+                // 如果要知道他的 IP，必須從快取裡找出來
+                const u = allUsersCache.find(x => x.uid === uid);
+                if (u && u.lastIP) {
+                    await setDoc(doc(db, "system", "banned_ips"), { ips: arrayUnion(u.lastIP) }, { merge: true });
+                }
+
+                alert("🚫 執法成功！已將該帳號與 IP 永久封鎖。");
+                window.runAntiCheatScan(); // 重新整理雷達名單
+                window.fetchAdminUserList(); // 同步更新名單
+            } catch (e) {
+                alert("封禁失敗: " + e.message);
+            }
+        };
         // 🌟 新增：管理員強制清空玩家卡冊功能
         window.adminClearUserCards = async function() {
             if (checkBanned()) return;
