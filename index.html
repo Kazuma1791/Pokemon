@@ -1260,24 +1260,22 @@
                     const todayDate = new Date();
                     const todayStr = `${todayDate.getFullYear()}-${todayDate.getMonth()+1}-${todayDate.getDate()}`;
                     const statsRef = doc(db, "system", `dailyStats_${todayStr}`);
-                    getDoc(statsRef).then(statsSnap => {
-                        const todayProfit = statsSnap.exists() ? statsSnap.data().profit : 0;
-                        const profitEl = document.getElementById('statPlayerProfit');
-                        if (profitEl) {
-                            profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
-                            profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
-                        }
-                    }).catch(e=>{});
+                    const statsSnap = await getDoc(statsRef);
+                    const todayProfit = statsSnap.exists() ? statsSnap.data().profit : 0;
+                    const profitEl = document.getElementById('statPlayerProfit');
+                    if (profitEl) {
+                        profitEl.innerText = (todayProfit >= 0 ? "+" : "") + todayProfit.toLocaleString();
+                        profitEl.className = todayProfit >= 0 ? "text-lg sm:text-2xl font-black text-emerald-400" : "text-lg sm:text-2xl font-black text-red-400";
+                    }
                 } catch (e) {}
 
                 try {
                     const todayStart = new Date();
                     todayStart.setHours(0, 0, 0, 0);
                     const qToday = query(collection(db, "broadcasts"), where("timestamp", ">=", todayStart.getTime()));
-                    getDocs(qToday).then(todaySnap => {
-                        const todayRaresEl = document.getElementById('statTodayRares');
-                        if (todayRaresEl) todayRaresEl.innerText = todaySnap.size.toLocaleString();
-                    }).catch(e=>{});
+                    const todaySnap = await getDocs(qToday);
+                    const todayRaresEl = document.getElementById('statTodayRares');
+                    if (todayRaresEl) todayRaresEl.innerText = todaySnap.size.toLocaleString();
                 } catch (rareErr) {}
 
                 let q = currentLbSubTab === 'lucky' 
@@ -1286,7 +1284,16 @@
 
                 const snap = await getDocs(q);
                 let usersList = [];
-                const totalCardsInGame = Object.values(CARD_SETS).flat().length;
+                
+                // 🌟 修正：用最安全的迴圈來計算總卡牌數，保證絕不報錯崩潰！
+                let totalCardsInGame = 0;
+                for (const key in CARD_SETS) {
+                    if (CARD_SETS[key] && Array.isArray(CARD_SETS[key])) {
+                        totalCardsInGame += CARD_SETS[key].length;
+                    }
+                }
+                // 避免總數為 0 導致除以 0 的錯誤
+                if (totalCardsInGame === 0) totalCardsInGame = 1; 
 
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
@@ -1303,7 +1310,7 @@
                         isVip: data.isVip || false,
                         isBanned: data.isBanned || false,
                         unlockedCount: unlockedCount,
-                        progressPct: totalCardsInGame > 0 ? Math.round((unlockedCount / totalCardsInGame) * 100) : 0
+                        progressPct: Math.round((unlockedCount / totalCardsInGame) * 100)
                     });
                 });
 
@@ -1329,7 +1336,6 @@
                         
                         const titleStyle = window.getTitleStyle(u.title);
                         const titleBadge = `<span class="text-[9px] ${titleStyle} px-1.5 py-0.2 rounded font-bold mr-1.5">${escapeHTML(u.title)}</span>`;
-
                         const nameStyle = window.getNameStyle(u.title, u.isVip);
 
                         htmlStr += `
