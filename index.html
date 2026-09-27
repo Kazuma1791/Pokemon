@@ -483,7 +483,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, deleteDoc, query, orderBy, limit, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, onSnapshot, addDoc, deleteDoc, query, orderBy, limit, where, getDoc, increment, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // 🌟 1. 確保卡池資料正確讀取外部的 cards.js
         const CARD_SETS = window.CARD_SETS || {};
@@ -543,6 +543,37 @@
         }
 
         window.checkBanned = function() {
+            // 🌟 終極防護：設備與 IP 雙重黑名單檢查
+            window.checkDeviceAndIP = async function(userUid) {
+                // 1. 檢查本地設備是否有「作弊烙印」
+                if (localStorage.getItem("banned_device") === "true") return true;
+                
+                // 2. 獲取當前玩家 IP (透過第三方免費 API)
+                let currentIP = "unknown";
+                try {
+                    const res = await fetch('https://api.ipify.org?format=json');
+                    const data = await res.json();
+                    currentIP = data.ip;
+                } catch(e) {}
+    
+                // 3. 檢查雲端 IP 黑名單
+                try {
+                    const banSnap = await getDoc(doc(db, "system", "banned_ips"));
+                    if (banSnap.exists()) {
+                        const ipList = banSnap.data().ips || [];
+                        if (ipList.includes(currentIP)) {
+                            localStorage.setItem("banned_device", "true"); // 順便把這台設備也烙印起來
+                            return true;
+                        }
+                    }
+                } catch(e) {}
+    
+                // 4. 如果過關，偷偷把 IP 更新到玩家資料庫，供雷達抓人使用
+                if (userUid && currentIP !== "unknown") {
+                    setDoc(doc(db, "users", userUid), { lastIP: currentIP }, { merge: true }).catch(e=>{});
+                }
+                return false;
+            };
             if (currentUserDoc && currentUserDoc.isBanned) {
                 document.getElementById('bannedModal').classList.remove('hidden');
                 return true;
@@ -959,21 +990,45 @@
             broadcastTimer = setTimeout(() => { banner.classList.add('hidden'); }, 5000);
         }
 
+        // 🌟 升級版：管理員手動 封鎖 / 解封 玩家
         window.adminToggleBanSelectedUser = async function() {
             if (checkBanned()) return;
             if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作！");
+            
             const selectEl = document.getElementById('adminUserSelect');
             const targetUid = selectEl ? selectEl.value : '';
             if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            
             const u = allUsersCache.find(x => x.uid === targetUid);
             if (!u) return;
+            
             const newBanStatus = !u.isBanned;
+            const actionText = newBanStatus ? "永久封禁 (含 IP 與設備)" : "解除封鎖 (恢復遊玩與 IP)";
+            
+            // 加入防呆確認，以免管理員手滑
+            if (!confirm(`確定要對玩家「${u.name}」執行【${actionText}】嗎？`)) return;
+
             try {
+                // 1. 更改該玩家的帳號封禁狀態
                 await setDoc(doc(db, "users", targetUid), { isBanned: newBanStatus }, { merge: true });
-                alert(`🚫 已成功將玩家 ${escapeHTML(u.name)} 狀態更新為：${newBanStatus ? '【已封禁】' : '【正常】'}`);
+                
+                // 2. 同步處理 IP 死亡名單
+                if (u.lastIP) {
+                    if (newBanStatus) {
+                        // 封鎖時：把 IP 加入黑名單
+                        await setDoc(doc(db, "system", "banned_ips"), { ips: arrayUnion(u.lastIP) }, { merge: true });
+                    } else {
+                        // 解封時：把 IP 從黑名單中拔除！
+                        await setDoc(doc(db, "system", "banned_ips"), { ips: arrayRemove(u.lastIP) }, { merge: true });
+                    }
+                }
+                
+                alert(`✅ 執行成功！玩家 ${escapeHTML(u.name)} 狀態已更新為：${newBanStatus ? '【已封禁】' : '【已解封】'}`);
                 window.fetchAdminUserList();
                 window.fetchGlobalStatsAndLeaderboard();
-            } catch (e) { alert("切換封禁狀態失敗: " + e.message); }
+            } catch (e) { 
+                alert("切換封禁狀態失敗: " + e.message); 
+            }
         };
         
         window.adminToggleVipForSelectedUser = async function() {
@@ -1073,6 +1128,14 @@
             try { if (typeof window.renderPackList === 'function') window.renderPackList(); } catch (e) {}
         
             if (user) {
+                // 🚨 登入第一件事：檢查 IP 與設備是否在死亡黑名單
+                const isBannedDevice = await window.checkDeviceAndIP(user.uid);
+                if (isBannedDevice) {
+                    alert("🚨 系統阻擋：您的 IP 或設備已被永久封鎖，禁止進入遊戲！");
+                    window.handleSignOut();
+                    return;
+                }
+
                 const authModal = document.getElementById('authModal');
                 const userHeaderInfo = document.getElementById('userHeaderInfo');
                 if (authModal) authModal.classList.add('hidden');
@@ -1881,6 +1944,30 @@
         };
 
         // 🌟 防作弊雷達系統：用嚴格的數學邏輯揪出修改數據的玩家
+        window.adminToggleBanSelectedUser = async function() {
+            if (checkBanned()) return;
+            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作！");
+            const selectEl = document.getElementById('adminUserSelect');
+            const targetUid = selectEl ? selectEl.value : '';
+            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
+            const u = allUsersCache.find(x => x.uid === targetUid);
+            if (!u) return;
+            const newBanStatus = !u.isBanned;
+            try {
+                await setDoc(doc(db, "users", targetUid), { isBanned: newBanStatus }, { merge: true });
+                
+                // 👇 如果是執行封鎖，順便把他的 IP 加入黑名單
+                if (newBanStatus && u.lastIP) {
+                    await setDoc(doc(db, "system", "banned_ips"), { ips: arrayUnion(u.lastIP) }, { merge: true });
+                }
+                
+                alert(`🚫 已成功將玩家 ${escapeHTML(u.name)} 狀態更新為：${newBanStatus ? '【已封禁 + IP 黑名單】' : '【正常】'}`);
+                window.fetchAdminUserList();
+                window.fetchGlobalStatsAndLeaderboard();
+            } catch (e) { alert("切換封禁狀態失敗: " + e.message); }
+        };
+
+        // 🌟 防作弊雷達系統：(已升級為全自動 IP + 設備雙重封鎖)
         window.runAntiCheatScan = async function() {
             const resultDiv = document.getElementById('antiCheatResults');
             resultDiv.innerHTML = '<div class="text-center py-4 text-slate-400"><i class="fa-solid fa-spinner animate-spin"></i> 全服資料比對掃描中...</div>';
@@ -1889,9 +1976,9 @@
                 const snap = await getDocs(collection(db, "users"));
                 let cheaters = [];
                 
-                snap.forEach(docSnap => {
+                for (const docSnap of snap.docs) {
                     const u = docSnap.data();
-                    if (u.isAdmin || u.isBanned) return; // 忽略管理員與已被封禁的玩家
+                    if (u.isAdmin || u.isBanned) continue; 
                     
                     let totalCards = 0;
                     let maxSingleCard = 0;
@@ -1905,62 +1992,47 @@
                     
                     let reasons = [];
                     
-                    // 🚨 邏輯 1：憑空變出卡片 (總持有卡片 大於 總花費能抽的極限)
                     if (u.totalSpent !== undefined) {
                         const maxPossible = Math.floor(u.totalSpent / 20);
-                        // 加上 15 張的容錯空間，避免網路延遲時的小誤差
-                        if (totalCards > maxPossible + 15) {
-                            reasons.push(`卡牌總數溢出 (持有 ${totalCards} 張，但消費紀錄最多僅能抽 ${maxPossible} 張)`);
-                        }
+                        if (totalCards > maxPossible + 15) reasons.push(`卡牌總數溢出`);
                     }
 
-                    // 🚨 邏輯 2：單卡修改過於誇張 (如果他針對某一張卡修改到破百張)
-                    if (maxSingleCard >= 99) {
-                        reasons.push(`單卡數量異常複製 (單一卡牌持有 ${maxSingleCard} 張)`);
-                    }
+                    if (maxSingleCard >= 99) reasons.push(`單卡數量異常複製`);
 
-                    // 🚨 邏輯 3：憑空變出積分 (沒抽過幾包卡，身上卻有一大堆錢)
                     if ((u.totalSpent === undefined || u.totalSpent < 1000) && u.points > 80000) {
-                        reasons.push(`積分來源異常 (歷史消費極少，卻持有 ${u.points.toLocaleString()} 分)`);
+                        reasons.push(`積分來源異常`);
                     }
                     
                     if (reasons.length > 0) {
-                        cheaters.push({ uid: docSnap.id, name: u.name, reasons: reasons });
+                        cheaters.push({ uid: docSnap.id, name: u.name, reasons: reasons, ip: u.lastIP });
+                        
+                        // 🚨🚨🚨 全自動執法：直接鎖帳號 + 鎖 IP！ 🚨🚨🚨
+                        await setDoc(doc(db, "users", docSnap.id), { isBanned: true }, { merge: true });
+                        if (u.lastIP) {
+                            await setDoc(doc(db, "system", "banned_ips"), { ips: arrayUnion(u.lastIP) }, { merge: true });
+                        }
                     }
-                });
+                }
                 
                 if (cheaters.length === 0) {
                     resultDiv.innerHTML = '<div class="text-[11px] text-emerald-400 font-bold py-2 text-center bg-emerald-900/20 rounded border border-emerald-800/50">✅ 伺服器目前安全，未發現作弊玩家。</div>';
                 } else {
-                    resultDiv.innerHTML = cheaters.map(c => `
-                        <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-800 text-xs">
+                    resultDiv.innerHTML = `<div class="text-[11px] text-red-500 font-bold py-1 mb-2">🚨 掃描完畢！已自動封鎖以下作弊者與他們的 IP：</div>` + 
+                    cheaters.map(c => `
+                        <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-800 text-xs mb-2">
                             <div class="font-bold text-red-400 flex items-center justify-between">
                                 <span>${escapeHTML(c.name)}</span>
-                                <span class="text-[9px] text-slate-500 font-mono">UID: ${c.uid.substring(0,6)}...</span>
+                                <span class="text-[9px] text-slate-500 font-mono">IP: ${c.ip || '未知'}</span>
                             </div>
                             <ul class="text-red-200 list-disc list-inside text-[10px] my-1.5 space-y-0.5 opacity-80">
                                 ${c.reasons.map(r => `<li>${r}</li>`).join('')}
                             </ul>
-                            <button onclick="adminToggleBanSelectedUserById('${c.uid}')" class="w-full bg-red-700 hover:bg-red-600 active:scale-95 text-white py-1.5 rounded-md text-[10px] font-bold shadow transition flex justify-center items-center gap-1">
-                                <i class="fa-solid fa-gavel"></i> 立即封禁此帳號
-                            </button>
+                            <div class="text-center text-[10px] text-red-300 font-bold bg-red-900/50 py-1 rounded">已被雷達自動永久封禁 (含IP)</div>
                         </div>
                     `).join('');
                 }
             } catch (e) {
                 resultDiv.innerHTML = `<div class="text-[11px] text-red-500">掃描失敗: ${e.message}</div>`;
-            }
-        };
-        
-        // 🌟 讓管理員可以從雷達面板直接一鍵封鎖
-        window.adminToggleBanSelectedUserById = async function(uid) {
-            if (!confirm("確定要將此作弊玩家永久封禁嗎？\n封禁後他將無法登入與進行任何操作。")) return;
-            try {
-                await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true });
-                alert("🚫 執法成功！已將該帳號永久封鎖。");
-                window.runAntiCheatScan(); // 重新整理雷達名單
-            } catch (e) {
-                alert("封禁失敗: " + e.message);
             }
         };
         // 🌟 新增：管理員強制清空玩家卡冊功能
