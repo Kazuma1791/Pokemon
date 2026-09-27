@@ -1574,6 +1574,8 @@
             let htmlStr = '';
             for(let i=0; i<cards.length; i++) {
                 const c = cards[i];
+                
+                // 🌟 這是 100% 乾淨的 3D 卡片翻牌 HTML，只會用到卡片資料 (c)
                 htmlStr += `
                     <div class="perspective-1000 aspect-[2/3] w-full cursor-pointer active:scale-95 transition" onclick="flipCard(${i})">
                         <div id="cardInner-${i}" class="card-inner">
@@ -1589,7 +1591,7 @@
                                 <div class="flex items-center gap-1 mt-0.5">
                                     <span class="text-[9px] font-black px-1.5 py-0.2 rounded text-white" style="background-color: ${RARITY[c.rarity].color}">${c.rarity}</span>
                                     <span class="text-[9px] sm:text-[10px] font-black text-cyan-300 bg-slate-900/90 px-1 py-0.2 rounded border border-cyan-500/30">
-                                        <i class="fa-solid fa-gem text-cyan-400 text-[8px]"></i>${RARITY[c.rarity].price}分
+                                        <i class="fa-solid fa-gem text-cyan-400 mr-0.5 text-[8px]"></i>${RARITY[c.rarity].price} 分
                                     </span>
                                 </div>
                             </div>
