@@ -539,8 +539,26 @@
         }
 
         window.checkDeviceAndIP = async function(userUid) {
-            if (localStorage.getItem("banned_device") === "true") return true;
+            // 🌟 新增：先從資料庫確認玩家的即時狀態
+            let isUserCurrentlyBanned = false;
+            if (userUid) {
+                try {
+                    const userSnap = await getDoc(doc(db, "users", userUid));
+                    if (userSnap.exists()) {
+                        isUserCurrentlyBanned = userSnap.data().isBanned || false;
+                        
+                        // 🌟 關鍵赦免機制：如果資料庫說他是清白的，就清除他瀏覽器的死亡烙印！
+                        if (!isUserCurrentlyBanned) {
+                            localStorage.removeItem("banned_device");
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            // 1. 檢查本地設備是否有「作弊烙印」(且資料庫確實封鎖他)
+            if (isUserCurrentlyBanned && localStorage.getItem("banned_device") === "true") return true;
             
+            // 2. 獲取當前玩家 IP
             let currentIP = "unknown";
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
@@ -548,17 +566,21 @@
                 currentIP = data.ip;
             } catch(e) {}
 
-            try {
-                const banSnap = await getDoc(doc(db, "system", "banned_ips"));
-                if (banSnap.exists()) {
-                    const ipList = banSnap.data().ips || [];
-                    if (ipList.includes(currentIP)) {
-                        localStorage.setItem("banned_device", "true");
-                        return true;
+            // 3. 檢查雲端 IP 黑名單 (只有在玩家未被赦免時才檢查)
+            if (isUserCurrentlyBanned || !userUid) {
+                try {
+                    const banSnap = await getDoc(doc(db, "system", "banned_ips"));
+                    if (banSnap.exists()) {
+                        const ipList = banSnap.data().ips || [];
+                        if (ipList.includes(currentIP)) {
+                            localStorage.setItem("banned_device", "true");
+                            return true;
+                        }
                     }
-                }
-            } catch(e) {}
+                } catch(e) {}
+            }
 
+            // 4. 更新 IP
             if (userUid && currentIP !== "unknown") {
                 setDoc(doc(db, "users", userUid), { lastIP: currentIP }, { merge: true }).catch(e=>{});
             }
@@ -1923,15 +1945,22 @@
                     
                     let reasons = [];
                     
+                    // 🚨 邏輯 1：卡片印鈔機檢查 (持有卡數遠大於歷史總抽卡數)
+                    // 假設一包卡有 5 張 (100分)，平均一張 20 分。容錯率提高到 30 張。
                     if (u.totalSpent !== undefined) {
                         const maxPossible = Math.floor(u.totalSpent / 20);
-                        if (totalCards > maxPossible + 15) reasons.push(`卡牌總數溢出`);
+                        if (totalCards > maxPossible + 30) reasons.push(`卡牌總數嚴重溢出`);
                     }
 
+                    // 🚨 邏輯 2：複製卡片檢查
                     if (maxSingleCard >= 99) reasons.push(`單卡數量異常複製`);
 
-                    if ((u.totalSpent === undefined || u.totalSpent < 1000) && u.points > 80000) {
-                        reasons.push(`積分來源異常`);
+                    // 🚨 邏輯 3：積分異常檢查 (修正容錯率)
+                    // 考量到玩家可能把卡片全賣了換積分，所以檢查「歷史抽卡總值」+「身上積分」
+                    const maxWealth = (u.totalPulledValue || 0) + INITIAL_GIFT_POINTS;
+                    // 如果身上的錢，超過了他這輩子抽到的卡片總值太多 (容錯 5萬分)
+                    if (u.points > maxWealth + 50000) {
+                        reasons.push(`積分總額不合邏輯`);
                     }
                     
                     if (reasons.length > 0) {
