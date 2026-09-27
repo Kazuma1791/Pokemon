@@ -990,7 +990,7 @@
             broadcastTimer = setTimeout(() => { banner.classList.add('hidden'); }, 5000);
         }
 
-        // 🌟 升級版：管理員手動 封鎖 / 解封 玩家
+        // 🌟 升級版：管理員手動 封鎖 / 解封 玩家 (從選單)
         window.adminToggleBanSelectedUser = async function() {
             if (checkBanned()) return;
             if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作！");
@@ -1030,22 +1030,26 @@
                 alert("切換封禁狀態失敗: " + e.message); 
             }
         };
-        
-        window.adminToggleVipForSelectedUser = async function() {
-            if (checkBanned()) return;
-            if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID) return alert("⚠️ 警告：非法操作！");
-            const selectEl = document.getElementById('adminUserSelect');
-            const targetUid = selectEl ? selectEl.value : '';
-            if (!targetUid) return alert("請先從選單選擇一名訓練家！");
-            const u = allUsersCache.find(x => x.uid === targetUid);
-            if (!u) return;
-            const newVipStatus = !u.isVip;
+
+        // 🌟 讓管理員可以從雷達面板直接一鍵封鎖
+        window.adminToggleBanSelectedUserById = async function(uid) {
+            if (!confirm("確定要將此作弊玩家永久封禁嗎？\n封禁後他將無法登入與進行任何操作。")) return;
             try {
-                await setDoc(doc(db, "users", targetUid), { isVip: newVipStatus }, { merge: true });
-                alert(`👑 已成功將玩家 ${escapeHTML(u.name)} VIP 狀態更新為：${newVipStatus ? '【已開通 VIP】' : '【普通會員】'}`);
-                window.fetchAdminUserList();
-                window.fetchGlobalStatsAndLeaderboard();
-            } catch (e) { alert("修改 VIP 失敗: " + e.message); }
+                // 直接寫死為 true (封鎖)
+                await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true });
+                
+                // 如果要知道他的 IP，必須從快取裡找出來
+                const u = allUsersCache.find(x => x.uid === uid);
+                if (u && u.lastIP) {
+                    await setDoc(doc(db, "system", "banned_ips"), { ips: arrayUnion(u.lastIP) }, { merge: true });
+                }
+
+                alert("🚫 執法成功！已將該帳號與 IP 永久封鎖。");
+                window.runAntiCheatScan(); // 重新整理雷達名單
+                window.fetchAdminUserList(); // 同步更新名單
+            } catch (e) {
+                alert("封禁失敗: " + e.message);
+            }
         };
         
         window.adminAdjustSelectedUser = async function(delta) {
