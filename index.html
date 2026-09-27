@@ -1921,6 +1921,7 @@
             }
         };
 
+        // 🌟 防作弊雷達系統：(已升級為「人工審核模式」，絕不再自動封鎖)
         window.runAntiCheatScan = async function() {
             const resultDiv = document.getElementById('antiCheatResults');
             resultDiv.innerHTML = '<div class="text-center py-4 text-slate-400"><i class="fa-solid fa-spinner animate-spin"></i> 全服資料比對掃描中...</div>';
@@ -1945,38 +1946,32 @@
                     
                     let reasons = [];
                     
-                    // 🚨 邏輯 1：卡片印鈔機檢查 (持有卡數遠大於歷史總抽卡數)
-                    // 假設一包卡有 5 張 (100分)，平均一張 20 分。容錯率提高到 30 張。
+                    // 🌟 放寬條件 1：總卡數容錯拉高到 100 張 (照顧早期沒有記錄歷史消費的玩家)
                     if (u.totalSpent !== undefined) {
                         const maxPossible = Math.floor(u.totalSpent / 20);
-                        if (totalCards > maxPossible + 30) reasons.push(`卡牌總數嚴重溢出`);
+                        if (totalCards > maxPossible + 100) reasons.push(`卡牌總數溢出 (持有 ${totalCards} 張，理論上限 ${maxPossible} 張)`);
                     }
 
-                    // 🚨 邏輯 2：複製卡片檢查
-                    if (maxSingleCard >= 99) reasons.push(`單卡數量異常複製`);
+                    // 🌟 放寬條件 2：單卡複製容錯拉高到 300 張才示警
+                    if (maxSingleCard >= 300) reasons.push(`單卡數量異常複製 (單卡最高持有 ${maxSingleCard} 張)`);
 
-                    // 🚨 邏輯 3：積分異常檢查 (修正容錯率)
-                    // 考量到玩家可能把卡片全賣了換積分，所以檢查「歷史抽卡總值」+「身上積分」
+                    // 🌟 放寬條件 3：考慮到管理員會送分，容錯金錢提高到 50 萬分
                     const maxWealth = (u.totalPulledValue || 0) + INITIAL_GIFT_POINTS;
-                    // 如果身上的錢，超過了他這輩子抽到的卡片總值太多 (容錯 5萬分)
-                    if (u.points > maxWealth + 50000) {
-                        reasons.push(`積分總額不合邏輯`);
+                    if (u.points > maxWealth + 500000) {
+                        reasons.push(`積分異常 (持有 ${u.points.toLocaleString()} 分，遠超抽卡總值)`);
                     }
                     
                     if (reasons.length > 0) {
+                        // 只列入可疑名單，🚨 移除了全自動 setDoc(isBanned) 🚨
                         cheaters.push({ uid: docSnap.id, name: u.name, reasons: reasons, ip: u.lastIP });
-                        
-                        await setDoc(doc(db, "users", docSnap.id), { isBanned: true }, { merge: true });
-                        if (u.lastIP) {
-                            await setDoc(doc(db, "system", "banned_ips"), { ips: arrayUnion(u.lastIP) }, { merge: true });
-                        }
                     }
                 }
                 
                 if (cheaters.length === 0) {
                     resultDiv.innerHTML = '<div class="text-[11px] text-emerald-400 font-bold py-2 text-center bg-emerald-900/20 rounded border border-emerald-800/50">✅ 伺服器目前安全，未發現作弊玩家。</div>';
                 } else {
-                    resultDiv.innerHTML = `<div class="text-[11px] text-red-500 font-bold py-1 mb-2">🚨 掃描完畢！已自動封鎖以下作弊者與他們的 IP：</div>` + 
+                    // 讓管理員自己決定要不要按下「立即封禁」
+                    resultDiv.innerHTML = `<div class="text-[11px] text-amber-400 font-bold py-1 mb-2">⚠️ 掃描完畢！發現以下可疑帳號，請管理員人工審核：</div>` + 
                     cheaters.map(c => `
                         <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-800 text-xs mb-2">
                             <div class="font-bold text-red-400 flex items-center justify-between">
@@ -1986,7 +1981,9 @@
                             <ul class="text-red-200 list-disc list-inside text-[10px] my-1.5 space-y-0.5 opacity-80">
                                 ${c.reasons.map(r => `<li>${r}</li>`).join('')}
                             </ul>
-                            <div class="text-center text-[10px] text-red-300 font-bold bg-red-900/50 py-1 rounded">已被雷達自動永久封禁 (含IP)</div>
+                            <button onclick="adminToggleBanSelectedUserById('${c.uid}')" class="w-full bg-red-700 hover:bg-red-600 active:scale-95 text-white py-1.5 rounded-md text-[10px] font-bold shadow transition flex justify-center items-center gap-1 mt-2">
+                                <i class="fa-solid fa-gavel"></i> 確定為外掛，立即封禁
+                            </button>
                         </div>
                     `).join('');
                 }
