@@ -786,9 +786,18 @@
         };
 
         const PACK_DEFINITIONS = [
-            { id: 'm6a', title: '「30th CELEBRATION」M6a', tag: '30th', desc: '全168張陣容！FUR 科幻夢幻/超夢、RGB 三色夢幻與 SAR 登場！', bg: 'from-slate-800 via-amber-950 to-purple-950', border: 'border-amber-400/50', icon: 'fa-crown', badge: '168張大包' },
-            { id: 's12a', title: '高級包「VSTAR 宇宙」S12a', tag: 'VSTAR', desc: '收錄 262 張大圖鑑！神級繪圖阿爾宙斯、騎拉帝納 UR 登場！', bg: 'from-slate-800 to-indigo-950', border: 'border-purple-500/50', icon: 'fa-shuttle-space', badge: '262張全陣容' },
-            { id: 'sv2a', title: '強化擴充包「寶可夢 151」', tag: '151', desc: '收錄經典 151 陣容！噴火龍 ex SAR 與超夢！', bg: 'from-slate-800 to-indigo-950', border: 'border-indigo-500/30', icon: 'fa-dragon', badge: '熱門擴充包' }
+            { 
+                id: 'm6a', title: '「30th CELEBRATION」M6a', tag: '30th', desc: '全168張陣容！FUR 科幻夢幻/超夢、RGB 三色夢幻與 SAR 登場！', bg: 'from-slate-800 via-amber-950 to-purple-950', border: 'border-amber-400/50', badge: '168張大包',
+                imageSrc: 'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcQojAWn6fbkGlcL0Se7IlF6hWoFa5BlDj270UHeHwRLiyoVuIhZjYHJgmYe9RvUOb_LtYAII_vmZQsYJKbgS6ZIDZBRCZtJ7c5Zdi_USuA_kS3k-RU6ffrKLS9OUyAM&usqp=CAc' 
+            },
+            { 
+                id: 's12a', title: '高級包「VSTAR 宇宙」S12a', tag: 'VSTAR', desc: '收錄 262 張大圖鑑！神級繪圖阿爾宙斯、騎拉帝納 UR 登場！', bg: 'from-slate-800 to-indigo-950', border: 'border-purple-500/50', badge: '262張全陣容',
+                imageSrc: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxgYup_kj1p9Msr9ERfaBDyVzdPVEPTXUBkkMQVVM-SA&s=10' 
+            },
+            { 
+                id: 'sv2a', title: '強化擴充包「寶可夢 151」', tag: '151', desc: '收錄經典 151 陣容！噴火龍 ex SAR 與超夢！', bg: 'from-slate-800 to-indigo-950', border: 'border-indigo-500/30', badge: '熱門擴充包',
+                imageSrc: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT24GvAdnj4dzp_ASYYQ830gaq62omIb0yGbFZZDVu8mw&s=10' 
+            }
         ];
 
         function drawCardFromSet(setCards) {
@@ -1027,13 +1036,15 @@
             const isVip = currentUserDoc && currentUserDoc.isVip;
             container.innerHTML = PACK_DEFINITIONS.map(pack => `
                 <div class="bg-gradient-to-br ${pack.bg} p-4 sm:p-5 rounded-2xl border ${pack.border} shadow-xl flex flex-col justify-between space-y-3 sm:space-y-4 relative">
-                    <button onclick="showDropRates('${pack.id}', '${pack.title}')" class="absolute top-3 right-3 text-[10px] sm:text-xs text-slate-400 hover:text-cyan-300 border border-slate-600/50 hover:border-cyan-500/50 bg-slate-900/60 px-2 py-1 rounded transition"><i class="fa-solid fa-scale-unbalanced"></i> 機率</button>
+                    <!-- 🌟 查閱掉落率按鈕 -->
+                    <button onclick="showDropRates('${pack.id}', '${pack.title}')" class="absolute top-3 right-3 text-[10px] sm:text-xs text-slate-400 hover:text-cyan-300 border border-slate-600/50 hover:border-cyan-500/50 bg-slate-900/60 px-2 py-1 rounded transition z-20"><i class="fa-solid fa-scale-unbalanced"></i> 機率</button>
 
                     <div class="flex gap-3 sm:gap-4 items-center pt-2">
-                        <div class="w-16 h-24 sm:w-20 sm:h-28 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center p-2 text-center shadow border border-white/20 shrink-0">
-                            <span class="text-[9px] sm:text-[10px] font-black bg-white/20 px-1.5 py-0.2 rounded text-white">${pack.id.toUpperCase()}</span>
-                            <i class="fa-solid ${pack.icon} text-xl sm:text-2xl text-amber-300 my-1"></i>
-                            <span class="text-[9px] font-bold text-slate-300">${pack.tag}</span>
+                        <!-- 🌟 這裡改成顯示真實卡包圖片 -->
+                        <div class="w-16 h-24 sm:w-20 sm:h-28 rounded-xl flex flex-col items-center justify-center text-center shadow-lg shrink-0 overflow-hidden relative border border-white/20">
+                            <img src="${pack.imageSrc}" class="w-full h-full object-cover hover:scale-110 transition duration-300" alt="${pack.title}">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent pointer-events-none"></div>
+                            <span class="absolute bottom-1 text-[9px] sm:text-[10px] font-black bg-slate-900/80 px-1.5 py-0.2 rounded border border-white/20 text-white">${pack.id.toUpperCase()}</span>
                         </div>
                         <div class="pr-6">
                             <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded">${pack.badge}</span>
