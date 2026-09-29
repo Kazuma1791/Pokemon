@@ -1649,11 +1649,21 @@
                 let hasCards = false;
                 let htmlStr = '';
 
-                Object.values(CARD_SETS).flat().forEach(c => {
+                // 🌟 使用最安全的卡牌讀取法，絕不報錯
+                let allCards = [];
+                for (const key in CARD_SETS) {
+                    if (CARD_SETS[key] && Array.isArray(CARD_SETS[key])) {
+                        allCards = allCards.concat(CARD_SETS[key]);
+                    }
+                }
+
+                allCards.forEach(c => {
                     const count = currentUserDoc.cards?.[c.id] || 0;
                     if (count > 0) {
                         hasCards = true;
-                        const price = RARITY[c.rarity].price;
+                        // 🌟 防呆：避免因卡牌設定錯誤導致找不到價格而崩潰
+                        const rarityConfig = RARITY[c.rarity] || { price: 0 };
+                        const price = rarityConfig.price;
                         htmlStr += `
                             <div class="bg-slate-800/90 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center justify-between space-y-2 shadow-md">
                                 <div class="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-slate-950">
@@ -1685,10 +1695,19 @@
             if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
-            let card = Object.values(CARD_SETS).flat().find(c => c.id === cardId);
+            // 🌟 安全尋找卡片
+            let allCards = [];
+            for (const key in CARD_SETS) {
+                if (CARD_SETS[key] && Array.isArray(CARD_SETS[key])) {
+                    allCards = allCards.concat(CARD_SETS[key]);
+                }
+            }
+            let card = allCards.find(c => c.id === cardId);
             if (!card) return;
 
-            const price = RARITY[card.rarity].price;
+            // 🌟 防呆設定
+            const rarityConfig = RARITY[card.rarity] || { price: 0 };
+            const price = rarityConfig.price;
             const newPoints = (currentUserDoc.points || 0) + price;
 
             lockUI(); 
@@ -1719,19 +1738,31 @@
             let total = 0;
             let newCards = { ...currentUserDoc.cards };
 
-            Object.values(CARD_SETS).flat().forEach(c => {
-                const count = newCards[c.id] || 0;
-                if (count > 1) {
-                    total += (count - 1) * RARITY[c.rarity].price;
-                    newCards[c.id] = 1;
-                }
-            });
-
-            if (total === 0) return alert("目前沒有重複卡！");
-            const newPoints = (currentUserDoc.points || 0) + total;
-
             lockUI(); 
             try {
+                // 🌟 安全計算總額
+                let allCards = [];
+                for (const key in CARD_SETS) {
+                    if (CARD_SETS[key] && Array.isArray(CARD_SETS[key])) {
+                        allCards = allCards.concat(CARD_SETS[key]);
+                    }
+                }
+
+                allCards.forEach(c => {
+                    const count = newCards[c.id] || 0;
+                    if (count > 1) {
+                        const rarityConfig = RARITY[c.rarity] || { price: 0 };
+                        total += (count - 1) * rarityConfig.price;
+                        newCards[c.id] = 1; // 賣到只剩 1 張
+                    }
+                });
+
+                if (total === 0) {
+                    unlockUI();
+                    return alert("目前沒有重複卡！");
+                }
+                const newPoints = (currentUserDoc.points || 0) + total;
+
                 await window.syncToCloud({ cards: newCards, points: newPoints });
                 currentUserDoc.cards = newCards;
                 currentUserDoc.points = newPoints;
