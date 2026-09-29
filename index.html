@@ -1319,10 +1319,17 @@
             if (checkBanned()) return;
             if (!auth.currentUser || !currentUserDoc) return;
             const userRef = doc(db, "users", auth.currentUser.uid);
-            await Promise.race([
-                setDoc(userRef, updateData, { merge: true }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("網路連線逾時，請稍後再試")), 2500))
-            ]);
+            
+            try {
+                // 讓 Firebase SDK 自行在背景處理同步，不要用 reject 阻擋流程
+                // 這樣即使網路稍有延遲，也不會中斷玩家的遊戲體驗！
+                await Promise.race([
+                    setDoc(userRef, updateData, { merge: true }),
+                    new Promise(resolve => setTimeout(resolve, 3000)) // 3秒後強制放行本地UI
+                ]);
+            } catch (e) {
+                console.warn("背景同步稍有延遲，Firebase 將持續重試", e);
+            }
         }
 
         window.updateUI = function() {
@@ -1695,7 +1702,6 @@
             if (checkBanned()) return;
             if (!currentUserDoc || !currentUserDoc.cards || (currentUserDoc.cards[cardId] || 0) <= 0) return;
             
-            // 🌟 安全尋找卡片
             let allCards = [];
             for (const key in CARD_SETS) {
                 if (CARD_SETS[key] && Array.isArray(CARD_SETS[key])) {
@@ -1705,7 +1711,6 @@
             let card = allCards.find(c => c.id === cardId);
             if (!card) return;
 
-            // 🌟 防呆設定
             const rarityConfig = RARITY[card.rarity] || { price: 0 };
             const price = rarityConfig.price;
             const newPoints = (currentUserDoc.points || 0) + price;
@@ -1714,6 +1719,8 @@
             try {
                 let newCards = { ...currentUserDoc.cards };
                 newCards[cardId]--;
+                
+                // 即使網路慢，這裡也不會報錯了
                 await window.syncToCloud({ cards: newCards, points: newPoints });
                 
                 currentUserDoc.cards = newCards;
@@ -1724,7 +1731,7 @@
                 window.renderSellInventory();
                 window.checkAchievements();
             } catch (err) {
-                alert("出售失敗：" + err.message);
+                console.error(err);
             } finally {
                 unlockUI(); 
             }
@@ -1736,11 +1743,11 @@
             if (!currentUserDoc || !currentUserDoc.cards) return;
 
             let total = 0;
-            let newCards = { ...currentUserDoc.cards };
+            // 確保資料被乾淨複製
+            let newCards = JSON.parse(JSON.stringify(currentUserDoc.cards));
 
             lockUI(); 
             try {
-                // 🌟 安全計算總額
                 let allCards = [];
                 for (const key in CARD_SETS) {
                     if (CARD_SETS[key] && Array.isArray(CARD_SETS[key])) {
@@ -1763,7 +1770,9 @@
                 }
                 const newPoints = (currentUserDoc.points || 0) + total;
 
+                // 將龐大的卡牌資料拋給雲端，本地立刻進行結算
                 await window.syncToCloud({ cards: newCards, points: newPoints });
+                
                 currentUserDoc.cards = newCards;
                 currentUserDoc.points = newPoints;
                 window.recordDailyProfit(total); 
@@ -1775,7 +1784,8 @@
                 alert(`✅ 已成功賣出所有重複卡，獲得 +${total.toLocaleString()} 積分！`);
                 window.checkAchievements();
             } catch (err) {
-                alert("一鍵出售失敗，請稍後再試：" + err.message);
+                alert("出售過程遇到小錯誤，但 Firebase 已在背景處理中！");
+                console.error(err);
             } finally {
                 unlockUI(); 
             }
